@@ -43,7 +43,7 @@ def trusted_user(user: User) -> User:
 
 def test_archdev_navbar(client: TestClient):
     expected = [
-        "AUR Home",
+        "MPR Home",
         "Packages",
         "Register",
         "Login"

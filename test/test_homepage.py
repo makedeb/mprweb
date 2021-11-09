@@ -99,7 +99,7 @@ def test_homepage_ssh_fingerprints(get_ssh_fingerprints_mock):
     for key, value in fingerprints.items():
         assert key in response.content.decode()
         assert value in response.content.decode()
-    assert 'The following SSH fingerprints are used for the AUR' in response.content.decode()
+    assert 'The following SSH fingerprints are used for the MPR' in response.content.decode()
 
 
 @patch('aurweb.util.get_ssh_fingerprints')

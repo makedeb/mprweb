@@ -8,7 +8,7 @@ MAKEFLAGS = -j1
 check: sh pytest
 
 pytest:
-	cd .. && coverage run --append /usr/bin/pytest test
+	cd .. && coverage run --append /usr/bin/pytest test/
 
 ifdef PROVE
 sh:

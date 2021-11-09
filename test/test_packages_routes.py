@@ -1826,7 +1826,7 @@ def test_pkgbase_flag_vcs(client: TestClient, user: User, package: Package):
 
     expected = ("This seems to be a VCS package. Please do "
                 "<strong>not</strong> flag it out-of-date if the package "
-                "version in the AUR does not match the most recent commit. "
+                "version in the MPR does not match the most recent commit. "
                 "Flagging this package should only be done if the sources "
                 "moved or changes in the PKGBUILD are required because of "
                 "recent upstream changes.")
