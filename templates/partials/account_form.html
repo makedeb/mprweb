@@ -110,9 +110,9 @@
         </p>
         <p>
             <em>{{ "If you do not hide your email address, it is "
-            "visible to all registered AUR users. If you hide your "
-            "email address, it is visible to members of the Arch "
-            "Linux staff only." | tr }}</em>
+            "visible to all registered MPR users. If you hide your "
+            "email address, it is visible to MPR "
+            "Trusted Users only." | tr }}</em>
         </p>
 
         <!-- Backup Email -->
@@ -132,7 +132,7 @@
             {{ "Password reset links are always sent to both your "
             "primary and your backup email address." | tr }}
             {{ "Your backup email address is always only visible to "
-            "members of the Arch Linux staff, independent of the %s "
+            "MPR Trusted Users, independent of the %s "
             "setting." | tr
             | format("<em>%s</em>" | format("Hide Email Address" | tr))
             | safe }}
@@ -249,7 +249,7 @@
         <legend>
             {{
             "The following information is only required if you "
-            "want to submit packages to the Arch User Repository." | tr
+            "want to submit packages to the makedeb Package Repository." | tr
             }}
         </legend>
         <p>
@@ -316,7 +316,7 @@
         {% else %}
             <!-- Otherwise, form_type is assumed that it's NewAccount. -->
             <legend>
-                {{ "To protect the AUR against automated account creation, "
+                {{ "To protect the MPR against automated account creation, "
                 "we kindly ask you to provide the output of the following "
                 "command:" | tr }}
                 <code>

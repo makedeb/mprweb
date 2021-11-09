@@ -1,4 +1,3 @@
-#
 # Docker service definitions for the aurweb project.
 #
 # Notable services:
@@ -23,35 +22,35 @@ version: "3.8"
 services:
   aurweb-image:
     build: .
-    image: aurweb:latest
+    image: mprweb:latest
 
   ca:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     entrypoint: /docker/ca-entrypoint.sh
     command: echo
 
   memcached:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     command: /docker/scripts/run-memcached.sh
-    healthcheck:
-      test: "bash /docker/health/memcached.sh"
-      interval: 3s
+    #healthcheck:
+    #  test: "bash /docker/health/memcached.sh"
+    #  interval: 3s
  
   redis:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     entrypoint: /docker/redis-entrypoint.sh
     command: /docker/scripts/run-redis.sh
-    healthcheck:
-      test: "bash /docker/health/redis.sh"
-      interval: 3s
+    #healthcheck:
+    #  test: "bash /docker/health/redis.sh"
+    #  interval: 3s
     ports:
       - "16379:6379"
 
   mariadb:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     entrypoint: /docker/mariadb-entrypoint.sh
     command: /usr/bin/mysqld_safe --datadir=/var/lib/mysql
@@ -62,23 +61,23 @@ services:
     volumes:
       - mariadb_run:/var/run/mysqld # Bind socket in this volume.
       - mariadb_data:/var/lib/mysql
-    healthcheck:
-      test: "bash /docker/health/mariadb.sh"
-      interval: 3s
+    #healthcheck:
+    #  test: "bash /docker/health/mariadb.sh"
+    #  interval: 3s
 
   mariadb_init:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     entrypoint: /docker/mariadb-init-entrypoint.sh
     command: echo "MariaDB tables initialized."
     volumes:
       - mariadb_run:/var/run/mysqld
     depends_on:
-      mariadb:
-        condition: service_healthy
+      - mariadb
+      #  condition: service_healthy
 
   git:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
@@ -86,59 +85,59 @@ services:
     command: /docker/scripts/run-sshd.sh
     ports:
       - "2222:2222"
-    healthcheck:
-      test: "bash /docker/health/sshd.sh"
-      interval: 3s
+    #healthcheck:
+    #  test: "bash /docker/health/sshd.sh"
+    #  interval: 3s
     depends_on:
-      mariadb_init:
-        condition: service_started
+      - mariadb_init
+        #condition: service_started
     volumes:
       - mariadb_run:/var/run/mysqld
 
   smartgit:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
     entrypoint: /docker/smartgit-entrypoint.sh
     command: /docker/scripts/run-smartgit.sh
-    healthcheck:
-      test: "bash /docker/health/smartgit.sh"
-      interval: 3s
+    #healthcheck:
+    #  test: "bash /docker/health/smartgit.sh"
+    #  interval: 3s
 
   cgit-php:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
       - CGIT_CLONE_PREFIX=${AURWEB_PHP_PREFIX}
     entrypoint: /docker/cgit-entrypoint.sh
     command: /docker/scripts/run-cgit.sh 3000
-    healthcheck:
-      test: "bash /docker/health/cgit.sh 3000"
-      interval: 3s
+    #healthcheck:
+    #  test: "bash /docker/health/cgit.sh 3000"
+    #  interval: 3s
     depends_on:
-      git:
-        condition: service_healthy
+      - git
+        #condition: service_healthy
     ports:
       - "13000:3000"
     volumes:
       - git_data:/aurweb/aur.git
 
   cgit-fastapi:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
       - CGIT_CLONE_PREFIX=${AURWEB_FASTAPI_PREFIX}
     entrypoint: /docker/cgit-entrypoint.sh
     command: /docker/scripts/run-cgit.sh 3000
-    healthcheck:
-      test: "bash /docker/health/cgit.sh 3000"
-      interval: 3s
+    #healthcheck:
+    #  test: "bash /docker/health/cgit.sh 3000"
+    #  interval: 3s
     depends_on:
-      git:
-        condition: service_healthy
+      - git
+        #condition: service_healthy
     ports:
       - "13001:3000"
     volumes:
@@ -159,7 +158,7 @@ services:
       - archives:/var/lib/aurweb/archives
 
   php-fpm:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
@@ -167,18 +166,18 @@ services:
       - AURWEB_SSHD_PREFIX=${AURWEB_SSHD_PREFIX}
     entrypoint: /docker/php-entrypoint.sh
     command: /docker/scripts/run-php.sh
-    healthcheck:
-      test: "bash /docker/health/php.sh"
-      interval: 3s
+    #healthcheck:
+    #  test: "bash /docker/health/php.sh"
+    #  interval: 3s
     depends_on:
-      ca:
-        condition: service_started
-      git:
-        condition: service_healthy
-      memcached:
-        condition: service_healthy
-      cron:
-        condition: service_started
+      - ca
+        #condition: service_started
+      - git
+        #condition: service_healthy
+      - memcached
+        #condition: service_healthy
+      - cron
+        #condition: service_started
     volumes:
       - mariadb_run:/var/run/mysqld
       - archives:/var/lib/aurweb/archives
@@ -186,7 +185,7 @@ services:
       - "19000:9000"
 
   fastapi:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=conf/config
@@ -197,25 +196,25 @@ services:
       - PROMETHEUS_MULTIPROC_DIR=/tmp_prometheus
     entrypoint: /docker/fastapi-entrypoint.sh
     command: /docker/scripts/run-fastapi.sh "${FASTAPI_BACKEND}"
-    healthcheck:
-      test: "bash /docker/health/fastapi.sh ${FASTAPI_BACKEND}"
-      interval: 3s
+    #healthcheck:
+    #  test: "bash /docker/health/fastapi.sh ${FASTAPI_BACKEND}"
+    #  interval: 3s
     depends_on:
-      ca:
-        condition: service_started
-      git:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      cron:
-        condition: service_started
+      - ca
+        #condition: service_started
+      - git
+        #condition: service_healthy
+      - redis
+        #condition: service_healthy
+      - cron
+        #condition: service_started
     volumes:
       - mariadb_run:/var/run/mysqld
     ports:
       - "18000:8000"
 
   nginx:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=conf/config
@@ -224,25 +223,25 @@ services:
     ports:
       - "8443:8443" # PHP
       - "8444:8444" # FastAPI
-    healthcheck:
-      test: "bash /docker/health/nginx.sh"
-      interval: 3s
+    #healthcheck:
+    #  test: "bash /docker/health/nginx.sh"
+    #  interval: 3s
     depends_on:
-      cgit-php:
-        condition: service_healthy
-      cgit-fastapi:
-        condition: service_healthy
-      smartgit:
-        condition: service_healthy
-      fastapi:
-        condition: service_healthy
-      php-fpm:
-        condition: service_healthy
+      - cgit-php
+        #condition: service_healthy
+      - cgit-fastapi
+        #condition: service_healthy
+      - smartgit
+        #condition: service_healthy
+      - fastapi
+        #condition: service_healthy
+      - php-fpm
+        #condition: service_healthy
     volumes:
       - archives:/var/lib/aurweb/archives
 
   sharness:
-    image: aurweb:latest
+    image: mprweb:latest
     profiles: ["dev"]
     init: true
     environment:
@@ -252,8 +251,8 @@ services:
     stdin_open: true
     tty: true
     depends_on:
-      git:
-        condition: service_healthy
+      - git
+        #condition: service_healthy
     volumes:
       - git_data:/aurweb/aur.git
       - ./cache:/cache
@@ -266,7 +265,7 @@ services:
       - ./templates:/aurweb/templates
 
   pytest-mysql:
-    image: aurweb:latest
+    image: mprweb:latest
     profiles: ["dev"]
     init: true
     environment:
@@ -278,8 +277,8 @@ services:
     stdin_open: true
     tty: true
     depends_on:
-      mariadb_init:
-        condition: service_started
+      - mariadb_init
+        #condition: service_started
     volumes:
       - mariadb_run:/var/run/mysqld
       - git_data:/aurweb/aur.git
@@ -293,7 +292,7 @@ services:
       - ./templates:/aurweb/templates
 
   pytest-sqlite:
-    image: aurweb:latest
+    image: mprweb:latest
     profiles: ["dev"]
     init: true
     environment:
@@ -316,7 +315,7 @@ services:
       - ./templates:/aurweb/templates
 
   test:
-    image: aurweb:latest
+    image: mprweb:latest
     profiles: ["dev"]
     init: true
     environment:
@@ -328,8 +327,8 @@ services:
     stdin_open: true
     tty: true
     depends_on:
-      mariadb_init:
-        condition: service_started
+      - mariadb_init
+        #condition: service_started
     volumes:
       - mariadb_run:/var/run/mysqld
       - git_data:/aurweb/aur.git

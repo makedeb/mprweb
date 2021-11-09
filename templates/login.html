@@ -3,7 +3,7 @@
 {% block pageContent %}
 
 <div id="dev-login" class="box">
-    <h2>AUR {% trans %}Login{% endtrans %}</h2>
+    <h2>MPR {% trans %}Login{% endtrans %}</h2>
 
     {% if request.url.scheme == "http" and config.getboolean("options", "disable_http_login") %}
         {% set https_login = url_base.replace("http://", "https://") + "/login" %}

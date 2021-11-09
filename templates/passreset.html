@@ -47,10 +47,10 @@
                 </form>
             {% else %}
                 <!-- Default page with prompt for user name/e-mail. -->
-                {% set url = "https://mailman.archlinux.org/mailman/listinfo/aur-general" %}
+                {% set url = "https://matrix.to/#/#makedeb-mpr:hunterwittenborn.com" %}
                 {{ "If you have forgotten the user name and the primary e-mail "
                 "address you used to register, please send a message to the "
-                "%saur-general%s mailing list."
+                "%s#makedeb-mpr:hunterwittenborn.com%s Matrix room."
                 | tr
                 | format(
                     '<a href="%s">' | format(url),

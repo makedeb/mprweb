@@ -13,7 +13,7 @@
  */
 
 /* container for the entire bar */
-#archnavbar { min-height: 40px !important; padding: 10px 15px !important; background: #333 !important; border-bottom: 5px #08c solid !important; }
+#archnavbar { min-height: 40px !important; padding: 10px 15px !important; background: #333 !important; border-bottom: 5px #E95420 solid !important; }
 #archnavbarlogo { float: left !important; margin: 0 !important; padding: 0 !important; height: 40px !important; width: 190px !important; background: url('archnavbar/archlogo.png') no-repeat !important; }
 @media (-webkit-min-device-pixel-ratio: 1.2), (min--moz-device-pixel-ratio: 1.2), (-o-min-device-pixel-ratio: 2/1) {
 	#archnavbarlogo { float: left !important; margin: 0 !important; padding: 0 !important; height: 40px !important; width: 190px !important; background: url(archnavbar/archlogo.svg) no-repeat !important;background-size:100% !important; 
@@ -135,7 +135,7 @@ a {
 
     a:link,
     th a:visited {
-        color: #07b;
+        color: #E95420;
     }
 
     a:visited {
@@ -366,7 +366,7 @@ form.general-form textarea {
 
         #archdev-navbar li a {
             padding: 0 0.5em;
-            color: #07b;
+            color: #E95420;
         }
 
 /* error/info messages (x pkg is already flagged out-of-date, etc) */
@@ -473,7 +473,7 @@ table thead th.sorter-false {
 /* home: arrowed headings */
 #news h3 a {
     display: block;
-    background: #1794D1;
+    background: #E95420;
     font-size: 15px;
     padding: 2px 10px;
     color: white;
@@ -489,7 +489,7 @@ h3 span.arrow {
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
-    border-top: 6px solid #1794D1;
+    border-top: 6px solid #E95420;
     margin: 0 auto;
     font-size: 0;
     line-height: 0px;
@@ -498,9 +498,9 @@ h3 span.arrow {
 /* home: pkgsearch box */
 #pkgsearch {
     padding: 1em 0.75em;
-    background: #3ad;
+    background: #E95420;
     color: #fff;
-    border: 1px solid #08b;
+    border: 1px solid #c73b0a;
 }
 
     #pkgsearch label {
@@ -514,7 +514,7 @@ h3 span.arrow {
         font-size: 1em;
         color: #000;
         background: #fff;
-        border: 1px solid #09c;
+        border: 1px solid #c73b0a;
     }
 
     .pkgsearch-typeahead {
@@ -540,7 +540,7 @@ h3 span.arrow {
 
         .pkgsearch-typeahead li:hover a,
         .pkgsearch-typeahead li.active a {
-            color: #07b;
+            color: #E95420;
         }
 
 /* home: recent pkg updates */
