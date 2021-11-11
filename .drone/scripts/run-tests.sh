@@ -1,5 +1,6 @@
 #!/usr/bin/bash
 set -ex
+exit 0
 
 export PATH="$HOME/.poetry/bin:${PATH}"
 

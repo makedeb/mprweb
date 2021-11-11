@@ -18,6 +18,29 @@ local runTests() = {
     }]
 };
 
+local publishImage() = {
+    name: "publish-image",
+    kind: "pipeline",
+    type: "docker",
+    depends_on: ["run-tests"],
+    volumes: [{name: "docker", host: {"path": "/var/run/docker.sock"}}],
+
+    steps: [{
+        name: "publish-image",
+        image: "docker",
+        volumes: [{name: "docker", path: "/var/run/docker.sock"}],
+        environment: {
+            proget_api_key: {from_secret: "proget_api_key"}
+        },  
+            
+        commands: [
+            "apk add --no-cache bash",
+            "bash .drone/scripts/publish-image.sh"
+        ]
+    }]
+};
+
 [
-    runTests()
+    runTests(),
+    publishImage()
 ]
