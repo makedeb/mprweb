@@ -1,11 +1,6 @@
 <div id="intro" class="box">
     <h2>MPR  {% trans %}Home{% endtrans %}</h2>
     <p>
-        {{ "Welcome to the MPR! See the %sMPR page in the makedeb docs%s for more information."
-            | tr
-            | format('<a href="https://makedeb.hunterwittenborn.com/mpr/introduction/">', "</a>")
-            | safe 
-        }}
         {{ "Welcome to the MPR! Contributed PKGBUILDs %smust%s conform to the %sMPR user guidelines%s; otherwise they will be deleted!"
             | tr
 	    | format("<strong>", "</strong>",
