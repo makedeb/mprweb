@@ -3,8 +3,8 @@ version: "3.8"
 services:
   mariadb_init:
     depends_on:
-      - mariadb
-        #condition: service_healthy
+      mariadb:
+        condition: service_healthy
 
   ca:
     volumes:
@@ -12,21 +12,24 @@ services:
 
   git:
     volumes:
-      - git_data:/aurweb/aur.git
+      - ./data/git_data:/aurweb/aur.git
+  
       - ./cache:/cache
 
   smartgit:
     volumes:
-      - git_data:/aurweb/aur.git
+      - ./data/git_data:/aurweb/aur.git
+      
       - ./cache:/cache
       - smartgit_run:/var/run/smartgit
     depends_on:
-      - mariadb
-        #condition: service_healthy
+      mariadb:
+        condition: service_healthy
 
   php-fpm:
     volumes:
       - ./cache:/cache
+      - ./conf:/aurweb/conf
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
       - ./test:/aurweb/test
@@ -38,6 +41,7 @@ services:
   fastapi:
     volumes:
       - ./cache:/cache
+      - ./conf:/aurweb/conf
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
       - ./test:/aurweb/test
@@ -48,10 +52,11 @@ services:
 
   nginx:
     volumes:
-      - git_data:/aurweb/aur.git
+      - ./data/git_data:/aurweb/aur.git
+      
       - ./cache:/cache
       - ./logs:/var/log/nginx
       - ./web/html:/aurweb/web/html
       - ./web/template:/aurweb/web/template
       - ./web/lib:/aurweb/web/lib
-      - smartgit_run:/var/run/smartgit
+

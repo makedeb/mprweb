@@ -34,18 +34,18 @@ services:
     image: mprweb:latest
     init: true
     command: /docker/scripts/run-memcached.sh
-    #healthcheck:
-    #  test: "bash /docker/health/memcached.sh"
-    #  interval: 3s
+    healthcheck:
+      test: "bash /docker/health/memcached.sh"
+      interval: 3s
  
   redis:
     image: mprweb:latest
     init: true
     entrypoint: /docker/redis-entrypoint.sh
     command: /docker/scripts/run-redis.sh
-    #healthcheck:
-    #  test: "bash /docker/health/redis.sh"
-    #  interval: 3s
+    healthcheck:
+      test: "bash /docker/health/redis.sh"
+      interval: 3s
     ports:
       - "16379:6379"
 
@@ -60,10 +60,11 @@ services:
       - "13306:3306"
     volumes:
       - mariadb_run:/var/run/mysqld # Bind socket in this volume.
-      - mariadb_data:/var/lib/mysql
-    #healthcheck:
-    #  test: "bash /docker/health/mariadb.sh"
-    #  interval: 3s
+      - ./data/mariadb_data:/var/lib/mysql
+      - ./conf:/aurweb/conf
+    healthcheck:
+      test: "bash /docker/health/mariadb.sh"
+      interval: 3s
 
   mariadb_init:
     image: mprweb:latest
@@ -73,8 +74,8 @@ services:
     volumes:
       - mariadb_run:/var/run/mysqld
     depends_on:
-      - mariadb
-      #  condition: service_healthy
+      mariadb:
+        condition: service_healthy
 
   git:
     image: mprweb:latest
@@ -85,12 +86,12 @@ services:
     command: /docker/scripts/run-sshd.sh
     ports:
       - "2222:2222"
-    #healthcheck:
-    #  test: "bash /docker/health/sshd.sh"
-    #  interval: 3s
+    healthcheck:
+      test: "bash /docker/health/sshd.sh"
+      interval: 3s
     depends_on:
-      - mariadb_init
-        #condition: service_started
+      mariadb_init:
+        condition: service_started
     volumes:
       - mariadb_run:/var/run/mysqld
 
@@ -101,9 +102,9 @@ services:
       - AUR_CONFIG=/aurweb/conf/config
     entrypoint: /docker/smartgit-entrypoint.sh
     command: /docker/scripts/run-smartgit.sh
-    #healthcheck:
-    #  test: "bash /docker/health/smartgit.sh"
-    #  interval: 3s
+    healthcheck:
+      test: "bash /docker/health/smartgit.sh"
+      interval: 3s
 
   cgit-php:
     image: mprweb:latest
@@ -113,16 +114,16 @@ services:
       - CGIT_CLONE_PREFIX=${AURWEB_PHP_PREFIX}
     entrypoint: /docker/cgit-entrypoint.sh
     command: /docker/scripts/run-cgit.sh 3000
-    #healthcheck:
-    #  test: "bash /docker/health/cgit.sh 3000"
-    #  interval: 3s
+    healthcheck:
+      test: "bash /docker/health/cgit.sh 3000"
+      interval: 3s
     depends_on:
-      - git
-        #condition: service_healthy
+      git:
+        condition: service_healthy
     ports:
       - "13000:3000"
     volumes:
-      - git_data:/aurweb/aur.git
+      - ./data/git_data:/aurweb/aur.git
 
   cgit-fastapi:
     image: mprweb:latest
@@ -132,19 +133,19 @@ services:
       - CGIT_CLONE_PREFIX=${AURWEB_FASTAPI_PREFIX}
     entrypoint: /docker/cgit-entrypoint.sh
     command: /docker/scripts/run-cgit.sh 3000
-    #healthcheck:
-    #  test: "bash /docker/health/cgit.sh 3000"
-    #  interval: 3s
+    healthcheck:
+      test: "bash /docker/health/cgit.sh 3000"
+      interval: 3s
     depends_on:
       - git
         #condition: service_healthy
     ports:
       - "13001:3000"
     volumes:
-      - git_data:/aurweb/aur.git
+      - ./data/git_data:/aurweb/aur.git
 
   cron:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
@@ -155,7 +156,7 @@ services:
         condition: service_started
     volumes:
       - mariadb_run:/var/run/mysqld
-      - archives:/var/lib/aurweb/archives
+      - ./data/archives:/var/lib/aurweb/archives
 
   php-fpm:
     image: mprweb:latest
@@ -166,21 +167,21 @@ services:
       - AURWEB_SSHD_PREFIX=${AURWEB_SSHD_PREFIX}
     entrypoint: /docker/php-entrypoint.sh
     command: /docker/scripts/run-php.sh
-    #healthcheck:
-    #  test: "bash /docker/health/php.sh"
-    #  interval: 3s
+    healthcheck:
+      test: "bash /docker/health/php.sh"
+      interval: 3s
     depends_on:
-      - ca
-        #condition: service_started
-      - git
-        #condition: service_healthy
-      - memcached
-        #condition: service_healthy
-      - cron
-        #condition: service_started
+      ca:
+        condition: service_started
+      git:
+        condition: service_healthy
+      memcached:
+        condition: service_healthy
+      cron:
+        condition: service_started
     volumes:
       - mariadb_run:/var/run/mysqld
-      - archives:/var/lib/aurweb/archives
+      - ./data/archives:/var/lib/aurweb/archives
     ports:
       - "19000:9000"
 
@@ -196,18 +197,18 @@ services:
       - PROMETHEUS_MULTIPROC_DIR=/tmp_prometheus
     entrypoint: /docker/fastapi-entrypoint.sh
     command: /docker/scripts/run-fastapi.sh "${FASTAPI_BACKEND}"
-    #healthcheck:
-    #  test: "bash /docker/health/fastapi.sh ${FASTAPI_BACKEND}"
-    #  interval: 3s
+    healthcheck:
+      test: "bash /docker/health/fastapi.sh ${FASTAPI_BACKEND}"
+      interval: 3s
     depends_on:
-      - ca
-        #condition: service_started
-      - git
-        #condition: service_healthy
-      - redis
-        #condition: service_healthy
-      - cron
-        #condition: service_started
+      ca:
+        condition: service_started
+      git:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      cron:
+        condition: service_started
     volumes:
       - mariadb_run:/var/run/mysqld
     ports:
@@ -223,22 +224,22 @@ services:
     ports:
       - "8443:8443" # PHP
       - "8444:8444" # FastAPI
-    #healthcheck:
-    #  test: "bash /docker/health/nginx.sh"
-    #  interval: 3s
+    healthcheck:
+      test: "bash /docker/health/nginx.sh"
+      interval: 3s
     depends_on:
-      - cgit-php
-        #condition: service_healthy
-      - cgit-fastapi
-        #condition: service_healthy
-      - smartgit
-        #condition: service_healthy
-      - fastapi
-        #condition: service_healthy
-      - php-fpm
-        #condition: service_healthy
+      cgit-php:
+        condition: service_healthy
+      cgit-fastapi:
+        condition: service_healthy
+      smartgit:
+        condition: service_healthy
+      fastapi:
+        condition: service_healthy
+      php-fpm:
+        condition: service_healthy
     volumes:
-      - archives:/var/lib/aurweb/archives
+      - ./data/archives:/var/lib/aurweb/archives
 
   sharness:
     image: mprweb:latest
@@ -251,10 +252,11 @@ services:
     stdin_open: true
     tty: true
     depends_on:
-      - git
-        #condition: service_healthy
+      git:
+        condition: service_healthy
     volumes:
-      - git_data:/aurweb/aur.git
+      - ./data/git_data:/aurweb/aur.git
+      
       - ./cache:/cache
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
@@ -277,11 +279,12 @@ services:
     stdin_open: true
     tty: true
     depends_on:
-      - mariadb_init
-        #condition: service_started
+      mariadb_init:
+        condition: service_started
     volumes:
       - mariadb_run:/var/run/mysqld
-      - git_data:/aurweb/aur.git
+      - ./data/git_data:/aurweb/aur.git
+      
       - ./cache:/cache
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
@@ -304,7 +307,8 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - git_data:/aurweb/aur.git
+      - ./data/git_data:/aurweb/aur.git
+      
       - ./cache:/cache
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
@@ -327,11 +331,12 @@ services:
     stdin_open: true
     tty: true
     depends_on:
-      - mariadb_init
-        #condition: service_started
+      mariadb_init:
+        condition: service_started
     volumes:
       - mariadb_run:/var/run/mysqld
-      - git_data:/aurweb/aur.git
+      - ./data/git_data:/aurweb/aur.git
+      
       - ./cache:/cache
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
@@ -343,7 +348,4 @@ services:
 
 volumes:
   mariadb_run: {} # Share /var/run/mysqld/mysqld.sock
-  mariadb_data: {} # Share /var/lib/mysql
-  git_data: {} # Share aurweb/aur.git
   smartgit_run: {}
-  archives: {}
