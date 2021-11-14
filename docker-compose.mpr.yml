@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+    git:
+        ports:
+            - "22:2222"
+        volumes:
+            - /etc/ssh/ssh_host_ecdsa_key:/etc/ssh/ssh_host_ecdsa_key:ro
+            - /etc/ssh/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key:ro
+            - /etc/ssh/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key:ro
+            - ./conf:/aurweb/conf
+            - ./data/git_data:/aurweb/aur.git
+            - ./cache:/cache
+            - mariadb_run:/var/run/mysqld

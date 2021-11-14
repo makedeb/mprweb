@@ -31,10 +31,10 @@ chmod 755 $AUTH_SCRIPT
 
 # Add AUR SSH config.
 cat >> $SSHD_CONFIG << EOF
-Match User aur
+Match User mpr
     PasswordAuthentication no
     AuthorizedKeysCommand $AUTH_SCRIPT "%t" "%k"
-    AuthorizedKeysCommandUser aur
+    AuthorizedKeysCommandUser mpr
     AcceptEnv AUR_OVERWRITE
 EOF
 
@@ -51,11 +51,13 @@ fi
 # Set some defaults needed for pathing and ssh uris.
 sed -ri "s|^(repo-path) = .+|\1 = /aurweb/aur.git/|" $AUR_CONFIG_DEFAULTS
 
-ssh_cmdline='ssh ssh://aur@localhost:2222'
+ssh_cmdline='ssh ssh://mpr@localhost:2222'
 sed -ri "s|^(ssh-cmdline) = .+|\1 = $ssh_cmdline|" $AUR_CONFIG_DEFAULTS
 
 # Setup SSH Keys.
-ssh-keygen -A
+if (( "${GENERATE_SSH_KEYS:-1}" )); then
+    ssh-keygen -A
+fi
 
 # Taken from INSTALL.
 mkdir -pv $GIT_REPO
@@ -71,7 +73,7 @@ if [ ! -f $GIT_REPO/config ]; then
     git config --local --add transfer.hideRefs '!HEAD'
     ln -sf /usr/bin/aurweb-git-update hooks/update
     cd $curdir
-    chown -R aur:aur $GIT_REPO
+    chown -R mpr:mpr $GIT_REPO
 fi
 
 exec "$@"

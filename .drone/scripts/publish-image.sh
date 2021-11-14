@@ -11,6 +11,7 @@ echo "+ Setting up config files..."
 sed -i \
     -e "s|AURWEB_FASTAPI_PREFIX='https://localhost:8444'|AURWEB_FASTAPI_PREFIX='https://${mpr_url}'|" \
     -e "s|CONFIG_FILE='conf/config.dev'|CONFIG_FILE='conf/config.defaults'|" \
+    -e "s|GENERATE_SSH_KEYS='1'|GENERATE_SSH_KEYS='0'|" \
     conf/docker.env
 
 sed -i \
@@ -33,9 +34,16 @@ sed -i \
     -e "s|session_secret =.*|session_secret = ${fastapi_secret}|" \
     conf/config.defaults
 
+echo "+ Building image..."
+docker-compose build --pull aurweb-image
+
 echo "+ Deploying..."
 cd /var/www/mpr.hunterwittenborn.com
-docker-compose down
+docker-compose -f ./docker-compose.yml \
+               -f ./docker-compose.override.yml \
+               -f ./docker-compose.mpr.yml \
+               down
+
 find ./ -maxdepth 1 \
         -not -path './' \
         -not -path './data' \
@@ -48,5 +56,8 @@ find ./ -maxdepth 1 \
         -exec cp '{}' '/var/www/mpr.hunterwittenborn.com/{}' -R \;
 
 cd /var/www/mpr.hunterwittenborn.com
-docker-compose build --pull aurweb-image
-docker-compose up -d nginx
+docker-compose up \
+               -f ./docker-compose.yml \
+               -f ./docker-compose.override.yml \
+               -f ./docker-compose.mpr.yml \
+               -d nginx
