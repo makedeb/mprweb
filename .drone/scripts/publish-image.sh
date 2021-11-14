@@ -18,7 +18,6 @@ cd -
 find ./ -maxdepth 1 \
         -not -path './' \
         -not -path './data' \
-        -not -path './.git' \
         -exec cp '{}' '/var/www/mpr.hunterwittenborn.com/{}' -R \;
 
 cd /var/www/mpr.hunterwittenborn.com
