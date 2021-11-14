@@ -41,7 +41,6 @@ echo "+ Deploying..."
 cd /var/www/mpr.hunterwittenborn.com
 docker-compose -f ./docker-compose.yml \
                -f ./docker-compose.override.yml \
-               -f ./docker-compose.mpr.yml \
                down
 
 find ./ -maxdepth 1 \
