@@ -1,11 +1,33 @@
 #!/usr/bin/bash
 set -ex
 
-# Set up env file.
+# Get needed data.
+commit_hash="$(git rev-parse --short HEAD)"
+
+# Set up config files.
 sed -i \
-    -e "s|DB_PASSWORD='mpr'|DB_PASSWORD='${mpr_db_password}'|" \
     -e "s|AURWEB_FASTAPI_PREFIX='https://localhost:8444'|AURWEB_FASTAPI_PREFIX='https://${mpr_url}'|" \
+    -e "s|CONFIG_FILE='conf/config.dev'|CONFIG_FILE='conf/config.defaults'|" \
     conf/docker.env
+
+sed -i \
+    -e "s|password =.*|password = ${mpr_db_password}|" \
+    -e "s|aur_location =.*|aur_location = https://${mpr_url}|" \
+    -e "s|git_clone_uri_anon =.*|git_clone_uri_anon = https://${mpr_url}/%s.git|" \
+    -e "s|git_clone_uri_priv =.*|git_clone_uri_priv = ssh://mpr@${mpr_url}/%s.git|" \
+    -e 's|smtp-server =.*|smtp-server = smtp.zoho.com|' \
+    -e 's|smtp-port =.*|smtp-port = 465|' \
+    -e 's|smtp-use-ssl =.*|smtp-use-ssl = 1|' \
+    -e 's|smtp-user =.*|smtp-user = mpr@hunterwittenborn.com|' \
+    -e "s|smtp-password =.*|smtp-password = ${mpr_smtp_password}|" \
+    -e 's|sender =.*|sender = mpr@hunterwittenborn.com|' \
+    -e 's|reply-to =.*|reply-to = mpr@hunterwittenborn.com|' \
+    -e 's|Ed25519 =.*|Ed25519 = {}|' \
+    -e 's|ECDSA =.*|ECDSA = {}|' \
+    -e 's|RSA =.*|RSA = {}|' \
+    -e "s|ssh-cmdline =.*|ssh-cmdline = ssh mpr@${mpr_url}|" \
+    -e "s|commit_hash =.*|commit_hash = ${commit_hash}|" \
+    conf/config.defaults
 
 cd /var/www/mpr.hunterwittenborn.com
 docker-compose down

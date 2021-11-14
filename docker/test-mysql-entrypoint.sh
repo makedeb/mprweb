@@ -4,7 +4,7 @@ set -eou pipefail
 DB_NAME="aurweb_test"
 
 # Setup a config for our mysql db.
-cp -vf conf/config.dev conf/config
+cp -vf "${CONFIG_FILE}" conf/config
 sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
 sed -ri "s/^(name) = .+/\1 = ${DB_NAME}/" conf/config
 

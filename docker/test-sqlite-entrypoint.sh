@@ -5,7 +5,7 @@ DB_BACKEND="sqlite"
 DB_NAME="aurweb.sqlite3"
 
 # Create an SQLite config from the default dev config.
-cp -vf conf/config.dev conf/config.sqlite
+cp -vf "${CONFIG_FILE}" conf/config.sqlite
 cp -vf conf/config.defaults conf/config.sqlite.defaults
 
 # Modify it for SQLite.

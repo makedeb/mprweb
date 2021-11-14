@@ -39,7 +39,7 @@ Match User aur
 EOF
 
 # Setup a config for our mysql db.
-cp -vf conf/config.dev $AUR_CONFIG
+cp -vf "${CONFIG_FILE}" $AUR_CONFIG
 sed -i "s;YOUR_AUR_ROOT;$(pwd);g" $AUR_CONFIG
 
 AUR_CONFIG_DEFAULTS="${AUR_CONFIG}.defaults"

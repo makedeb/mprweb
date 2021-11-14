@@ -2,7 +2,7 @@
 set -eou pipefail
 
 # Prepare AUR_CONFIG.
-cp -vf conf/config.dev conf/config
+cp -vf "${CONFIG_FILE}" conf/config
 sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
 
 # Create directories we need.

@@ -12,7 +12,7 @@ DEST_CERT=/etc/ssl/certs/web.cert.pem
 DEST_KEY=/etc/ssl/private/web.key.pem
 
 # Setup a config for our mysql db.
-cp -vf conf/config.dev conf/config
+cp -vf "${CONFIG_FILE}" conf/config
 sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
 sed -ri 's/^(host) = .+/\1 = mariadb/' conf/config
 sed -ri 's/^(user) = .+/\1 = aur/' conf/config

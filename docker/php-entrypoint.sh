@@ -6,27 +6,9 @@ for archive in packages pkgbase users packages-meta-v1.json packages-meta-ext-v1
 done
 
 # Setup a config for our mysql db.
-cp -vf conf/config.dev conf/config
+cp -vf "${CONFIG_FILE}" conf/config
 sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
 sed -ri "s;^(aur_location) = .+;\1 = ${AURWEB_FASTAPI_PREFIX:-'http://127.0.0.1:8080'};" conf/config
-
-items=('DB_USER/user' 'DB_PASSWORD/password' 'SMTP_SERVER/smtp-server' 'SMTP_PORT/smtp-port'
-       'SMTP_USE_SSL/smtp-use-ssl' 'SMTP_USE_STARTTLS/smtp-use-starttls' 'SMTP_USER/smtp-user'
-       'SMTP_PASSWORD/smtp-password' 'SMTP_SENDER/sender' 'SMTP_REPLY_TO/reply-to')
-
-for i in "${items[@]}"; do
-    IFS="/" read -r var config_item < <(echo "${i}")
-
-    if [[ "${!var:+x}" == "x" ]]; then
-        sed -i "s;^${config_item} =.*;${config_item} = ${!var};" conf/config
-    fi
-done
-
-if [[ "${SESSION_SECRET:+x}" == "" ]]; then
-    SESSION_SECRET="$(openssl rand -hex 20)"
-fi
-
-sed -i "s;session_secret = secret;session_secret = ${SESSION_SECRET};" conf/config
 
 # Enable memcached.
 sed -ri 's/^(cache) = .+$/\1 = memcache/' conf/config
