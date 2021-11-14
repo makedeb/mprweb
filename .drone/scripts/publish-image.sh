@@ -55,8 +55,7 @@ find ./ -maxdepth 1 \
         -exec cp '{}' '/var/www/mpr.hunterwittenborn.com/{}' -R \;
 
 cd /var/www/mpr.hunterwittenborn.com
-docker-compose up \
-               -f ./docker-compose.yml \
+docker-compose -f ./docker-compose.yml \
                -f ./docker-compose.override.yml \
                -f ./docker-compose.mpr.yml \
-               -d nginx
+               up -d nginx
