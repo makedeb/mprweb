@@ -42,7 +42,8 @@ local publishImage() = {
 
     steps: [{
         name: "publish-image",
-        image: "docker",
+        image: "ubuntu",
+        environment: {mpr_db_password: {from_secret: "mpr_db_password"}},
         volumes: [
             {
                 name: "docker",
@@ -59,12 +60,9 @@ local publishImage() = {
                 path: "/var/www/mpr.hunterwittenborn.com"
             }
         ],
-        environment: {
-            proget_api_key: {from_secret: "proget_api_key"}
-        },  
-            
         commands: [
-            "apk add --no-cache bash",
+            "apt-get update",
+            "apt-get install docker.io -yq",
             "bash .drone/scripts/publish-image.sh"
         ]
     }]

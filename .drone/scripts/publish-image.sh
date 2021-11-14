@@ -20,5 +20,5 @@ find ./ -maxdepth 1 \
         -exec cp '{}' '/var/www/mpr.hunterwittenborn.com/{}' -R \;
 
 cd /var/www/mpr.hunterwittenborn.com
-docker-compose build aurweb-image
+docker-compose build --pull aurweb-image
 docker-compose up -d nginx
