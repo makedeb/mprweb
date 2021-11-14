@@ -1,6 +1,10 @@
 */*.mo
+/data/
 conf/config
 conf/config.sqlite
 conf/config.sqlite.defaults
+conf/config.dev
+conf/config.defaults
 conf/docker
 conf/docker.defaults
+conf/docker.env

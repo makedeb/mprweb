@@ -1,4 +1,9 @@
 #!/usr/bin/bash
+if echo "${DRONE_COMMIT_MESSAGE}" | grep -q 'TEST SKIP'; then
+    echo "Skipping tests."
+    exit 0
+fi
+
 set -ex
 
 export PATH="$HOME/.poetry/bin:${PATH}"

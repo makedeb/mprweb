@@ -1,62 +1,118 @@
 version: "3.8"
 
 services:
+  memcached:
+    healthcheck:
+      test: "bash /docker/health/memcached.sh"
+      interval: 3s
+
+  redis:
+    healthcheck:
+      test: "bash /docker/health/redis.sh"
+      interval: 3s
+
+  mariadb:
+    healthcheck:
+      test: "bash /docker/health/mariadb.sh"
+      interval: 3s
+
   mariadb_init:
     depends_on:
       mariadb:
         condition: service_healthy
 
-  ca:
-    volumes:
-      - ./cache:/cache
-
   git:
-    volumes:
-      - ./data/git_data:/aurweb/aur.git
-  
-      - ./cache:/cache
+    healthcheck:
+      test: "bash /docker/health/sshd.sh"
+      interval: 3s
+    depends_on:
+      mariadb_init:
+        condition: service_started
 
   smartgit:
-    volumes:
-      - ./data/git_data:/aurweb/aur.git
-      
-      - ./cache:/cache
-      - smartgit_run:/var/run/smartgit
+    healthcheck:
+      test: "bash /docker/health/smartgit.sh"
+      interval: 3s
     depends_on:
       mariadb:
         condition: service_healthy
+  
+  cgit-php:
+    healthcheck:
+      test: "bash /docker/health/cgit.sh 3000"
+      interval: 3s
+    depends_on:
+      git:
+        condition: service_healthy
+  
+  cgit-fastapi:
+    healthcheck:
+      test: "bash /docker/health/cgit.sh 3000"
+      interval: 3s
+    depends_on:
+      git:
+        condition: service_healthy
+  
+  cron:
+    depends_on:
+      mariadb_init:
+        condition: service_started
 
   php-fpm:
-    volumes:
-      - ./cache:/cache
-      - ./conf:/aurweb/conf
-      - ./aurweb:/aurweb/aurweb
-      - ./migrations:/aurweb/migrations
-      - ./test:/aurweb/test
-      - ./web/html:/aurweb/web/html
-      - ./web/template:/aurweb/web/template
-      - ./web/lib:/aurweb/web/lib
-      - ./templates:/aurweb/templates
+    healthcheck:
+      test: "bash /docker/health/php.sh"
+      interval: 3s
+    depends_on:
+      ca:
+        condition: service_started
+      git:
+        condition: service_healthy
+      memcached:
+        condition: service_healthy
+      cron:
+        condition: service_started
 
   fastapi:
-    volumes:
-      - ./cache:/cache
-      - ./conf:/aurweb/conf
-      - ./aurweb:/aurweb/aurweb
-      - ./migrations:/aurweb/migrations
-      - ./test:/aurweb/test
-      - ./web/html:/aurweb/web/html
-      - ./web/template:/aurweb/web/template
-      - ./web/lib:/aurweb/web/lib
-      - ./templates:/aurweb/templates
+    healthcheck:
+      test: "bash /docker/health/fastapi.sh ${FASTAPI_BACKEND}"
+      interval: 3s
+    depends_on:
+      ca:
+        condition: service_started
+      git:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      cron:
+        condition: service_started
 
   nginx:
-    volumes:
-      - ./data/git_data:/aurweb/aur.git
-      
-      - ./cache:/cache
-      - ./logs:/var/log/nginx
-      - ./web/html:/aurweb/web/html
-      - ./web/template:/aurweb/web/template
-      - ./web/lib:/aurweb/web/lib
+    healthcheck:
+      test: "bash /docker/health/nginx.sh"
+      interval: 3s
+    depends_on:
+      cgit-php:
+        condition: service_healthy
+      cgit-fastapi:
+        condition: service_healthy
+      smartgit:
+        condition: service_healthy
+      fastapi:
+        condition: service_healthy
+      php-fpm:
+        condition: service_healthy
 
+  sharness:
+    depends_on:
+      git:
+        condition: service_healthy
+
+  pytest-mysql:
+    depends_on:
+      mariadb_init:
+        condition: service_started
+  
+  test:
+    depends_on:
+      mariadb_init:
+        condition: service_started

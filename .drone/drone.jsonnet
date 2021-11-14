@@ -23,12 +23,32 @@ local publishImage() = {
     kind: "pipeline",
     type: "docker",
     depends_on: ["run-tests"],
-    volumes: [{name: "docker", host: {"path": "/var/run/docker.sock"}}],
+    volumes: [
+        {
+            name: "docker",
+            host: {"path": "/var/run/docker.sock"}
+        },
+
+        {
+            name: "binaries",
+            host: {"path": "/usr/bin/docker-compose"}
+        }
+    ],
 
     steps: [{
         name: "publish-image",
         image: "docker",
-        volumes: [{name: "docker", path: "/var/run/docker.sock"}],
+        volumes: [
+            {
+                name: "docker",
+                path: "/var/run/docker.sock"
+            },
+
+            {
+                name: "binaries",
+                path: "/usr/bin/docker-compose"
+            }
+        ],
         environment: {
             proget_api_key: {from_secret: "proget_api_key"}
         },  

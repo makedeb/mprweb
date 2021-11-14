@@ -50,7 +50,7 @@
 	margin: 1px .5ex 1px 0;
 	padding: 0 1em;
 	color: white;
-	background-color: #36a;
+	background-color: #E95420;
 	border: 1px solid transparent;
 	border-radius: 2px;
 }
@@ -149,10 +149,12 @@ label.confirmation,
 	width: auto;
 }
 
+/*
 #pkgdepslist .broken {
-	color: red;
-	font-weight: bold;
+    color: red;
+    font-weight: bold;
 }
+*/
 
 .package-comments {
 	margin-top: 1.5em;
@@ -167,7 +169,7 @@ label.confirmation,
 /* arrowed headings */
 .comments-header h3 span.text {
 	display: block;
-	background: #1794D1;
+	background: #ff6029;
 	font-size: 15px;
 	padding: 2px 10px;
 	color: white;
