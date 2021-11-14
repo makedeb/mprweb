@@ -26,12 +26,17 @@ local publishImage() = {
     volumes: [
         {
             name: "docker",
-            host: {"path": "/var/run/docker.sock"}
+            host: {path: "/var/run/docker.sock"}
         },
 
         {
             name: "binaries",
-            host: {"path": "/usr/bin/docker-compose"}
+            host: {path: "/usr/bin/docker-compose"}
+        },
+
+        {
+            name: "mprweb",
+            host: {path: "/var/www/mpr.hunterwittenborn.com"}
         }
     ],
 
@@ -47,6 +52,11 @@ local publishImage() = {
             {
                 name: "binaries",
                 path: "/usr/bin/docker-compose"
+            },
+
+            {
+                name: "mprweb",
+                path: "/var/www/mpr.hunterwittenborn.com"
             }
         ],
         environment: {
