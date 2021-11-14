@@ -1,10 +1,13 @@
 #!/usr/bin/bash
-set -ex
+set -e
 
 # Get needed data.
 commit_hash="$(git rev-parse --short HEAD)"
+fastapi_secret="$(openssl rand -hex 32)"
 
 # Set up config files.
+echo "+ Setting up config files..."
+
 sed -i \
     -e "s|AURWEB_FASTAPI_PREFIX='https://localhost:8444'|AURWEB_FASTAPI_PREFIX='https://${mpr_url}'|" \
     -e "s|CONFIG_FILE='conf/config.dev'|CONFIG_FILE='conf/config.defaults'|" \
@@ -27,8 +30,10 @@ sed -i \
     -e 's|RSA =.*|RSA = SHA256:b7DzV4xdxMgUftFUFu2geQHmpe/w2c9dYEvXtJqap9Y|' \
     -e "s|ssh-cmdline =.*|ssh-cmdline = ssh mpr@${mpr_url}|" \
     -e "s|commit_hash =.*|commit_hash = ${commit_hash}|" \
+    -e "s|session_secret =.*|session_secret = ${fastapi_secret}|" \
     conf/config.defaults
 
+echo "+ Deploying..."
 cd /var/www/mpr.hunterwittenborn.com
 docker-compose down
 find ./ -maxdepth 1 \
