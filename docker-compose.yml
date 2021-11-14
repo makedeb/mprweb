@@ -48,7 +48,6 @@ services:
   mariadb:
     image: mprweb:latest
     init: true
-    env_file: ./conf/docker.env
     entrypoint: /docker/mariadb-entrypoint.sh
     command: /usr/bin/mysqld_safe --datadir=/var/lib/mysql
     ports:
@@ -63,6 +62,7 @@ services:
   mariadb_init:
     image: mprweb:latest
     init: true
+    env_file: ./conf/docker.env
     entrypoint: /docker/mariadb-init-entrypoint.sh
     command: echo "MariaDB tables initialized."
     volumes:
@@ -74,6 +74,7 @@ services:
   git:
     image: mprweb:latest
     init: true
+    env_file: ./conf/docker.env
     environment:
       - AUR_CONFIG=/aurweb/conf/config
     entrypoint: /docker/git-entrypoint.sh
@@ -139,6 +140,7 @@ services:
   cron:
     image: mprweb:latest
     init: true
+    env_file: ./conf/docker.env
     environment:
       - AUR_CONFIG=/aurweb/conf/config
     entrypoint: /docker/cron-entrypoint.sh
@@ -215,6 +217,7 @@ services:
   nginx:
     image: mprweb:latest
     init: true
+    env_file: ./conf/docker.env
     environment:
       - AUR_CONFIG=conf/config
     entrypoint: /docker/nginx-entrypoint.sh
@@ -242,6 +245,7 @@ services:
     image: mprweb:latest
     profiles: ["dev"]
     init: true
+    env_file: ./conf/docker.env
     environment:
       - AUR_CONFIG=conf/config.sqlite
     entrypoint: /docker/test-sqlite-entrypoint.sh
@@ -265,6 +269,7 @@ services:
     image: mprweb:latest
     profiles: ["dev"]
     init: true
+    env_file: ./conf/docker.env
     environment:
       - AUR_CONFIG=conf/config
       - TEST_RECURSION_LIMIT=${TEST_RECURSION_LIMIT}
