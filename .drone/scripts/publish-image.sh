@@ -9,9 +9,9 @@ fastapi_secret="$(openssl rand -hex 32)"
 echo "+ Setting up config files..."
 
 sed -i \
-    -e "s|AURWEB_FASTAPI_PREFIX='https://localhost:8444'|AURWEB_FASTAPI_PREFIX='https://${mpr_url}'|" \
-    -e "s|CONFIG_FILE='conf/config.dev'|CONFIG_FILE='conf/config.defaults'|" \
-    -e "s|GENERATE_SSH_KEYS='1'|GENERATE_SSH_KEYS='0'|" \
+    -e "s|AURWEB_FASTAPI_PREFIX=.*|AURWEB_FASTAPI_PREFIX='https://${mpr_url}'|" \
+    -e "s|CONFIG_FILE=.*|CONFIG_FILE='conf/config.defaults'|" \
+    -e "s|GENERATE_SSH_KEYS=.*|GENERATE_SSH_KEYS='0'|" \
     conf/docker.env
 
 sed -i \

@@ -19,9 +19,6 @@ sed -ri 's/^(user) = .+/\1 = aur/' conf/config
 sed -ri 's/^;?(password) = .+/\1 = aur/' conf/config
 
 # Setup http(s) stuff.
-sed -ri "s|^(aur_location) = .+|\1 = https://localhost:8444|" conf/config
-sed -ri 's/^(disable_http_login) = .+/\1 = 1/' conf/config
-
 if [ -f "$CERT" ]; then
     cp -vf "$CERT" "$DEST_CERT"
     cp -vf "$KEY" "$DEST_KEY"

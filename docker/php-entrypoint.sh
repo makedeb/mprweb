@@ -8,13 +8,9 @@ done
 # Setup a config for our mysql db.
 cp -vf "${CONFIG_FILE}" conf/config
 sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
-sed -ri "s;^(aur_location) = .+;\1 = ${AURWEB_FASTAPI_PREFIX:-'http://127.0.0.1:8080'};" conf/config
 
 # Enable memcached.
 sed -ri 's/^(cache) = .+$/\1 = memcache/' conf/config
-
-sed -ri "s|^(git_clone_uri_anon) = .+|\1 = ${AURWEB_PHP_PREFIX}/%s.git|" conf/config.defaults
-sed -ri "s|^(git_clone_uri_priv) = .+|\1 = ${AURWEB_SSHD_PREFIX}/%s.git|" conf/config.defaults
 
 sed -ri 's/^(listen).*/\1 = 0.0.0.0:9000/' /etc/php/php-fpm.d/www.conf
 sed -ri 's/^;?(clear_env).*/\1 = no/' /etc/php/php-fpm.d/www.conf

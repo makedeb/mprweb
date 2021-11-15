@@ -84,7 +84,7 @@ client_id =
 client_secret =
 
 [fastapi]
-session_secret =
+session_secret = secret
 
 [serve]
 repo-path = YOUR_AUR_ROOT/aurweb/aur.git/

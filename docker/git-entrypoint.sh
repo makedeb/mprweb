@@ -42,17 +42,8 @@ EOF
 cp -vf "${CONFIG_FILE}" $AUR_CONFIG
 sed -i "s;YOUR_AUR_ROOT;$(pwd);g" $AUR_CONFIG
 
-AUR_CONFIG_DEFAULTS="${AUR_CONFIG}.defaults"
-
-if [[ "$AUR_CONFIG_DEFAULTS" != "/aurweb/conf/config.defaults" ]]; then
-    cp -vf conf/config.defaults $AUR_CONFIG_DEFAULTS
-fi
-
 # Set some defaults needed for pathing and ssh uris.
-sed -ri "s|^(repo-path) = .+|\1 = /aurweb/aur.git/|" $AUR_CONFIG_DEFAULTS
-
-ssh_cmdline='ssh ssh://mpr@localhost:2222'
-sed -ri "s|^(ssh-cmdline) = .+|\1 = $ssh_cmdline|" $AUR_CONFIG_DEFAULTS
+sed -ri "s|^(repo-path) = .+|\1 = /aurweb/aur.git/|" $AUR_CONFIG
 
 # Setup SSH Keys.
 if (( "${GENERATE_SSH_KEYS:-1}" )); then
