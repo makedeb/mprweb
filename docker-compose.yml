@@ -245,6 +245,7 @@ services:
       - ./web/html:/aurweb/web/html
       - ./web/template:/aurweb/web/template
       - ./web/lib:/aurweb/web/lib
+      - smartgit_run:/var/run/smartgit
 
   sharness:
     image: mprweb:latest
