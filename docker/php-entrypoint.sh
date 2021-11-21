@@ -10,8 +10,9 @@ cp -vf "${CONFIG_FILE}" conf/config
 sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
 
 # Enable memcached.
-sed -i 's|^cache = [^1].*|cache = memcache|' conf/config
+sed -ri 's/^(cache) = .+$/\1 = memcache/' conf/config
 
+# Listen on :9000.
 sed -ri 's/^(listen).*/\1 = 0.0.0.0:9000/' /etc/php/php-fpm.d/www.conf
 sed -ri 's/^;?(clear_env).*/\1 = no/' /etc/php/php-fpm.d/www.conf
 

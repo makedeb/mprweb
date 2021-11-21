@@ -34,6 +34,7 @@ def main():
     db.get_engine()
     args = parse_args()
 
+    db.get_engine()
     type = db.query(AccountType,
                     AccountType.AccountType == args.type).first()
     with db.begin():

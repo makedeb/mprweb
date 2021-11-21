@@ -33,45 +33,63 @@
             </td>
         </tr>
     {% endif %}
-    <tr>
-        <th>{{ "Keywords" | tr }}:</th>
-        {% if request.user.has_credential("CRED_PKGBASE_SET_KEYWORDS", approved=[pkgbase.Maintainer]) %}
-        <td>
-            <form method="update"
-                  action="/pkgbase/{{ pkgbase.Name }}/keywords"
-            >
-                <div>
-                    <input type="text"
-                           name="keywords"
-                           value="{{ pkgbase.keywords | join(' ', attribute='Keyword') }}"
-                    />
-                    <input type="submit" value="{{ 'Update' | tr }}"/>
-                </div>
-            </form>
-        </td>
-        {% else %}
-        <td>
-            {% for keyword in pkgbase.keywords %}
-                <a class="keyword"
-                   href="/packages/?K={{ keyword.Keyword }}&amp;SB=p"
-                >
-                    {{ keyword.Keyword }}
-                </a>
-            {% endfor %}
-        </td>
-        {% endif %}
-    </tr>
-    {% if licenses and licenses.count() and show_package_details %}
+    {% if pkgbase.keywords.count() or request.user.has_credential("CRED_PKGBASE_SET_KEYWORDS", approved=[pkgbase.Maintainer]) %}
         <tr>
-            <th>{{ "Licenses" | tr }}:</th>
-            <td>{{ licenses | join(', ', attribute='Name') | default('None' | tr) }} </td>
+            <th>{{ "Keywords" | tr }}:</th>
+            {% if request.user.has_credential("CRED_PKGBASE_SET_KEYWORDS", approved=[pkgbase.Maintainer]) %}
+            <td>
+                <form method="post"
+                      action="/pkgbase/{{ pkgbase.Name }}/keywords"
+                >
+                    <div>
+                        <input type="text"
+                               name="keywords"
+                               value="{{ pkgbase.keywords | join(' ', attribute='Keyword') }}"
+                        />
+                        <input type="submit" value="{{ 'Update' | tr }}"/>
+                    </div>
+                </form>
+            </td>
+            {% else %}
+            <td>
+                {% for keyword in pkgbase.keywords.all() %}
+                    <a class="keyword"
+                       href="/packages/?K={{ keyword.Keyword }}&amp;SB=p"
+                    >
+                        {{ keyword.Keyword }}
+                    </a>
+                {% endfor %}
+            </td>
+            {% endif %}
         </tr>
     {% endif %}
-    {% if show_package_details %}
-        <tr>
+    {% if show_package_details and licenses and licenses.count() %}
+        <tr id="licenses">
+            <th>{{ "Licenses" | tr }}:</th>
+            <td>{{ licenses.all() | join(', ', attribute='License.Name') }} </td>
+        </tr>
+    {% endif %}
+    {% if show_package_details and conflicts and conflicts.count() %}
+        <tr id="conflicts">
             <th>{{ "Conflicts" | tr }}:</th>
             <td class="wrap">
-                {{ conflicts | join(', ', attribute='RelName') }}
+                {{ conflicts.all() | join(', ', attribute='RelName') }}
+            </td>
+        </tr>
+    {% endif %}
+    {% if show_package_details and provides and provides.count() %}
+        <tr id="provides">
+            <th>{{ "Provides" | tr }}:</th>
+            <td class="wrap">
+                {{ provides.all() | join(', ', attribute='RelName') }}
+            </td>
+        </tr>
+    {% endif %}
+    {% if show_package_details and replaces and replaces.count() %}
+        <tr id="replaces">
+            <th>{{ "Replaces" | tr }}:</th>
+            <td class="wrap">
+                {{ replaces.all() | join(', ', attribute='RelName') }}
             </td>
         </tr>
     {% endif %}
@@ -114,11 +132,11 @@
     <tr>
         <th>{{ "Votes" | tr }}:</th>
         {% if not is_maintainer %}
-            <td>{{ pkgbase.package_votes.count() }}</td>
+            <td>{{ pkgbase.NumVotes }}</td>
         {% else %}
             <td>
                 <a href="/pkgbase/{{ pkgbase.Name }}/voters">
-                    {{ pkgbase.package_votes.count() }}
+                    {{ pkgbase.NumVotes }}
                 </a>
             </td>
         {% endif %}

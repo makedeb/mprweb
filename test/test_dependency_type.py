@@ -2,12 +2,11 @@ import pytest
 
 from aurweb.db import begin, create, delete, query
 from aurweb.models.dependency_type import DependencyType
-from aurweb.testing import setup_test_db
 
 
 @pytest.fixture(autouse=True)
-def setup():
-    setup_test_db()
+def setup(db_test):
+    return
 
 
 def test_dependency_types():
@@ -24,7 +23,7 @@ def test_dependency_type_creation():
     assert bool(dependency_type.ID)
     assert dependency_type.Name == "Test Type"
     with begin():
-        delete(DependencyType, DependencyType.ID == dependency_type.ID)
+        delete(dependency_type)
 
 
 def test_dependency_type_null_name_uses_default():
@@ -32,4 +31,4 @@ def test_dependency_type_null_name_uses_default():
         dependency_type = create(DependencyType)
     assert dependency_type.Name == str()
     with begin():
-        delete(DependencyType, DependencyType.ID == dependency_type.ID)
+        delete(dependency_type)

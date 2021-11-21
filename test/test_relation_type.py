@@ -2,12 +2,11 @@ import pytest
 
 from aurweb import db
 from aurweb.models.relation_type import RelationType
-from aurweb.testing import setup_test_db
 
 
 @pytest.fixture(autouse=True)
-def setup():
-    setup_test_db()
+def setup(db_test):
+    return
 
 
 def test_relation_type_creation():
@@ -18,7 +17,7 @@ def test_relation_type_creation():
     assert relation_type.Name == "test-relation"
 
     with db.begin():
-        db.delete(RelationType, RelationType.ID == relation_type.ID)
+        db.delete(relation_type)
 
 
 def test_relation_types():

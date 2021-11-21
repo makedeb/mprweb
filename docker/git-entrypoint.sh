@@ -50,6 +50,13 @@ if (( "${GENERATE_SSH_KEYS:-1}" )); then
     ssh-keygen -A
 fi
 
+# In docker-compose.aur-dev.yml, we bind ./data to /aurweb/data.
+# Production users wishing to include their own SSH keys should
+# supply them in ./data.
+if [ -d /aurweb/data ]; then
+    find /aurweb/data -type f -name 'ssh_host_*' -exec cp -vf "{}" /etc/ssh/ \;
+fi
+
 # Taken from INSTALL.
 mkdir -pv $GIT_REPO
 

@@ -6,7 +6,8 @@
 ; development-specific options too.
 
 [database]
-; Options: mysql, sqlite.
+; PHP options: mysql, sqlite.
+; FastAPI options: mysql.
 backend = mysql
 
 ; If using sqlite, set name to the database file path.

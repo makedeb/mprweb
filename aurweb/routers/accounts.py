@@ -1,25 +1,25 @@
 import copy
 import typing
 
-from datetime import datetime
 from http import HTTPStatus
 
-from fastapi import APIRouter, Form, HTTPException, Request
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, or_
 
 import aurweb.config
 
-from aurweb import cookies, db, l10n, logging, models, time, util
+from aurweb import cookies, db, l10n, logging, models, util
 from aurweb.auth import account_type_required, auth_required
-from aurweb.captcha import get_captcha_answer, get_captcha_salts, get_captcha_token
+from aurweb.captcha import get_captcha_salts
+from aurweb.exceptions import ValidationError
 from aurweb.l10n import get_translator_for_request
-from aurweb.models import account_type
-from aurweb.models.account_type import (DEVELOPER, DEVELOPER_ID, TRUSTED_USER, TRUSTED_USER_AND_DEV, TRUSTED_USER_AND_DEV_ID,
-                                        TRUSTED_USER_ID, USER_ID)
+from aurweb.models import account_type as at
 from aurweb.models.ssh_pub_key import get_fingerprint
 from aurweb.scripts.notify import ResetKeyNotification, WelcomeNotification
 from aurweb.templates import make_context, make_variable_context, render_template
+from aurweb.users import update, validate
+from aurweb.users.util import get_user_by_name
 
 router = APIRouter()
 logger = logging.get_logger(__name__)
@@ -49,6 +49,7 @@ async def passreset_post(request: Request,
         return render_template(request, "passreset.html", context,
                                status_code=HTTPStatus.NOT_FOUND)
 
+    db.refresh(user)
     if resetkey:
         context["resetkey"] = resetkey
 
@@ -83,7 +84,7 @@ async def passreset_post(request: Request,
         with db.begin():
             user.ResetKey = str()
             if user.session:
-                db.session.delete(user.session)
+                db.delete(user.session)
             user.update_password(password)
 
         # Render ?step=complete.
@@ -124,146 +125,31 @@ def process_account_form(request: Request, user: models.User, args: dict):
     # Get a local translator.
     _ = get_translator_for_request(request)
 
-    host = request.client.host
-    ban = db.query(models.Ban, models.Ban.IPAddress == host).first()
-    if ban:
-        return (False, [
-            "Account registration has been disabled for your "
-            "IP address, probably due to sustained spam attacks. "
-            "Sorry for the inconvenience."
-        ])
+    checks = [
+        validate.is_banned,
+        validate.invalid_user_password,
+        validate.invalid_fields,
+        validate.invalid_suspend_permission,
+        validate.invalid_username,
+        validate.invalid_password,
+        validate.invalid_email,
+        validate.invalid_backup_email,
+        validate.invalid_homepage,
+        validate.invalid_pgp_key,
+        validate.invalid_ssh_pubkey,
+        validate.invalid_language,
+        validate.invalid_timezone,
+        validate.username_in_use,
+        validate.email_in_use,
+        validate.invalid_account_type,
+        validate.invalid_captcha
+    ]
 
-    if request.user.is_authenticated():
-        if not request.user.valid_password(args.get("passwd", None)):
-            return (False, ["Invalid password."])
-
-    email = args.get("E", None)
-    username = args.get("U", None)
-
-    if not email or not username:
-        return (False, ["Missing a required field."])
-
-    inactive = args.get("J", False)
-    if not request.user.is_elevated() and inactive != bool(user.InactivityTS):
-        return (False, ["You do not have permission to suspend accounts."])
-
-    username_min_len = aurweb.config.getint("options", "username_min_len")
-    username_max_len = aurweb.config.getint("options", "username_max_len")
-    if not util.valid_username(args.get("U")):
-        return (False, [
-            "The username is invalid.",
-            [
-                _("It must be between %s and %s characters long") % (
-                    username_min_len, username_max_len),
-                "Start and end with a letter or number",
-                "Can contain only one period, underscore or hyphen.",
-            ]
-        ])
-
-    password = args.get("P", None)
-    if password:
-        confirmation = args.get("C", None)
-        if not util.valid_password(password):
-            return (False, [
-                _("Your password must be at least %s characters.") % (
-                    username_min_len)
-            ])
-        elif not confirmation:
-            return (False, ["Please confirm your new password."])
-        elif password != confirmation:
-            return (False, ["Password fields do not match."])
-
-    backup_email = args.get("BE", None)
-    homepage = args.get("HP", None)
-    pgp_key = args.get("K", None)
-    ssh_pubkey = args.get("PK", None)
-    language = args.get("L", None)
-    timezone = args.get("TZ", None)
-
-    def username_exists(username):
-        return and_(models.User.ID != user.ID,
-                    func.lower(models.User.Username) == username.lower())
-
-    def email_exists(email):
-        return and_(models.User.ID != user.ID,
-                    func.lower(models.User.Email) == email.lower())
-
-    if not util.valid_email(email):
-        return (False, ["The email address is invalid."])
-    elif backup_email and not util.valid_email(backup_email):
-        return (False, ["The backup email address is invalid."])
-    elif homepage and not util.valid_homepage(homepage):
-        return (False, [
-            "The home page is invalid, please specify the full HTTP(s) URL."])
-    elif pgp_key and not util.valid_pgp_fingerprint(pgp_key):
-        return (False, ["The PGP key fingerprint is invalid."])
-    elif ssh_pubkey and not util.valid_ssh_pubkey(ssh_pubkey):
-        return (False, ["The SSH public key is invalid."])
-    elif language and language not in l10n.SUPPORTED_LANGUAGES:
-        return (False, ["Language is not currently supported."])
-    elif timezone and timezone not in time.SUPPORTED_TIMEZONES:
-        return (False, ["Timezone is not currently supported."])
-    elif db.query(models.User, username_exists(username)).first():
-        # If the username already exists...
-        return (False, [
-            _("The username, %s%s%s, is already in use.") % (
-                "<strong>", username, "</strong>")
-        ])
-    elif db.query(models.User, email_exists(email)).first():
-        # If the email already exists...
-        return (False, [
-            _("The address, %s%s%s, is already in use.") % (
-                "<strong>", email, "</strong>")
-        ])
-
-    def ssh_fingerprint_exists(fingerprint):
-        return and_(models.SSHPubKey.UserID != user.ID,
-                    models.SSHPubKey.Fingerprint == fingerprint)
-
-    if ssh_pubkey:
-        fingerprint = get_fingerprint(ssh_pubkey.strip().rstrip())
-        if fingerprint is None:
-            return (False, ["The SSH public key is invalid."])
-
-        if db.query(models.SSHPubKey,
-                    ssh_fingerprint_exists(fingerprint)).first():
-            return (False, [
-                _("The SSH public key, %s%s%s, is already in use.") % (
-                    "<strong>", fingerprint, "</strong>")
-            ])
-
-    T = int(args.get("T", user.AccountTypeID))
-    if T != user.AccountTypeID:
-        if T not in account_type.ACCOUNT_TYPE_NAME:
-            return (False,
-                    ["Invalid account type provided."])
-        elif not request.user.is_elevated():
-            return (False,
-                    ["You do not have permission to change account types."])
-
-        credential_checks = {
-            DEVELOPER_ID: request.user.is_developer,
-            TRUSTED_USER_AND_DEV_ID: request.user.is_developer,
-            TRUSTED_USER_ID: request.user.is_elevated,
-            USER_ID: request.user.is_elevated
-        }
-        credential_check = credential_checks.get(T)
-
-        if not credential_check():
-            name = account_type.ACCOUNT_TYPE_NAME.get(T)
-            error = _("You do not have permission to change "
-                      "this user's account type to %s.") % name
-            return (False, [error])
-
-    captcha_salt = args.get("captcha_salt", None)
-    if captcha_salt and captcha_salt not in get_captcha_salts():
-        return (False, ["This CAPTCHA has expired. Please try again."])
-
-    captcha = args.get("captcha", None)
-    if captcha:
-        answer = get_captcha_answer(get_captcha_token(captcha_salt))
-        if captcha != answer:
-            return (False, ["The entered CAPTCHA answer is invalid."])
+    try:
+        for check in checks:
+            check(**args, request=request, user=user, _=_)
+    except ValidationError as exc:
+        return (False, exc.data)
 
     return (True, [])
 
@@ -284,16 +170,16 @@ def make_account_form_context(context: dict,
     context = copy.copy(context)
 
     context["account_types"] = [
-        (USER_ID, "Normal User"),
-        (TRUSTED_USER_ID, TRUSTED_USER)
+        (at.USER_ID, "Normal User"),
+        (at.TRUSTED_USER_ID, at.TRUSTED_USER)
     ]
 
     user_account_type_id = context.get("account_types")[0][0]
 
     if request.user.has_credential("CRED_ACCOUNT_EDIT_DEV"):
-        context["account_types"].append((DEVELOPER_ID, DEVELOPER))
-        context["account_types"].append((TRUSTED_USER_AND_DEV_ID,
-                                         TRUSTED_USER_AND_DEV))
+        context["account_types"].append((at.DEVELOPER_ID, at.DEVELOPER))
+        context["account_types"].append((at.TRUSTED_USER_AND_DEV_ID,
+                                         at.TRUSTED_USER_AND_DEV))
 
     if request.user.is_authenticated():
         context["username"] = args.get("U", user.Username)
@@ -387,12 +273,10 @@ async def account_register_post(request: Request,
                                 captcha: str = Form(default=None),
                                 captcha_salt: str = Form(...)):
     context = await make_variable_context(request, "Register")
-
     args = dict(await request.form())
+
     context = make_account_form_context(context, request, None, args)
-
     ok, errors = process_account_form(request, request.user, args)
-
     if not ok:
         # If the field values given do not meet the requirements,
         # return HTTP 400 with an error.
@@ -458,15 +342,15 @@ def cannot_edit(request, user):
 
 @router.get("/account/{username}/edit", response_class=HTMLResponse)
 @auth_required(True, redirect="/account/{username}")
-async def account_edit(request: Request,
-                       username: str):
+async def account_edit(request: Request, username: str):
     user = db.query(models.User, models.User.Username == username).first()
+
     response = cannot_edit(request, user)
     if response:
         return response
 
     context = await make_variable_context(request, "Accounts")
-    context["user"] = user
+    context["user"] = db.refresh(user)
 
     context = make_account_form_context(context, request, user, dict())
     return render_template(request, "account/edit.html", context)
@@ -497,16 +381,14 @@ async def account_edit_post(request: Request,
                             ON: bool = Form(default=False),  # Owner Notify
                             T: int = Form(default=None),
                             passwd: str = Form(default=str())):
-    from aurweb.db import session
-
-    user = session.query(models.User).filter(
+    user = db.query(models.User).filter(
         models.User.Username == username).first()
     response = cannot_edit(request, user)
     if response:
         return response
 
     context = await make_variable_context(request, "Accounts")
-    context["user"] = user
+    context["user"] = db.refresh(user)
 
     args = dict(await request.form())
     context = make_account_form_context(context, request, user, args)
@@ -522,79 +404,17 @@ async def account_edit_post(request: Request,
         return render_template(request, "account/edit.html", context,
                                status_code=HTTPStatus.BAD_REQUEST)
 
-    # Set all updated fields as needed.
-    with db.begin():
-        user.Username = U or user.Username
-        user.Email = E or user.Email
-        user.HideEmail = bool(H)
-        user.BackupEmail = BE or user.BackupEmail
-        user.RealName = R or user.RealName
-        user.Homepage = HP or user.Homepage
-        user.IRCNick = I or user.IRCNick
-        user.PGPKey = K or user.PGPKey
-        user.Suspended = J
-        user.InactivityTS = int(datetime.utcnow().timestamp()) * int(J)
+    updates = [
+        update.simple,
+        update.language,
+        update.timezone,
+        update.ssh_pubkey,
+        update.account_type,
+        update.password
+    ]
 
-    # If we update the language, update the cookie as well.
-    if L and L != user.LangPreference:
-        request.cookies["AURLANG"] = L
-        with db.begin():
-            user.LangPreference = L
-        context["language"] = L
-
-    # If we update the timezone, also update the cookie.
-    if TZ and TZ != user.Timezone:
-        with db.begin():
-            user.Timezone = TZ
-        request.cookies["AURTZ"] = TZ
-        context["timezone"] = TZ
-
-    with db.begin():
-        user.CommentNotify = bool(CN)
-        user.UpdateNotify = bool(UN)
-        user.OwnershipNotify = bool(ON)
-
-    # If a PK is given, compare it against the target user's PK.
-    with db.begin():
-        if PK:
-            # Get the second token in the public key, which is the actual key.
-            pubkey = PK.strip().rstrip()
-            parts = pubkey.split(" ")
-            if len(parts) == 3:
-                # Remove the host part.
-                pubkey = parts[0] + " " + parts[1]
-            fingerprint = get_fingerprint(pubkey)
-            if not user.ssh_pub_key:
-                # No public key exists, create one.
-                user.ssh_pub_key = models.SSHPubKey(UserID=user.ID,
-                                                    PubKey=pubkey,
-                                                    Fingerprint=fingerprint)
-            elif user.ssh_pub_key.PubKey != pubkey:
-                # A public key already exists, update it.
-                user.ssh_pub_key.PubKey = pubkey
-                user.ssh_pub_key.Fingerprint = fingerprint
-        elif user.ssh_pub_key:
-            # Else, if the user has a public key already, delete it.
-            session.delete(user.ssh_pub_key)
-
-    if T and T != user.AccountTypeID:
-        with db.begin():
-            user.AccountTypeID = T
-
-    if P and not user.valid_password(P):
-        # Remove the fields we consumed for passwords.
-        context["P"] = context["C"] = str()
-
-        # If a password was given and it doesn't match the user's, update it.
-        with db.begin():
-            user.update_password(P)
-
-        if user == request.user:
-            remember_me = request.cookies.get("AURREMEMBER", False)
-
-            # If the target user is the request user, login with
-            # the updated password to update the Session record.
-            user.login(request, P, cookies.timeout(remember_me))
+    for f in updates:
+        f(**args, request=request, user=user, context=context)
 
     if not errors:
         context["complete"] = True
@@ -617,27 +437,16 @@ account_template = (
                status_code=HTTPStatus.UNAUTHORIZED)
 async def account(request: Request, username: str):
     _ = l10n.get_translator_for_request(request)
-    context = await make_variable_context(request,
-                                          _("Account") + " " + username)
-
-    user = db.query(models.User, models.User.Username == username).first()
-    if not user:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-
-    context["user"] = user
-
+    context = await make_variable_context(
+        request, _("Account") + " " + username)
+    context["user"] = get_user_by_name(username)
     return render_template(request, "account/show.html", context)
 
 
 @router.get("/account/{username}/comments")
 @auth_required(redirect="/account/{username}/comments")
 async def account_comments(request: Request, username: str):
-    user = db.query(models.User).filter(
-        models.User.Username == username
-    ).first()
-    if not user:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-
+    user = get_user_by_name(username)
     context = make_context(request, "Accounts")
     context["username"] = username
     context["comments"] = user.package_comments.order_by(
@@ -647,9 +456,9 @@ async def account_comments(request: Request, username: str):
 
 @router.get("/accounts")
 @auth_required(True, redirect="/accounts")
-@account_type_required({account_type.TRUSTED_USER,
-                        account_type.DEVELOPER,
-                        account_type.TRUSTED_USER_AND_DEV})
+@account_type_required({at.TRUSTED_USER,
+                        at.DEVELOPER,
+                        at.TRUSTED_USER_AND_DEV})
 async def accounts(request: Request):
     context = make_context(request, "Accounts")
     return render_template(request, "account/search.html", context)
@@ -657,12 +466,12 @@ async def accounts(request: Request):
 
 @router.post("/accounts")
 @auth_required(True, redirect="/accounts")
-@account_type_required({account_type.TRUSTED_USER,
-                        account_type.DEVELOPER,
-                        account_type.TRUSTED_USER_AND_DEV})
+@account_type_required({at.TRUSTED_USER,
+                        at.DEVELOPER,
+                        at.TRUSTED_USER_AND_DEV})
 async def accounts_post(request: Request,
                         O: int = Form(default=0),  # Offset
-                        SB: str = Form(default=str()),  # Search By
+                        SB: str = Form(default=str()),  # Sort By
                         U: str = Form(default=str()),  # Username
                         T: str = Form(default=str()),  # Account Type
                         S: bool = Form(default=False),  # Suspended
@@ -691,10 +500,10 @@ async def accounts_post(request: Request,
 
     # Convert parameter T to an AccountType ID.
     account_types = {
-        "u": account_type.USER_ID,
-        "t": account_type.TRUSTED_USER_ID,
-        "d": account_type.DEVELOPER_ID,
-        "td": account_type.TRUSTED_USER_AND_DEV_ID
+        "u": at.USER_ID,
+        "t": at.TRUSTED_USER_ID,
+        "d": at.DEVELOPER_ID,
+        "td": at.TRUSTED_USER_AND_DEV_ID
     }
     account_type_id = account_types.get(T, None)
 
@@ -705,23 +514,19 @@ async def accounts_post(request: Request,
 
     # Populate this list with any additional statements to
     # be ANDed together.
-    statements = []
-    if account_type_id is not None:
-        statements.append(models.AccountType.ID == account_type_id)
-    if U:
-        statements.append(models.User.Username.like(f"%{U}%"))
-    if S:
-        statements.append(models.User.Suspended == S)
-    if E:
-        statements.append(models.User.Email.like(f"%{E}%"))
-    if R:
-        statements.append(models.User.RealName.like(f"%{R}%"))
-    if I:
-        statements.append(models.User.IRCNick.like(f"%{I}%"))
-    if K:
-        statements.append(models.User.PGPKey.like(f"%{K}%"))
+    statements = [
+        v for k, v in [
+            (account_type_id is not None, models.AccountType.ID == account_type_id),
+            (bool(U), models.User.Username.like(f"%{U}%")),
+            (bool(S), models.User.Suspended == S),
+            (bool(E), models.User.Email.like(f"%{E}%")),
+            (bool(R), models.User.RealName.like(f"%{R}%")),
+            (bool(I), models.User.IRCNick.like(f"%{I}%")),
+            (bool(K), models.User.PGPKey.like(f"%{K}%")),
+        ] if k
+    ]
 
-    # Filter the query by combining all statements added above into
+    # Filter the query by coe-mbining all statements added above into
     # an AND statement, unless there's just one statement, which
     # we pass on to filter() as args.
     if statements:
@@ -729,7 +534,7 @@ async def accounts_post(request: Request,
 
     # Finally, order and truncate our users for the current page.
     users = query.order_by(*order_by).limit(pp).offset(offset)
-    context["users"] = users
+    context["users"] = util.apply_all(users, db.refresh)
 
     return render_template(request, "account/index.html", context)
 
@@ -754,6 +559,9 @@ async def terms_of_service(request: Request):
     # Query the database for any terms that have not yet been accepted.
     unaccepted = db.query(models.Term).filter(
         ~models.Term.ID.in_(db.query(models.AcceptedTerm.TermsID))).all()
+
+    for record in (diffs + unaccepted):
+        db.refresh(record)
 
     # Translate the 'Terms of Service' part of our page title.
     _ = l10n.get_translator_for_request(request)
@@ -786,18 +594,21 @@ async def terms_of_service_post(request: Request,
         # We already did the database filters here, so let's just use
         # them instead of reiterating the process in terms_of_service.
         accept_needed = sorted(unaccepted + diffs)
-        return render_terms_of_service(request, context, accept_needed)
+        return render_terms_of_service(
+            request, context, util.apply_all(accept_needed, db.refresh))
 
     with db.begin():
         # For each term we found, query for the matching accepted term
         # and update its Revision to the term's current Revision.
         for term in diffs:
+            db.refresh(term)
             accepted_term = request.user.accepted_terms.filter(
                 models.AcceptedTerm.TermsID == term.ID).first()
             accepted_term.Revision = term.Revision
 
         # For each term that was never accepted, accept it!
         for term in unaccepted:
+            db.refresh(term)
             db.create(models.AcceptedTerm, User=request.user,
                       Term=term, Revision=term.Revision)
 

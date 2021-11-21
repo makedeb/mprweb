@@ -74,7 +74,7 @@ alembic = "^1.7.4"
 mysqlclient = "^2.0.3"
 Authlib = "^0.15.5"
 Jinja2 = "^3.0.2"
-Markdown = "^3.3.4"
+Markdown = "3.3.4"
 Werkzeug = "^2.0.2"
 SQLAlchemy = "^1.4.26"
 
@@ -84,6 +84,8 @@ gunicorn = "^20.1.0"
 Hypercorn = "^0.11.2"
 mysql-connector = "^2.2.9"
 prometheus-fastapi-instrumentator = "^5.7.1"
+pytest-xdist = "^2.4.0"
+filelock = "^3.3.2"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"

@@ -7,6 +7,7 @@ import secrets
 import string
 
 from datetime import datetime
+from distutils.util import strtobool as _strtobool
 from typing import Any, Callable, Dict, Iterable, Tuple
 from urllib.parse import urlencode, urlparse
 from zoneinfo import ZoneInfo
@@ -155,6 +156,7 @@ def get_ssh_fingerprints():
 def apply_all(iterable: Iterable, fn: Callable):
     for item in iterable:
         fn(item)
+    return iterable
 
 
 def sanitize_params(offset: str, per_page: str) -> Tuple[int, int]:
@@ -169,3 +171,9 @@ def sanitize_params(offset: str, per_page: str) -> Tuple[int, int]:
         per_page = defaults.PP
 
     return (offset, per_page)
+
+
+def strtobool(value: str) -> bool:
+    if isinstance(value, str):
+        return _strtobool(value)
+    return value

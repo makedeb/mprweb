@@ -35,7 +35,7 @@ sed -i \
     conf/config.defaults
 
 echo "+ Building image..."
-docker-compose build --pull aurweb-image
+docker-compose build --pull --no-cache mprweb-image
 
 echo "+ Deploying..."
 cd /var/www/mpr.hunterwittenborn.com

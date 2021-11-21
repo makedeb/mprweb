@@ -21,6 +21,11 @@ services:
       mariadb:
         condition: service_healthy
 
+  mariadb_test:
+    healthcheck:
+      test: "bash /docker/health/mariadb.sh"
+      interval: 3s
+
   git:
     healthcheck:
       test: "bash /docker/health/sshd.sh"

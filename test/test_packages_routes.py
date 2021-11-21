@@ -10,7 +10,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import and_
 
-from aurweb import asgi, db, defaults
+from aurweb import asgi, config, db, defaults
+from aurweb.models import License, PackageLicense
 from aurweb.models.account_type import USER_ID, AccountType
 from aurweb.models.dependency_type import DependencyType
 from aurweb.models.official_provider import OfficialProvider
@@ -24,10 +25,9 @@ from aurweb.models.package_notification import PackageNotification
 from aurweb.models.package_relation import PackageRelation
 from aurweb.models.package_request import ACCEPTED_ID, REJECTED_ID, PackageRequest
 from aurweb.models.package_vote import PackageVote
-from aurweb.models.relation_type import PROVIDES_ID, RelationType
+from aurweb.models.relation_type import CONFLICTS_ID, PROVIDES_ID, REPLACES_ID, RelationType
 from aurweb.models.request_type import DELETION_ID, MERGE_ID, RequestType
 from aurweb.models.user import User
-from aurweb.testing import setup_test_db
 from aurweb.testing.html import get_errors, get_successes, parse_root
 from aurweb.testing.requests import Request
 
@@ -64,21 +64,8 @@ def create_package_rel(package: Package,
 
 
 @pytest.fixture(autouse=True)
-def setup():
-    setup_test_db(
-        User.__tablename__,
-        Package.__tablename__,
-        PackageBase.__tablename__,
-        PackageDependency.__tablename__,
-        PackageRelation.__tablename__,
-        PackageKeyword.__tablename__,
-        PackageVote.__tablename__,
-        PackageNotification.__tablename__,
-        PackageComaintainer.__tablename__,
-        PackageComment.__tablename__,
-        PackageRequest.__tablename__,
-        OfficialProvider.__tablename__
-    )
+def setup(db_test):
+    return
 
 
 @pytest.fixture
@@ -90,12 +77,11 @@ def client() -> TestClient:
 @pytest.fixture
 def user() -> User:
     """ Yield a user. """
-    account_type = db.query(AccountType, AccountType.ID == USER_ID).first()
     with db.begin():
         user = db.create(User, Username="test",
                          Email="test@example.org",
                          Passwd="testPassword",
-                         AccountType=account_type)
+                         AccountTypeID=USER_ID)
     yield user
 
 
@@ -217,8 +203,41 @@ def test_package_official_not_found(client: TestClient, package: Package):
 
 def test_package(client: TestClient, package: Package):
     """ Test a single / packages / {name} route. """
-    with client as request:
 
+    with db.begin():
+        db.create(PackageRelation, PackageID=package.ID,
+                  RelTypeID=PROVIDES_ID,
+                  RelName="test_provider1")
+        db.create(PackageRelation, PackageID=package.ID,
+                  RelTypeID=PROVIDES_ID,
+                  RelName="test_provider2")
+
+        db.create(PackageRelation, PackageID=package.ID,
+                  RelTypeID=REPLACES_ID,
+                  RelName="test_replacer1")
+        db.create(PackageRelation, PackageID=package.ID,
+                  RelTypeID=REPLACES_ID,
+                  RelName="test_replacer2")
+
+        db.create(PackageRelation, PackageID=package.ID,
+                  RelTypeID=CONFLICTS_ID,
+                  RelName="test_conflict1")
+        db.create(PackageRelation, PackageID=package.ID,
+                  RelTypeID=CONFLICTS_ID,
+                  RelName="test_conflict2")
+
+        # Create some licenses.
+        licenses = [
+            db.create(License, Name="test_license1"),
+            db.create(License, Name="test_license2")
+        ]
+
+        db.create(PackageLicense, PackageID=package.ID,
+                  License=licenses[0])
+        db.create(PackageLicense, PackageID=package.ID,
+                  License=licenses[1])
+
+    with client as request:
         resp = request.get(package_endpoint(package))
     assert resp.status_code == int(HTTPStatus.OK)
 
@@ -237,6 +256,22 @@ def test_package(client: TestClient, package: Package):
 
     pkgbase = row.find("./td/a")
     assert pkgbase.text.strip() == package.PackageBase.Name
+
+    licenses = root.xpath('//tr[@id="licenses"]/td')
+    expected = ["test_license1", "test_license2"]
+    assert licenses[0].text.strip() == ", ".join(expected)
+
+    provides = root.xpath('//tr[@id="provides"]/td')
+    expected = ["test_provider1", "test_provider2"]
+    assert provides[0].text.strip() == ", ".join(expected)
+
+    replaces = root.xpath('//tr[@id="replaces"]/td')
+    expected = ["test_replacer1", "test_replacer2"]
+    assert replaces[0].text.strip() == ", ".join(expected)
+
+    conflicts = root.xpath('//tr[@id="conflicts"]/td')
+    expected = ["test_conflict1", "test_conflict2"]
+    assert conflicts[0].text.strip() == ", ".join(expected)
 
 
 def test_package_comments(client: TestClient, user: User, package: Package):
@@ -1123,7 +1158,7 @@ def test_pkgbase_comments(client: TestClient, maintainer: User, user: User,
         PackageNotification.UserID == maintainer.ID
     ).first()
     with db.begin():
-        db.session.delete(db_notif)
+        db.delete(db_notif)
 
     # Now, let's edit the comment we just created.
     comment_id = int(headers[0].attrib["id"].split("-")[-1])
@@ -1501,6 +1536,24 @@ def test_pkgbase_request_post_deletion(client: TestClient, user: User,
     assert pkgreq.Comments == "We want to delete this."
 
 
+def test_pkgbase_request_post_maintainer_deletion(
+        client: TestClient, maintainer: User, package: Package):
+    pkgbasename = package.PackageBase.Name
+    endpoint = f"/pkgbase/{package.PackageBase.Name}/request"
+    cookies = {"AURSID": maintainer.login(Request(), "testPassword")}
+    with client as request:
+        resp = request.post(endpoint, data={
+            "type": "deletion",
+            "comments": "We want to delete this."
+        }, cookies=cookies, allow_redirects=False)
+    assert resp.status_code == int(HTTPStatus.SEE_OTHER)
+
+    pkgreq = db.query(PackageRequest).filter(
+        PackageRequest.PackageBaseName == pkgbasename
+    ).first()
+    assert pkgreq.Status == ACCEPTED_ID
+
+
 def test_pkgbase_request_post_orphan(client: TestClient, user: User,
                                      package: Package):
     endpoint = f"/pkgbase/{package.PackageBase.Name}/request"
@@ -1519,6 +1572,29 @@ def test_pkgbase_request_post_orphan(client: TestClient, user: User,
     assert pkgreq.RequestType.Name == "orphan"
     assert pkgreq.PackageBaseName == package.PackageBase.Name
     assert pkgreq.Comments == "We want to disown this."
+
+
+def test_pkgbase_request_post_auto_orphan(client: TestClient, user: User,
+                                          package: Package):
+    now = int(datetime.utcnow().timestamp())
+    auto_orphan_age = config.getint("options", "auto_orphan_age")
+    with db.begin():
+        package.PackageBase.OutOfDateTS = now - auto_orphan_age - 1
+
+    endpoint = f"/pkgbase/{package.PackageBase.Name}/request"
+    cookies = {"AURSID": user.login(Request(), "testPassword")}
+    with client as request:
+        resp = request.post(endpoint, data={
+            "type": "orphan",
+            "comments": "We want to disown this."
+        }, cookies=cookies, allow_redirects=False)
+    assert resp.status_code == int(HTTPStatus.SEE_OTHER)
+
+    pkgreq = db.query(PackageRequest).filter(
+        PackageRequest.PackageBaseID == package.PackageBase.ID
+    ).first()
+    assert pkgreq is not None
+    assert pkgreq.Status == ACCEPTED_ID
 
 
 def test_pkgbase_request_post_merge(client: TestClient, user: User,
@@ -2604,3 +2680,33 @@ def test_account_comments(client: TestClient, user: User, package: Package):
     expected = rendered_comment.RenderedComment.replace(
         "<p>", "").replace("</p>", "")
     assert rendered[0].text.strip() == expected
+
+
+def test_pkgbase_keywords(client: TestClient, user: User, package: Package):
+    endpoint = f"/pkgbase/{package.PackageBase.Name}"
+    with client as request:
+        resp = request.get(endpoint)
+    assert resp.status_code == int(HTTPStatus.OK)
+
+    root = parse_root(resp.text)
+    keywords = root.xpath('//a[@class="keyword"]')
+    assert len(keywords) == 0
+
+    cookies = {"AURSID": user.login(Request(), "testPassword")}
+    post_endpoint = f"{endpoint}/keywords"
+    with client as request:
+        resp = request.post(post_endpoint, data={
+            "keywords": "abc test"
+        }, cookies=cookies)
+    assert resp.status_code == int(HTTPStatus.SEE_OTHER)
+
+    with client as request:
+        resp = request.get(resp.headers.get("location"))
+    assert resp.status_code == int(HTTPStatus.OK)
+
+    root = parse_root(resp.text)
+    keywords = root.xpath('//a[@class="keyword"]')
+    assert len(keywords) == 2
+    expected = ["abc", "test"]
+    for i, keyword in enumerate(keywords):
+        assert keyword.text.strip() == expected[i]

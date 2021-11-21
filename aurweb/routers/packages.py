@@ -4,20 +4,23 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, Form, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
-from sqlalchemy import and_, case
+from sqlalchemy import case
 
 import aurweb.filters
 import aurweb.packages.util
 
 from aurweb import db, defaults, l10n, logging, models, util
 from aurweb.auth import auth_required
+from aurweb.exceptions import ValidationError
 from aurweb.models.package_request import ACCEPTED_ID, PENDING_ID, REJECTED_ID
-from aurweb.models.relation_type import CONFLICTS_ID
+from aurweb.models.relation_type import CONFLICTS_ID, PROVIDES_ID, REPLACES_ID
 from aurweb.models.request_type import DELETION_ID, MERGE, MERGE_ID
+from aurweb.packages import util as pkgutil
+from aurweb.packages import validate
 from aurweb.packages.search import PackageSearch
-from aurweb.packages.util import get_pkg_or_base, get_pkgbase_comment, query_notified, query_voted
+from aurweb.packages.util import get_pkg_or_base, get_pkgbase_comment, get_pkgreq_by_id, query_notified, query_voted
 from aurweb.scripts import notify, popupdate
-from aurweb.scripts.rendercomment import update_comment_render
+from aurweb.scripts.rendercomment import update_comment_render_fastapi
 from aurweb.templates import make_context, make_variable_context, render_raw_template, render_template
 
 logger = logging.get_logger(__name__)
@@ -92,7 +95,10 @@ async def packages_get(request: Request, context: Dict[str, Any],
 
     # Insert search results into the context.
     results = search.results()
-    context["packages"] = results.limit(per_page).offset(offset)
+
+    packages = results.limit(per_page).offset(offset)
+    util.apply_all(packages, db.refresh)
+    context["packages"] = packages
     context["packages_voted"] = query_voted(
         context.get("packages"), request.user)
     context["packages_notified"] = query_notified(
@@ -132,6 +138,7 @@ def create_request_if_missing(requests: List[models.PackageRequest],
                            ClosedTS=now,
                            Closer=user)
         requests.append(pkgreq)
+    return pkgreq
 
 
 def delete_package(deleter: models.User, package: models.Package):
@@ -147,8 +154,9 @@ def delete_package(deleter: models.User, package: models.Package):
         ).first()
 
         with db.begin():
-            create_request_if_missing(
+            pkgreq = create_request_if_missing(
                 requests, reqtype, deleter, package)
+            pkgreq.Status = ACCEPTED_ID
 
         bases_to_delete.append(package.PackageBase)
 
@@ -171,8 +179,9 @@ def delete_package(deleter: models.User, package: models.Package):
         )
 
     # Perform all the deletions.
-    db.delete_all([package])
-    db.delete_all(bases_to_delete)
+    with db.begin():
+        db.delete(package)
+        db.delete_all(bases_to_delete)
 
     # Send out all the notifications.
     util.apply_all(notifications, lambda n: n.send())
@@ -221,17 +230,14 @@ async def make_single_context(request: Request,
 async def package(request: Request, name: str) -> Response:
     # Get the Package.
     pkg = get_pkg_or_base(name, models.Package)
-    pkgbase = (get_pkg_or_base(name, models.PackageBase)
-               if not pkg else pkg.PackageBase)
+    pkgbase = pkg.PackageBase
 
     # Add our base information.
     context = await make_single_context(request, pkgbase)
     context["package"] = pkg
 
     # Package sources.
-    context["sources"] = db.query(models.PackageSource).join(
-        models.Package).join(models.PackageBase).filter(
-        models.PackageBase.ID == pkgbase.ID)
+    context["sources"] = pkg.package_sources
 
     # Package dependencies.
     dependencies = db.query(models.PackageDependency).join(
@@ -246,17 +252,19 @@ async def package(request: Request, name: str) -> Response:
         models.Package.Name.asc())
     context["required_by"] = required_by
 
-    licenses = db.query(models.License).join(models.PackageLicense).join(
-        models.Package).join(models.PackageBase).filter(
-        models.PackageBase.ID == pkgbase.ID)
-    context["licenses"] = licenses
+    context["licenses"] = pkg.package_licenses
 
-    conflicts = db.query(models.PackageRelation).join(models.Package).join(
-        models.PackageBase).filter(
-        and_(models.PackageRelation.RelTypeID == CONFLICTS_ID,
-             models.PackageBase.ID == pkgbase.ID)
-    )
+    conflicts = pkg.package_relations.filter(
+        models.PackageRelation.RelTypeID == CONFLICTS_ID)
     context["conflicts"] = conflicts
+
+    provides = pkg.package_relations.filter(
+        models.PackageRelation.RelTypeID == PROVIDES_ID)
+    context["provides"] = provides
+
+    replaces = pkg.package_relations.filter(
+        models.PackageRelation.RelTypeID == REPLACES_ID)
+    context["replaces"] = replaces
 
     return render_template(request, "packages/show.html", context)
 
@@ -312,7 +320,7 @@ async def pkgbase_comments_post(
             db.create(models.PackageNotification,
                       User=request.user,
                       PackageBase=pkgbase)
-    update_comment_render(comment.ID)
+    update_comment_render_fastapi(comment)
 
     # Redirect to the pkgbase page.
     return RedirectResponse(f"/pkgbase/{pkgbase.Name}#comment-{comment.ID}",
@@ -374,7 +382,7 @@ async def pkgbase_comment_post(
                 db.create(models.PackageNotification,
                           User=request.user,
                           PackageBase=pkgbase)
-    update_comment_render(db_comment.ID)
+    update_comment_render_fastapi(db_comment)
 
     if not next:
         next = f"/pkgbase/{pkgbase.Name}"
@@ -524,28 +532,6 @@ async def package_base_comaintainers(request: Request, name: str) -> Response:
     return render_template(request, "pkgbase/comaintainers.html", context)
 
 
-def remove_users(pkgbase, usernames):
-    conn = db.ConnectionExecutor(db.get_engine().raw_connection())
-    notifications = []
-    with db.begin():
-        for username in usernames:
-            # We know that the users we passed here are in the DB.
-            # No need to check for their existence.
-            comaintainer = pkgbase.comaintainers.join(models.User).filter(
-                models.User.Username == username
-            ).first()
-            notifications.append(
-                notify.ComaintainerRemoveNotification(
-                    conn, comaintainer.User.ID, pkgbase.ID
-                )
-            )
-            db.session.delete(comaintainer)
-
-    # Send out notifications if need be.
-    for notify_ in notifications:
-        notify_.send()
-
-
 @router.post("/pkgbase/{name}/comaintainers")
 @auth_required(True, redirect="/pkgbase/{name}/comaintainers")
 async def package_base_comaintainers_post(
@@ -566,7 +552,7 @@ async def package_base_comaintainers_post(
     users.remove(str())  # Remove any empty strings from the set.
     records = {c.User.Username for c in pkgbase.comaintainers}
 
-    remove_users(pkgbase, records.difference(users))
+    pkgutil.remove_comaintainers(pkgbase, records.difference(users))
 
     # Default priority (lowest value; most preferred).
     priority = 1
@@ -583,52 +569,8 @@ async def package_base_comaintainers_post(
     if last_priority:
         priority = last_priority.Priority + 1
 
-    def add_users(usernames):
-        """ Add users as comaintainers to pkgbase.
-
-        :param usernames: An iterable of username strings
-        :return: None on success, an error string on failure. """
-        nonlocal request, pkgbase, priority
-
-        # First, perform a check against all usernames given; for each
-        # username, add its related User object to memo.
-        _ = l10n.get_translator_for_request(request)
-        memo = {}
-        for username in usernames:
-            user = db.query(models.User).filter(
-                models.User.Username == username).first()
-            if not user:
-                return _("Invalid user name: %s") % username
-            memo[username] = user
-
-        # Alright, now that we got past the check, add them all to the DB.
-        conn = db.ConnectionExecutor(db.get_engine().raw_connection())
-        notifications = []
-        with db.begin():
-            for username in usernames:
-                user = memo.get(username)
-                if pkgbase.Maintainer == user:
-                    # Already a maintainer. Move along.
-                    continue
-
-                # If we get here, our user model object is in the memo.
-                comaintainer = db.create(
-                    models.PackageComaintainer,
-                    PackageBase=pkgbase,
-                    User=user,
-                    Priority=priority)
-                priority += 1
-
-                notifications.append(
-                    notify.ComaintainerAddNotification(
-                        conn, comaintainer.User.ID, pkgbase.ID)
-                )
-
-        # Send out notifications.
-        for notify_ in notifications:
-            notify_.send()
-
-    error = add_users(users.difference(records))
+    error = pkgutil.add_comaintainers(request, pkgbase, priority,
+                                      users.difference(records))
     if error:
         context = make_context(request, "Manage Co-maintainers")
         context["pkgbase"] = pkgbase
@@ -679,14 +621,8 @@ async def requests(request: Request,
 @router.get("/pkgbase/{name}/request")
 @auth_required(True, redirect="/pkgbase/{name}/request")
 async def package_request(request: Request, name: str):
+    pkgbase = get_pkg_or_base(name, models.PackageBase)
     context = await make_variable_context(request, "Submit Request")
-
-    pkgbase = db.query(models.PackageBase).filter(
-        models.PackageBase.Name == name).first()
-
-    if not pkgbase:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-
     context["pkgbase"] = pkgbase
     return render_template(request, "pkgbase/request.html", context)
 
@@ -708,33 +644,12 @@ async def pkgbase_request_post(request: Request, name: str,
         return render_template(request, "pkgbase/request.html", context,
                                status_code=HTTPStatus.BAD_REQUEST)
 
-    if not comments:
-        context["errors"] = ["The comment field must not be empty."]
+    try:
+        validate.request(pkgbase, type, comments, merge_into, context)
+    except ValidationError as exc:
+        logger.error(f"Request Validation Error: {str(exc.data)}")
+        context["errors"] = exc.data
         return render_template(request, "pkgbase/request.html", context)
-
-    if type == "merge":
-        # Perform merge-related checks.
-        if not merge_into:
-            # TODO: This error needs to be translated.
-            context["errors"] = ['The "Merge into" field must not be empty.']
-            return render_template(request, "pkgbase/request.html", context)
-
-        target = db.query(models.PackageBase).filter(
-            models.PackageBase.Name == merge_into
-        ).first()
-        if not target:
-            # TODO: This error needs to be translated.
-            context["errors"] = [
-                "The package base you want to merge into does not exist."
-            ]
-            return render_template(request, "pkgbase/request.html", context)
-
-        if target.ID == pkgbase.ID:
-            # TODO: This error needs to be translated.
-            context["errors"] = [
-                "You cannot merge a package base into itself."
-            ]
-            return render_template(request, "pkgbase/request.html", context)
 
     # All good. Create a new PackageRequest based on the given type.
     now = int(datetime.utcnow().timestamp())
@@ -748,16 +663,37 @@ async def pkgbase_request_post(request: Request, name: str,
                            PackageBase=pkgbase,
                            PackageBaseName=pkgbase.Name,
                            MergeBaseName=merge_into,
-                           Comments=comments, ClosureComment=str())
+                           Comments=comments,
+                           ClosureComment=str())
 
-    # Prepare notification object.
     conn = db.ConnectionExecutor(db.get_engine().raw_connection())
-    notify_ = notify.RequestOpenNotification(
+    # Prepare notification object.
+    notif = notify.RequestOpenNotification(
         conn, request.user.ID, pkgreq.ID, reqtype.Name,
         pkgreq.PackageBase.ID, merge_into=merge_into or None)
 
     # Send the notification now that we're out of the DB scope.
-    notify_.send()
+    notif.send()
+
+    auto_orphan_age = aurweb.config.getint("options", "auto_orphan_age")
+    auto_delete_age = aurweb.config.getint("options", "auto_delete_age")
+
+    flagged = pkgbase.OutOfDateTS and pkgbase.OutOfDateTS >= auto_orphan_age
+    is_maintainer = pkgbase.Maintainer == request.user
+    outdated = now - pkgbase.SubmittedTS <= auto_delete_age
+
+    if type == "orphan" and flagged:
+        with db.begin():
+            pkgbase.Maintainer = None
+            pkgreq.Status = ACCEPTED_ID
+        db.refresh(pkgreq)
+        notif = notify.RequestCloseNotification(
+            conn, request.user.ID, pkgreq.ID, pkgreq.status_display())
+        notif.send()
+    elif type == "deletion" and is_maintainer and outdated:
+        packages = pkgbase.packages.all()
+        for package in packages:
+            delete_package(request.user, package)
 
     # Redirect the submitting user to /packages.
     return RedirectResponse("/packages",
@@ -767,8 +703,7 @@ async def pkgbase_request_post(request: Request, name: str,
 @router.get("/requests/{id}/close")
 @auth_required(True, redirect="/requests/{id}/close")
 async def requests_close(request: Request, id: int):
-    pkgreq = db.query(models.PackageRequest).filter(
-        models.PackageRequest.ID == id).first()
+    pkgreq = get_pkgreq_by_id(id)
     if not request.user.is_elevated() and request.user != pkgreq.User:
         # Request user doesn't have permission here: redirect to '/'.
         return RedirectResponse("/", status_code=HTTPStatus.SEE_OTHER)
@@ -783,8 +718,7 @@ async def requests_close(request: Request, id: int):
 async def requests_close_post(request: Request, id: int,
                               reason: int = Form(default=0),
                               comments: str = Form(default=str())):
-    pkgreq = db.query(models.PackageRequest).filter(
-        models.PackageRequest.ID == id).first()
+    pkgreq = get_pkgreq_by_id(id)
     if not request.user.is_elevated() and request.user != pkgreq.User:
         # Request user doesn't have permission here: redirect to '/'.
         return RedirectResponse("/", status_code=HTTPStatus.SEE_OTHER)
@@ -814,6 +748,33 @@ async def requests_close_post(request: Request, id: int,
     notify_.send()
 
     return RedirectResponse("/requests", status_code=HTTPStatus.SEE_OTHER)
+
+
+@router.post("/pkgbase/{name}/keywords")
+async def pkgbase_keywords(request: Request, name: str,
+                           keywords: str = Form(default=str())):
+    pkgbase = get_pkg_or_base(name, models.PackageBase)
+    keywords = set(keywords.split(" "))
+
+    # Delete all keywords which are not supplied by the user.
+    other_keywords = pkgbase.keywords.filter(
+        ~models.PackageKeyword.Keyword.in_(keywords))
+    other_keyword_strings = [kwd.Keyword for kwd in other_keywords]
+
+    existing_keywords = set(
+        kwd.Keyword for kwd in
+        pkgbase.keywords.filter(
+            ~models.PackageKeyword.Keyword.in_(other_keyword_strings))
+    )
+    with db.begin():
+        db.delete_all(other_keywords)
+        for keyword in keywords.difference(existing_keywords):
+            db.create(models.PackageKeyword,
+                      PackageBase=pkgbase,
+                      Keyword=keyword)
+
+    return RedirectResponse(f"/pkgbase/{name}",
+                            status_code=HTTPStatus.SEE_OTHER)
 
 
 @router.get("/pkgbase/{name}/flag")
@@ -917,7 +878,7 @@ def pkgbase_unnotify_instance(request: Request, pkgbase: models.PackageBase):
     has_cred = request.user.has_credential("CRED_PKGBASE_NOTIFY")
     if has_cred and notif:
         with db.begin():
-            db.session.delete(notif)
+            db.delete(notif)
 
 
 @router.post("/pkgbase/{name}/unnotify")
@@ -965,7 +926,7 @@ async def pkgbase_unvote(request: Request, name: str):
     has_cred = request.user.has_credential("CRED_PKGBASE_VOTE")
     if has_cred and vote:
         with db.begin():
-            db.session.delete(vote)
+            db.delete(vote)
 
         # Update NumVotes/Popularity.
         conn = db.ConnectionExecutor(db.get_engine().raw_connection())
@@ -989,12 +950,12 @@ def pkgbase_disown_instance(request: Request, pkgbase: models.PackageBase):
             models.PackageComaintainer.Priority.asc()
         ).limit(1).first()
 
-        if co:
-            with db.begin():
+        with db.begin():
+            if co:
                 pkgbase.Maintainer = co.User
-                db.session.delete(co)
-        else:
-            pkgbase.Maintainer = None
+                db.delete(co)
+            else:
+                pkgbase.Maintainer = None
 
     notif.send()
 
@@ -1440,8 +1401,8 @@ def pkgbase_merge_instance(request: Request, pkgbase: models.PackageBase,
         with db.begin():
             # Delete pkgbase and its packages now that everything's merged.
             for pkg in pkgbase.packages:
-                db.session.delete(pkg)
-            db.session.delete(pkgbase)
+                db.delete(pkg)
+            db.delete(pkgbase)
 
             # Accept merge requests related to this pkgbase and target.
             for pkgreq in requests:

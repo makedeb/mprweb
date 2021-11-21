@@ -2,10 +2,11 @@ from datetime import datetime
 
 import pytest
 
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from aurweb import asgi, db
-from aurweb.models.account_type import USER_ID, AccountType
+from aurweb.models.account_type import USER_ID
 from aurweb.models.official_provider import OFFICIAL_BASE, OfficialProvider
 from aurweb.models.package import Package
 from aurweb.models.package_base import PackageBase
@@ -14,29 +15,20 @@ from aurweb.models.package_vote import PackageVote
 from aurweb.models.user import User
 from aurweb.packages import util
 from aurweb.redis import kill_redis
-from aurweb.testing import setup_test_db
 
 
 @pytest.fixture(autouse=True)
-def setup():
-    setup_test_db(
-        User.__tablename__,
-        Package.__tablename__,
-        PackageBase.__tablename__,
-        PackageVote.__tablename__,
-        PackageNotification.__tablename__,
-        OfficialProvider.__tablename__
-    )
+def setup(db_test):
+    return
 
 
 @pytest.fixture
 def maintainer() -> User:
-    account_type = db.query(AccountType, AccountType.ID == USER_ID).first()
     with db.begin():
         maintainer = db.create(User, Username="test_maintainer",
                                Email="test_maintainer@examepl.org",
                                Passwd="testPassword",
-                               AccountType=account_type)
+                               AccountTypeID=USER_ID)
     yield maintainer
 
 
@@ -98,3 +90,8 @@ def test_query_notified(maintainer: User, package: Package):
     query = db.query(Package).filter(Package.ID == package.ID).all()
     query_notified = util.query_notified(query, maintainer)
     assert query_notified[package.PackageBase.ID]
+
+
+def test_pkgreq_by_id_not_found():
+    with pytest.raises(HTTPException):
+        util.get_pkgreq_by_id(0)

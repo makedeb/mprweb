@@ -13,21 +13,21 @@ from aurweb.db import begin, create, query
 from aurweb.models.account_type import AccountType
 from aurweb.models.session import Session
 from aurweb.models.user import User
-from aurweb.testing import setup_test_db
 
 # Some test global constants.
 TEST_USERNAME = "test"
 TEST_EMAIL = "test@example.org"
+TEST_REFERER = {
+    "referer": aurweb.config.get("options", "aur_location") + "/login",
+}
 
 # Global mutables.
 user = client = None
 
 
 @pytest.fixture(autouse=True)
-def setup():
+def setup(db_test):
     global user, client
-
-    setup_test_db("Users", "Sessions", "Bans")
 
     account_type = query(AccountType,
                          AccountType.AccountType == "User").first()
@@ -38,6 +38,10 @@ def setup():
                       AccountType=account_type)
 
     client = TestClient(app)
+
+    # Necessary for forged login CSRF protection on the login route. Set here
+    # instead of only on the necessary requests for convenience.
+    client.headers.update(TEST_REFERER)
 
 
 def test_login_logout():
@@ -91,6 +95,10 @@ def test_secure_login(mock):
 
     # Create a local TestClient here since we mocked configuration.
     client = TestClient(app)
+
+    # Necessary for forged login CSRF protection on the login route. Set here
+    # instead of only on the necessary requests for convenience.
+    client.headers.update(TEST_REFERER)
 
     # Data used for our upcoming http post request.
     post_data = {
@@ -246,3 +254,26 @@ def test_login_incorrect_password():
     assert post_data["user"] in content
     assert post_data["passwd"] not in content
     assert "checked" not in content
+
+
+def test_login_bad_referer():
+    post_data = {
+        "user": "test",
+        "passwd": "testPassword",
+        "next": "/",
+    }
+
+    # Create new TestClient without a Referer header.
+    client = TestClient(app)
+
+    with client as request:
+        response = request.post("/login", data=post_data)
+    assert "AURSID" not in response.cookies
+
+    BAD_REFERER = {
+        "referer": aurweb.config.get("options", "aur_location") + ".mal.local",
+    }
+    with client as request:
+        response = request.post("/login", data=post_data, headers=BAD_REFERER)
+    assert response.status_code == int(HTTPStatus.BAD_REQUEST)
+    assert "AURSID" not in response.cookies
