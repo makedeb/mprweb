@@ -20,11 +20,11 @@ test_expect_success 'Test out-of-date notifications.' '
 	>sendmail.out &&
 	cover "$NOTIFY" flag 1 1001 &&
 	cat <<-EOD >expected &&
-	Subject: AUR Out-of-date Notification for foobar
+	Subject: MPR Out-of-date Notification for foobar
 	To: tu@localhost
-	Subject: AUR Out-of-date Notification for foobar
+	Subject: MPR Out-of-date Notification for foobar
 	To: user2@localhost
-	Subject: AUR Out-of-date Notification for foobar
+	Subject: MPR Out-of-date Notification for foobar
 	To: user@localhost
 	EOD
 	grep "^\(Subject\|To\)" sendmail.out >sendmail.parts &&
@@ -42,7 +42,7 @@ test_expect_success 'Test subject and body of reset key notifications.' '
 	cover "$NOTIFY" send-resetkey 1 &&
 	grep ^Subject: sendmail.out >actual &&
 	cat <<-EOD >expected &&
-	Subject: AUR Password Reset
+	Subject: MPR Password Reset
 	EOD
 	test_cmp actual expected &&
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
@@ -52,7 +52,7 @@ test_expect_success 'Test subject and body of reset key notifications.' '
 	with your email address. If you wish to reset your password follow the
 	link [1] below, otherwise ignore this message and nothing will happen.
 
-	[1] https://aur.archlinux.org/passreset/?resetkey=12345678901234567890123456789012
+	[1] https://mpr.hunterwittenborn.com/passreset/?resetkey=12345678901234567890123456789012
 	EOD
 	test_cmp actual expected
 '
@@ -65,17 +65,17 @@ test_expect_success 'Test subject and body of welcome notifications.' '
 	cover "$NOTIFY" welcome 1 &&
 	grep ^Subject: sendmail.out >actual &&
 	cat <<-EOD >expected &&
-	Subject: Welcome to the Arch User Repository
+	Subject: Welcome to the makedeb Package Repository
 	EOD
 	test_cmp actual expected &&
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
 	echo >>actual &&
 	cat <<-EOD >expected &&
-	Welcome to the Arch User Repository! In order to set an initial
+	Welcome to the makedeb Package Repository! In order to set an initial
 	password for your new account, please click the link [1] below. If the
 	link does not work, try copying and pasting it into your browser.
 
-	[1] https://aur.archlinux.org/passreset/?resetkey=12345678901234567890123456789012
+	[1] https://mpr.hunterwittenborn.com/passreset/?resetkey=12345678901234567890123456789012
 	EOD
 	test_cmp actual expected
 '
@@ -91,7 +91,7 @@ test_expect_success 'Test subject and body of comment notifications.' '
 	cover "$NOTIFY" comment 1 1001 2001 &&
 	grep ^Subject: sendmail.out >actual &&
 	cat <<-EOD >expected &&
-	Subject: AUR Comment for foobar
+	Subject: MPR Comment for foobar
 	EOD
 	test_cmp actual expected &&
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
@@ -105,8 +105,8 @@ test_expect_success 'Test subject and body of comment notifications.' '
 	If you no longer wish to receive notifications about this package,
 	please go to the package page [2] and select "Disable notifications".
 	
-	[1] https://aur.archlinux.org/account/user/
-	[2] https://aur.archlinux.org/pkgbase/foobar/
+	[1] https://mpr.hunterwittenborn.com/account/user/
+	[2] https://mpr.hunterwittenborn.com/pkgbase/foobar/
 	EOD
 	test_cmp actual expected
 '
@@ -119,7 +119,7 @@ test_expect_success 'Test subject and body of update notifications.' '
 	cover "$NOTIFY" update 1 1001 &&
 	grep ^Subject: sendmail.out >actual &&
 	cat <<-EOD >expected &&
-	Subject: AUR Package Update: foobar
+	Subject: MPR Package Update: foobar
 	EOD
 	test_cmp actual expected &&
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
@@ -131,8 +131,8 @@ test_expect_success 'Test subject and body of update notifications.' '
 	If you no longer wish to receive notifications about this package,
 	please go to the package page [2] and select "Disable notifications".
 
-	[1] https://aur.archlinux.org/account/user/
-	[2] https://aur.archlinux.org/pkgbase/foobar/
+	[1] https://mpr.hunterwittenborn.com/account/user/
+	[2] https://mpr.hunterwittenborn.com/pkgbase/foobar/
 	EOD
 	test_cmp actual expected
 '
@@ -142,7 +142,7 @@ test_expect_success 'Test subject and body of out-of-date notifications.' '
 	cover "$NOTIFY" flag 1 1001 &&
 	grep ^Subject: sendmail.out >actual &&
 	cat <<-EOD >expected &&
-	Subject: AUR Out-of-date Notification for foobar
+	Subject: MPR Out-of-date Notification for foobar
 	EOD
 	test_cmp actual expected &&
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
@@ -152,8 +152,8 @@ test_expect_success 'Test subject and body of out-of-date notifications.' '
 
 	This is a test OOD comment.
 
-	[1] https://aur.archlinux.org/pkgbase/foobar/
-	[2] https://aur.archlinux.org/account/user/
+	[1] https://mpr.hunterwittenborn.com/pkgbase/foobar/
+	[2] https://mpr.hunterwittenborn.com/account/user/
 	EOD
 	test_cmp actual expected
 '
@@ -163,7 +163,7 @@ test_expect_success 'Test subject and body of adopt notifications.' '
 	cover "$NOTIFY" adopt 1 1001 &&
 	grep ^Subject: sendmail.out >actual &&
 	cat <<-EOD >expected &&
-	Subject: AUR Ownership Notification for foobar
+	Subject: MPR Ownership Notification for foobar
 	EOD
 	test_cmp actual expected &&
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
@@ -171,8 +171,8 @@ test_expect_success 'Test subject and body of adopt notifications.' '
 	cat <<-EOD >expected &&
 	The package foobar [1] was adopted by user [2].
 
-	[1] https://aur.archlinux.org/pkgbase/foobar/
-	[2] https://aur.archlinux.org/account/user/
+	[1] https://mpr.hunterwittenborn.com/pkgbase/foobar/
+	[2] https://mpr.hunterwittenborn.com/account/user/
 	EOD
 	test_cmp actual expected
 '
@@ -182,7 +182,7 @@ test_expect_success 'Test subject and body of disown notifications.' '
 	cover "$NOTIFY" disown 1 1001 &&
 	grep ^Subject: sendmail.out >actual &&
 	cat <<-EOD >expected &&
-	Subject: AUR Ownership Notification for foobar
+	Subject: MPR Ownership Notification for foobar
 	EOD
 	test_cmp actual expected &&
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
@@ -190,8 +190,8 @@ test_expect_success 'Test subject and body of disown notifications.' '
 	cat <<-EOD >expected &&
 	The package foobar [1] was disowned by user [2].
 
-	[1] https://aur.archlinux.org/pkgbase/foobar/
-	[2] https://aur.archlinux.org/account/user/
+	[1] https://mpr.hunterwittenborn.com/pkgbase/foobar/
+	[2] https://mpr.hunterwittenborn.com/account/user/
 	EOD
 	test_cmp actual expected
 '
@@ -201,7 +201,7 @@ test_expect_success 'Test subject and body of co-maintainer addition notificatio
 	cover "$NOTIFY" comaintainer-add 1 1001 &&
 	grep ^Subject: sendmail.out >actual &&
 	cat <<-EOD >expected &&
-	Subject: AUR Co-Maintainer Notification for foobar
+	Subject: MPR Co-Maintainer Notification for foobar
 	EOD
 	test_cmp actual expected &&
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
@@ -209,7 +209,7 @@ test_expect_success 'Test subject and body of co-maintainer addition notificatio
 	cat <<-EOD >expected &&
 	You were added to the co-maintainer list of foobar [1].
 
-	[1] https://aur.archlinux.org/pkgbase/foobar/
+	[1] https://mpr.hunterwittenborn.com/pkgbase/foobar/
 	EOD
 	test_cmp actual expected
 '
@@ -219,7 +219,7 @@ test_expect_success 'Test subject and body of co-maintainer removal notification
 	cover "$NOTIFY" comaintainer-remove 1 1001 &&
 	grep ^Subject: sendmail.out >actual &&
 	cat <<-EOD >expected &&
-	Subject: AUR Co-Maintainer Notification for foobar
+	Subject: MPR Co-Maintainer Notification for foobar
 	EOD
 	test_cmp actual expected &&
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
@@ -227,7 +227,7 @@ test_expect_success 'Test subject and body of co-maintainer removal notification
 	cat <<-EOD >expected &&
 	You were removed from the co-maintainer list of foobar [1].
 
-	[1] https://aur.archlinux.org/pkgbase/foobar/
+	[1] https://mpr.hunterwittenborn.com/pkgbase/foobar/
 	EOD
 	test_cmp actual expected
 '
@@ -237,7 +237,7 @@ test_expect_success 'Test subject and body of delete notifications.' '
 	cover "$NOTIFY" delete 1 1001 &&
 	grep ^Subject: sendmail.out >actual &&
 	cat <<-EOD >expected &&
-	Subject: AUR Package deleted: foobar
+	Subject: MPR Package deleted: foobar
 	EOD
 	test_cmp actual expected &&
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
@@ -247,8 +247,8 @@ test_expect_success 'Test subject and body of delete notifications.' '
 
 	You will no longer receive notifications about this package.
 
-	[1] https://aur.archlinux.org/account/user/
-	[2] https://aur.archlinux.org/pkgbase/foobar/
+	[1] https://mpr.hunterwittenborn.com/account/user/
+	[2] https://mpr.hunterwittenborn.com/pkgbase/foobar/
 	EOD
 	test_cmp actual expected
 '
@@ -258,7 +258,7 @@ test_expect_success 'Test subject and body of merge notifications.' '
 	cover "$NOTIFY" delete 1 1001 1002 &&
 	grep ^Subject: sendmail.out >actual &&
 	cat <<-EOD >expected &&
-	Subject: AUR Package deleted: foobar
+	Subject: MPR Package deleted: foobar
 	EOD
 	test_cmp actual expected &&
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
@@ -270,9 +270,9 @@ test_expect_success 'Test subject and body of merge notifications.' '
 	If you no longer wish receive notifications about the new package,
 	please go to [3] and click "Disable notifications".
 
-	[1] https://aur.archlinux.org/account/user/
-	[2] https://aur.archlinux.org/pkgbase/foobar/
-	[3] https://aur.archlinux.org/pkgbase/foobar2/
+	[1] https://mpr.hunterwittenborn.com/account/user/
+	[2] https://mpr.hunterwittenborn.com/pkgbase/foobar/
+	[3] https://mpr.hunterwittenborn.com/pkgbase/foobar2/
 	EOD
 	test_cmp actual expected
 '
@@ -301,8 +301,8 @@ test_expect_success 'Test Cc, subject and body of request open notifications.' '
 
 	This is a request test comment.
 
-	[1] https://aur.archlinux.org/account/user/
-	[2] https://aur.archlinux.org/pkgbase/foobar/
+	[1] https://mpr.hunterwittenborn.com/account/user/
+	[2] https://mpr.hunterwittenborn.com/pkgbase/foobar/
 	EOD
 	test_cmp actual expected
 '
@@ -322,9 +322,9 @@ test_expect_success 'Test subject and body of request open notifications for mer
 
 	This is a request test comment.
 
-	[1] https://aur.archlinux.org/account/user/
-	[2] https://aur.archlinux.org/pkgbase/foobar/
-	[3] https://aur.archlinux.org/pkgbase/foobar2/
+	[1] https://mpr.hunterwittenborn.com/account/user/
+	[2] https://mpr.hunterwittenborn.com/pkgbase/foobar/
+	[3] https://mpr.hunterwittenborn.com/pkgbase/foobar2/
 	EOD
 	test_cmp actual expected
 '
@@ -347,7 +347,7 @@ test_expect_success 'Test Cc, subject and body of request close notifications.' 
 	cat <<-EOD >expected &&
 	Request #3001 has been accepted by user [1].
 
-	[1] https://aur.archlinux.org/account/user/
+	[1] https://mpr.hunterwittenborn.com/account/user/
 	EOD
 	test_cmp actual expected
 '
@@ -363,7 +363,7 @@ test_expect_success 'Test subject and body of request close notifications (auto-
 	sed -n "/^\$/,\$p" sendmail.out | base64 -d >actual &&
 	echo >>actual &&
 	cat <<-EOD >expected &&
-	Request #3001 has been accepted automatically by the Arch User
+	Request #3001 has been accepted automatically by the makedeb Package
 	Repository package request system.
 	EOD
 	test_cmp actual expected
@@ -404,7 +404,7 @@ test_expect_success 'Test subject and body of request close notifications with c
 
 	This is a test closure comment.
 
-	[1] https://aur.archlinux.org/account/user/
+	[1] https://mpr.hunterwittenborn.com/account/user/
 	EOD
 	test_cmp actual expected
 '
@@ -423,7 +423,7 @@ test_expect_success 'Test subject and body of TU vote reminders.' '
 	Please remember to cast your vote on proposal 1 [1]. The voting period
 	ends in less than 48 hours.
 
-	[1] https://aur.archlinux.org/tu/?id=1
+	[1] https://mpr.hunterwittenborn.com/tu/?id=1
 	EOD
 	test_cmp actual expected
 '
