@@ -31,19 +31,19 @@ name = aur.db
 
 [options]
 aurwebdir = $TOPLEVEL
-aur_location = https://aur.archlinux.org
-aur_request_ml = aur-requests@lists.archlinux.org
+aur_location = https://mpr.hunterwittenborn.com
+aur_request_ml = mpr-requests@lists.hunterwittenborn.com
 enable-maintenance = 0
 maintenance-exceptions = 127.0.0.1
-commit_uri = https://aur.archlinux.org/cgit/aur.git/log/?h=%s&id=%s
+commit_uri = https://mpr.hunterwittenborn.com/cgit/aur.git/log/?h=%s&id=%s
 localedir = $TOPLEVEL/web/locale/
 snapshot_uri = /cgit/aur.git/snapshot/%s.tar.gz
 
 [notifications]
 notify-cmd = $NOTIFY
 sendmail = ./sendmail.sh
-sender = notify@aur.archlinux.org
-reply-to = noreply@aur.archlinux.org
+sender = mpr@hunterwittenborn.com
+reply-to = mpr@hunterwittenborn.com
 
 [auth]
 valid-keytypes = ssh-rsa ssh-dss ecdsa-sha2-nistp256 ecdsa-sha2-nistp384 ecdsa-sha2-nistp521 ssh-ed25519
@@ -56,7 +56,7 @@ repo-path = ./aur.git/
 repo-regex = [a-z0-9][a-z0-9.+_-]*$
 git-shell-cmd = ./git-shell.sh
 git-update-cmd = ./update.sh
-ssh-cmdline = ssh aur@aur.archlinux.org
+ssh-cmdline = ssh mpr@mpr.hunterwittenborn.com
 
 [update]
 max-blob-size = 256000
