@@ -1,6 +1,6 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the AURWEB package.
+# This file is distributed under the same license as the MPRWEB package.
 # 
 # Translators:
 # byStarTW (pan93412) <pan93412@gmail.com>, 2018
@@ -200,9 +200,9 @@ msgstr "搜尋我共同維護的套件"
 #: html/home.php
 #, php-format
 msgid ""
-"Welcome to the AUR! Please read the %sAUR User Guidelines%s and %sAUR TU "
+"Welcome to the MPR! Please read the %sMPR User Guidelines%s and %sMPR TU "
 "Guidelines%s for more information."
-msgstr "歡迎來到 AUR！請閱讀 %sAUR 使用者指導方針%s 和 %sAUR 受信使用者指導方針%s 以獲取更多的詳細資訊。"
+msgstr "歡迎來到 MPR！請閱讀 %sMPR 使用者指導方針%s 和 %sMPR 受信使用者指導方針%s 以獲取更多的詳細資訊。"
 
 #: html/home.php
 #, php-format
@@ -225,9 +225,9 @@ msgstr "免責聲明"
 
 #: html/home.php template/footer.php
 msgid ""
-"AUR packages are user produced content. Any use of the provided files is at "
+"MPR packages are user produced content. Any use of the provided files is at "
 "your own risk."
-msgstr "AUR 上的檔案是使用者產生的內容。任何使用檔案造成的風險由您自行承擔。"
+msgstr "MPR 上的檔案是使用者產生的內容。任何使用檔案造成的風險由您自行承擔。"
 
 #: html/home.php
 msgid "Learn more..."
@@ -264,7 +264,7 @@ msgstr "刪除請求"
 
 #: html/home.php
 msgid ""
-"Request a package to be removed from the Arch User Repository. Please do not"
+"Request a package to be removed from the makedeb Package Repository. Please do not"
 " use this if a package is broken and can be fixed easily. Instead, contact "
 "the package maintainer and file orphan request if necessary."
 msgstr "請求套件從 Arch 使用者套件庫中移除。如果套件損毀但可以很容易的被修復，請不要使用這個請求。您應該聯絡套件維護者，並在必要時提出棄置請求。"
@@ -293,14 +293,14 @@ msgstr "遞交套件"
 #: html/home.php
 #, php-format
 msgid ""
-"Git over SSH is now used to submit packages to the AUR. See the %sSubmitting"
-" packages%s section of the Arch User Repository ArchWiki page for more "
+"Git over SSH is now used to submit packages to the MPR. See the %sSubmitting"
+" packages%s section of the makedeb Package Repository ArchWiki page for more "
 "details."
-msgstr "現在遞交套件到 AUR 上的方法是透過 SSH 的 Git。參見 ArchWiki 上的 Arch User Repository 頁面之 %s遞交套件%s 章節以取得更多資訊。"
+msgstr "現在遞交套件到 MPR 上的方法是透過 SSH 的 Git。參見 ArchWiki 上的 makedeb Package Repository 頁面之 %s遞交套件%s 章節以取得更多資訊。"
 
 #: html/home.php
-msgid "The following SSH fingerprints are used for the AUR:"
-msgstr "AUR 使用下列 SSH 指紋："
+msgid "The following SSH fingerprints are used for the MPR:"
+msgstr "MPR 使用下列 SSH 指紋："
 
 #: html/home.php
 msgid "Discussion"
@@ -309,10 +309,10 @@ msgstr "討論"
 #: html/home.php
 #, php-format
 msgid ""
-"General discussion regarding the Arch User Repository (AUR) and Trusted User"
+"General discussion regarding the makedeb Package Repository (MPR) and Trusted User"
 " structure takes place on %saur-general%s. For discussion relating to the "
-"development of the AUR web interface, use the %saur-dev%s mailing list."
-msgstr "與 Arch 使用者套件庫(AUR)及受信使用者結構相關的一般性討論請見 %saur-general%s 。討論關於 AUR 網頁介面的開發，請使用 %saur-dev%s 郵件列表。"
+"development of the MPR web interface, use the %saur-dev%s mailing list."
+msgstr "與 Arch 使用者套件庫(MPR)及受信使用者結構相關的一般性討論請見 %saur-general%s 。討論關於 MPR 網頁介面的開發，請使用 %saur-dev%s 郵件列表。"
 
 #: html/home.php
 msgid "Bug Reporting"
@@ -321,11 +321,11 @@ msgstr "臭蟲回報"
 #: html/home.php
 #, php-format
 msgid ""
-"If you find a bug in the AUR web interface, please fill out a bug report on "
-"our %sbug tracker%s. Use the tracker to report bugs in the AUR web interface"
+"If you find a bug in the MPR web interface, please fill out a bug report on "
+"our %sbug tracker%s. Use the tracker to report bugs in the MPR web interface"
 " %sonly%s. To report packaging bugs contact the package maintainer or leave "
 "a comment on the appropriate package page."
-msgstr "如果您在 AUR 網頁介面中發現了臭蟲，請在我們的 %s臭蟲追蹤系統%s 中回報。請%s只%s回報 AUR 網頁介面本身的臭蟲。要回報打包臭蟲，請連絡套件的維護者或是在對應的套件頁面中留下評論。"
+msgstr "如果您在 MPR 網頁介面中發現了臭蟲，請在我們的 %s臭蟲追蹤系統%s 中回報。請%s只%s回報 MPR 網頁介面本身的臭蟲。要回報打包臭蟲，請連絡套件的維護者或是在對應的套件頁面中留下評論。"
 
 #: html/home.php
 msgid "Package Search"
@@ -499,8 +499,8 @@ msgstr "刪除套件"
 #, php-format
 msgid ""
 "Use this form to delete the package base %s%s%s and the following packages "
-"from the AUR: "
-msgstr "使用這個表單以從 AUR 刪除套件基礎 %s%s%s 以及以下的套件。"
+"from the MPR: "
+msgstr "使用這個表單以從 MPR 刪除套件基礎 %s%s%s 以及以下的套件。"
 
 #: html/pkgdel.php
 msgid "Deletion of a package is permanent. "
@@ -1134,8 +1134,8 @@ msgstr "請求關閉成功。"
 
 #: template/account_delete.php
 #, php-format
-msgid "You can use this form to permanently delete the AUR account %s."
-msgstr "您可以使用這個表單來永久刪除 AUR 帳號 %s 。"
+msgid "You can use this form to permanently delete the MPR account %s."
+msgstr "您可以使用這個表單來永久刪除 MPR 帳號 %s 。"
 
 #: template/account_delete.php
 #, php-format
@@ -1295,10 +1295,10 @@ msgstr "隱藏電子郵件地址"
 
 #: template/account_edit_form.php
 msgid ""
-"If you do not hide your email address, it is visible to all registered AUR "
+"If you do not hide your email address, it is visible to all registered MPR "
 "users. If you hide your email address, it is visible to members of the Arch "
 "Linux staff only."
-msgstr "如果您不隱藏您的電子郵件地址，它就是對所有已註冊的 AUR 使用者可見。如果您隱藏您的電子郵件地址，它就只對 Arch Linux 工作人員可見。"
+msgstr "如果您不隱藏您的電子郵件地址，它就是對所有已註冊的 MPR 使用者可見。如果您隱藏您的電子郵件地址，它就只對 Arch Linux 工作人員可見。"
 
 #: template/account_edit_form.php
 msgid "Backup Email Address"
@@ -1344,7 +1344,7 @@ msgstr "重新輸入密碼"
 #: template/account_edit_form.php
 msgid ""
 "The following information is only required if you want to submit packages to"
-" the Arch User Repository."
+" the makedeb Package Repository."
 msgstr "以下的資訊僅在您想要遞交套件到 Arch 使用者套件庫時是必須的。"
 
 #: template/account_edit_form.php
@@ -1377,9 +1377,9 @@ msgstr "您目前的密碼"
 
 #: template/account_edit_form.php
 msgid ""
-"To protect the AUR against automated account creation, we kindly ask you to "
+"To protect the MPR against automated account creation, we kindly ask you to "
 "provide the output of the following command:"
-msgstr "為了保護 AUR 不受自動建立帳號的侵擾，我們請您提供以下指令的輸出："
+msgstr "為了保護 MPR 不受自動建立帳號的侵擾，我們請您提供以下指令的輸出："
 
 #: template/account_edit_form.php
 msgid "Answer"
@@ -1595,9 +1595,9 @@ msgstr "新增評論"
 
 #: template/pkg_comment_form.php
 msgid ""
-"Git commit identifiers referencing commits in the AUR package repository and"
+"Git commit identifiers referencing commits in the MPR package repository and"
 " URLs are converted to links automatically."
-msgstr "引用 AUR 軟體庫的 Git 遞交識別符，URL 會自動轉換為連結。"
+msgstr "引用 MPR 軟體庫的 Git 遞交識別符，URL 會自動轉換為連結。"
 
 #: template/pkg_comment_form.php
 #, php-format
@@ -2110,8 +2110,8 @@ msgid "Back"
 msgstr "返回"
 
 #: scripts/notify.py
-msgid "AUR Password Reset"
-msgstr "AUR 密碼重設"
+msgid "MPR Password Reset"
+msgstr "MPR 密碼重設"
 
 #: scripts/notify.py
 #, python-brace-format
@@ -2122,20 +2122,20 @@ msgid ""
 msgstr "有一個關於您帳號 {user} 對應到電子信箱的密碼重設請求。若您想要重設您的密碼，請前往以下的網址 [1]，否則忽略這訊息就沒事了。"
 
 #: scripts/notify.py
-msgid "Welcome to the Arch User Repository"
+msgid "Welcome to the makedeb Package Repository"
 msgstr "歡迎來到 Arch 使用者軟體庫"
 
 #: scripts/notify.py
 msgid ""
-"Welcome to the Arch User Repository! In order to set an initial password for"
+"Welcome to the makedeb Package Repository! In order to set an initial password for"
 " your new account, please click the link [1] below. If the link does not "
 "work, try copying and pasting it into your browser."
 msgstr "歡迎來到 Arch 使用者軟體庫！為了要設定您新帳號的初始密碼，請點擊以下的連結 [1]。若連結沒辦法點擊，請嘗試複製並貼上連結到您的瀏覽器中。 "
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Comment for {pkgbase}"
-msgstr "{pkgbase} 的 AUR 評論"
+msgid "MPR Comment for {pkgbase}"
+msgstr "{pkgbase} 的 MPR 評論"
 
 #: scripts/notify.py
 #, python-brace-format
@@ -2151,8 +2151,8 @@ msgstr "若您不再想收到此軟體包的通知，請前往軟體包頁面 [2
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Package Update: {pkgbase}"
-msgstr "AUR 軟體包更新：{pkgbase}"
+msgid "MPR Package Update: {pkgbase}"
+msgstr "MPR 軟體包更新：{pkgbase}"
 
 #: scripts/notify.py
 #, python-brace-format
@@ -2161,8 +2161,8 @@ msgstr "{user} [1] 推送了新的提交到 {pkgbase} [2]。"
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Out-of-date Notification for {pkgbase}"
-msgstr "{pkgbase} 的 AUR 過期通知"
+msgid "MPR Out-of-date Notification for {pkgbase}"
+msgstr "{pkgbase} 的 MPR 過期通知"
 
 #: scripts/notify.py
 #, python-brace-format
@@ -2171,8 +2171,8 @@ msgstr "您的軟體包 {pkgbase} [1] 已經被 {user} [2] 使用者標記為過
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Ownership Notification for {pkgbase}"
-msgstr "{pkgbase} 的 AUR 所有權通知"
+msgid "MPR Ownership Notification for {pkgbase}"
+msgstr "{pkgbase} 的 MPR 所有權通知"
 
 #: scripts/notify.py
 #, python-brace-format
@@ -2186,8 +2186,8 @@ msgstr "軟體包 {pkgbase} [1] 已經被 {user} [2] 使用者拋棄。"
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Co-Maintainer Notification for {pkgbase}"
-msgstr "{pkgbase} 的 AUR 共同維護者通知"
+msgid "MPR Co-Maintainer Notification for {pkgbase}"
+msgstr "{pkgbase} 的 MPR 共同維護者通知"
 
 #: scripts/notify.py
 #, python-brace-format
@@ -2201,8 +2201,8 @@ msgstr "您已經從 {pkgbase} [1] 的共同維護者列表中移除了。"
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Package deleted: {pkgbase}"
-msgstr "已刪除 AUR 軟體包：{pkgbase}"
+msgid "MPR Package deleted: {pkgbase}"
+msgstr "已刪除 MPR 軟體包：{pkgbase}"
 
 #: scripts/notify.py
 #, python-brace-format

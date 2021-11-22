@@ -1,6 +1,6 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the AURWEB package.
+# This file is distributed under the same license as the MPRWEB package.
 # 
 # Translators:
 # safa1996alfulaij <safa1996alfulaij@gmail.com>, 2015
@@ -199,7 +199,7 @@ msgstr ""
 #: html/home.php
 #, php-format
 msgid ""
-"Welcome to the AUR! Please read the %sAUR User Guidelines%s and %sAUR TU "
+"Welcome to the MPR! Please read the %sMPR User Guidelines%s and %sMPR TU "
 "Guidelines%s for more information."
 msgstr "مرحبًا بك في م‌م‌آ! فضلًا اقرأ %sإرشادات مستخدمي م‌م‌آ%s و%sإرشادات مستخدمي م‌م‌آ الموثوقين (م‌م)%s لمعلومات أكثر."
 
@@ -224,7 +224,7 @@ msgstr "إخلاء مسؤوليّة"
 
 #: html/home.php template/footer.php
 msgid ""
-"AUR packages are user produced content. Any use of the provided files is at "
+"MPR packages are user produced content. Any use of the provided files is at "
 "your own risk."
 msgstr "حزم م‌م‌آ هي حزم قدّمها المستخدمين. أيّ استخدام للملفّات يكون على مسؤوليّتك الخاصّة."
 
@@ -263,7 +263,7 @@ msgstr "طلب الحذف"
 
 #: html/home.php
 msgid ""
-"Request a package to be removed from the Arch User Repository. Please do not"
+"Request a package to be removed from the makedeb Package Repository. Please do not"
 " use this if a package is broken and can be fixed easily. Instead, contact "
 "the package maintainer and file orphan request if necessary."
 msgstr "اطلب أن تُزال الحزمة من مستودع مستخدمي آرتش. فضلًا لا تستخدم هذه إن كانت الحزمة معطوبة ويمكن إصلاحها بسهولة. بدل ذلك تواصل مع مصين الحزمة وأبلغ عن طلب \"يتيمة\" إن تطلّب الأمر."
@@ -292,13 +292,13 @@ msgstr "تقديم الحزم"
 #: html/home.php
 #, php-format
 msgid ""
-"Git over SSH is now used to submit packages to the AUR. See the %sSubmitting"
-" packages%s section of the Arch User Repository ArchWiki page for more "
+"Git over SSH is now used to submit packages to the MPR. See the %sSubmitting"
+" packages%s section of the makedeb Package Repository ArchWiki page for more "
 "details."
 msgstr "غِت Git عبر SSH يُستخدم الآن لتقديم الحزم إلى مستودع مستخدمي آرتش (م‌م‌آ). طالع قسم %sتقديم الحزم%s في صفحة مستودع مستخدمي آرتش في ويكي آرتش لتفاصيل أكثر."
 
 #: html/home.php
-msgid "The following SSH fingerprints are used for the AUR:"
+msgid "The following SSH fingerprints are used for the MPR:"
 msgstr "بصمات SSH الآتية مستخدمة في م‌م‌آ:"
 
 #: html/home.php
@@ -308,9 +308,9 @@ msgstr "النّقاش"
 #: html/home.php
 #, php-format
 msgid ""
-"General discussion regarding the Arch User Repository (AUR) and Trusted User"
+"General discussion regarding the makedeb Package Repository (MPR) and Trusted User"
 " structure takes place on %saur-general%s. For discussion relating to the "
-"development of the AUR web interface, use the %saur-dev%s mailing list."
+"development of the MPR web interface, use the %saur-dev%s mailing list."
 msgstr "النّقاشات العاّمة حول مستودع مستخدمي آرتش (م‌م‌آ) وبنية المستخدمين الموثوقين تكون في  %saur-general%s. للنّقاشات المتعلّقة بتطوير واجهة وِبّ م‌م‌آ، استخدم قائمة %saur-dev%s البريديّة."
 
 #: html/home.php
@@ -320,8 +320,8 @@ msgstr "الإبلاغ عن العلل"
 #: html/home.php
 #, php-format
 msgid ""
-"If you find a bug in the AUR web interface, please fill out a bug report on "
-"our %sbug tracker%s. Use the tracker to report bugs in the AUR web interface"
+"If you find a bug in the MPR web interface, please fill out a bug report on "
+"our %sbug tracker%s. Use the tracker to report bugs in the MPR web interface"
 " %sonly%s. To report packaging bugs contact the package maintainer or leave "
 "a comment on the appropriate package page."
 msgstr "إن وجدت علّة في واجهة وِبّ م‌م‌آ، فضلًا املأ تقريرًا بها في %sمتعقّب العلل%s. استخدم المتعقّب للإبلاغ عن العلل في واجهة وِبّ م‌م‌آ %sفقط%s. للإبلاغ عن علل الحزم راسل مديرها أو اترك تعليقًا في صفحة الحزمة المناسبة."
@@ -498,7 +498,7 @@ msgstr "احذف الحزمة"
 #, php-format
 msgid ""
 "Use this form to delete the package base %s%s%s and the following packages "
-"from the AUR: "
+"from the MPR: "
 msgstr "استخدم هذه الاستمارة لحذف أساس الحزمة %s%s%s والحزم الآتية من م‌م‌آ:"
 
 #: html/pkgdel.php
@@ -1133,7 +1133,7 @@ msgstr "ُأُغلق الطّلب بنجاح."
 
 #: template/account_delete.php
 #, php-format
-msgid "You can use this form to permanently delete the AUR account %s."
+msgid "You can use this form to permanently delete the MPR account %s."
 msgstr "يمكنك استخدام هذه الاستمارة لحذف حساب م‌م‌آ هذا %s نهائيًّا."
 
 #: template/account_delete.php
@@ -1294,7 +1294,7 @@ msgstr "أخفِ عنوان البريد الإلكترونيّ"
 
 #: template/account_edit_form.php
 msgid ""
-"If you do not hide your email address, it is visible to all registered AUR "
+"If you do not hide your email address, it is visible to all registered MPR "
 "users. If you hide your email address, it is visible to members of the Arch "
 "Linux staff only."
 msgstr ""
@@ -1343,7 +1343,7 @@ msgstr "أعد كتابة كلمة المرور"
 #: template/account_edit_form.php
 msgid ""
 "The following information is only required if you want to submit packages to"
-" the Arch User Repository."
+" the makedeb Package Repository."
 msgstr "المعلومات الآتية مطلوبة فقط إن أردت تقديم حزم إلى مستودع مستخدمي آرتش."
 
 #: template/account_edit_form.php
@@ -1376,7 +1376,7 @@ msgstr ""
 
 #: template/account_edit_form.php
 msgid ""
-"To protect the AUR against automated account creation, we kindly ask you to "
+"To protect the MPR against automated account creation, we kindly ask you to "
 "provide the output of the following command:"
 msgstr ""
 
@@ -1599,7 +1599,7 @@ msgstr "أضف تعليقًا"
 
 #: template/pkg_comment_form.php
 msgid ""
-"Git commit identifiers referencing commits in the AUR package repository and"
+"Git commit identifiers referencing commits in the MPR package repository and"
 " URLs are converted to links automatically."
 msgstr ""
 
@@ -2134,7 +2134,7 @@ msgid "Back"
 msgstr "السّابق"
 
 #: scripts/notify.py
-msgid "AUR Password Reset"
+msgid "MPR Password Reset"
 msgstr ""
 
 #: scripts/notify.py
@@ -2146,19 +2146,19 @@ msgid ""
 msgstr ""
 
 #: scripts/notify.py
-msgid "Welcome to the Arch User Repository"
+msgid "Welcome to the makedeb Package Repository"
 msgstr ""
 
 #: scripts/notify.py
 msgid ""
-"Welcome to the Arch User Repository! In order to set an initial password for"
+"Welcome to the makedeb Package Repository! In order to set an initial password for"
 " your new account, please click the link [1] below. If the link does not "
 "work, try copying and pasting it into your browser."
 msgstr ""
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Comment for {pkgbase}"
+msgid "MPR Comment for {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py
@@ -2175,7 +2175,7 @@ msgstr ""
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Package Update: {pkgbase}"
+msgid "MPR Package Update: {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py
@@ -2185,7 +2185,7 @@ msgstr ""
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Out-of-date Notification for {pkgbase}"
+msgid "MPR Out-of-date Notification for {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py
@@ -2195,7 +2195,7 @@ msgstr ""
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Ownership Notification for {pkgbase}"
+msgid "MPR Ownership Notification for {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py
@@ -2210,7 +2210,7 @@ msgstr ""
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Co-Maintainer Notification for {pkgbase}"
+msgid "MPR Co-Maintainer Notification for {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py
@@ -2225,7 +2225,7 @@ msgstr ""
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Package deleted: {pkgbase}"
+msgid "MPR Package deleted: {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py

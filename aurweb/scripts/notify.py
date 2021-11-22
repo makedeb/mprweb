@@ -78,7 +78,7 @@ class Notification:
             msg['To'] = to
             if self.get_cc():
                 msg['Cc'] = str.join(', ', self.get_cc())
-            msg['X-AUR-Reason'] = reason
+            msg['X-MPR-Reason'] = reason
             msg['Date'] = email.utils.formatdate(localtime=True)
 
             for key, value in self.get_headers().items():
@@ -138,7 +138,7 @@ class ResetKeyNotification(Notification):
             return [(self._to, self._lang)]
 
     def get_subject(self, lang):
-        return aurweb.l10n.translator.translate('AUR Password Reset', lang)
+        return aurweb.l10n.translator.translate('MPR Password Reset', lang)
 
     def get_body(self, lang):
         return aurweb.l10n.translator.translate(
@@ -155,12 +155,12 @@ class ResetKeyNotification(Notification):
 class WelcomeNotification(ResetKeyNotification):
     def get_subject(self, lang):
         return aurweb.l10n.translator.translate(
-            'Welcome to the Arch User Repository',
+            'Welcome to the makedeb Package Repository',
             lang)
 
     def get_body(self, lang):
         return aurweb.l10n.translator.translate(
-            'Welcome to the Arch User Repository! In order to set an '
+            'Welcome to the makedeb Package Repository! In order to set an '
             'initial password for your new account, please click the '
             'link [1] below. If the link does not work, try copying and '
             'pasting it into your browser.', lang)
@@ -189,7 +189,7 @@ class CommentNotification(Notification):
 
     def get_subject(self, lang):
         return aurweb.l10n.translator.translate(
-            'AUR Comment for {pkgbase}',
+            'MPR Comment for {pkgbase}',
             lang).format(pkgbase=self._pkgbase)
 
     def get_body(self, lang):
@@ -236,7 +236,7 @@ class UpdateNotification(Notification):
 
     def get_subject(self, lang):
         return aurweb.l10n.translator.translate(
-            'AUR Package Update: {pkgbase}',
+            'MPR Package Update: {pkgbase}',
             lang).format(pkgbase=self._pkgbase)
 
     def get_body(self, lang):
@@ -287,7 +287,7 @@ class FlagNotification(Notification):
 
     def get_subject(self, lang):
         return aurweb.l10n.translator.translate(
-            'AUR Out-of-date Notification for {pkgbase}',
+            'MPR Out-of-date Notification for {pkgbase}',
             lang).format(pkgbase=self._pkgbase)
 
     def get_body(self, lang):
@@ -327,7 +327,7 @@ class OwnershipEventNotification(Notification):
 
     def get_subject(self, lang):
         return aurweb.l10n.translator.translate(
-            'AUR Ownership Notification for {pkgbase}',
+            'MPR Ownership Notification for {pkgbase}',
             lang).format(pkgbase=self._pkgbase)
 
     def get_refs(self):
@@ -363,7 +363,7 @@ class ComaintainershipEventNotification(Notification):
 
     def get_subject(self, lang):
         return aurweb.l10n.translator.translate(
-            'AUR Co-Maintainer Notification for {pkgbase}',
+            'MPR Co-Maintainer Notification for {pkgbase}',
             lang).format(pkgbase=self._pkgbase)
 
     def get_refs(self):
@@ -408,7 +408,7 @@ class DeleteNotification(Notification):
 
     def get_subject(self, lang):
         return aurweb.l10n.translator.translate(
-            'AUR Package deleted: {pkgbase}',
+            'MPR Package deleted: {pkgbase}',
             lang).format(pkgbase=self._old_pkgbase)
 
     def get_body(self, lang):
@@ -545,7 +545,7 @@ class RequestCloseNotification(Notification):
             body = 'Request #%d has been %s by %s [1]' % \
                    (self._reqid, self._reason, self._user)
         else:
-            body = 'Request #%d has been %s automatically by the Arch User ' \
+            body = 'Request #%d has been %s automatically by the makedeb Package ' \
                    'Repository package request system' % \
                    (self._reqid, self._reason)
         if self._text.strip() == '':
