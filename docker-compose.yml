@@ -282,6 +282,8 @@ services:
     stdin_open: true
     tty: true
     volumes:
+      - ./conf/config.defaults:/aurweb/conf/config.defaults
+      - ./conf/config.dev:/aurweb/conf/config.dev
       - ./data/git_data:/aurweb/aur.git
       - ./cache:/data
       - ./aurweb:/aurweb/aurweb
@@ -308,6 +310,7 @@ services:
     depends_on:
       - mariadb_test
     volumes:
+      - ./docker:/docker
       - mariadb_test_run:/var/run/mysqld
       - ./conf/config.defaults:/aurweb/conf/config.defaults
       - ./conf/config.dev:/aurweb/conf/config.dev
@@ -337,6 +340,7 @@ services:
     depends_on:
       - mariadb_test
     volumes:
+      - ./docker:/docker
       - mariadb_test_run:/var/run/mysqld
       - ./conf/config.defaults:/aurweb/conf/config.defaults
       - ./conf/config.dev:/aurweb/conf/config.dev

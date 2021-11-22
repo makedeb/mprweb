@@ -14,7 +14,7 @@ ifdef PROVE
 sh:
 	prove .
 else
-sh: $(T)
+sh: t2500-notify.t
 endif
 
 coverage:
@@ -26,6 +26,6 @@ clean:
 	rm -f ../.coverage
 
 $(T):
-	@echo "*** $@ ***"; $(SHELL) $@
+	@echo "*** $@ ***"; $(SHELL) $@ -v
 
 .PHONY: check coverage $(FOREIGN_TARGETS) clean $(T)

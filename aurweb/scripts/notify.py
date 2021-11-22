@@ -211,7 +211,7 @@ class CommentNotification(Notification):
 
     def get_headers(self):
         thread_id = '<pkg-notifications-' + self._pkgbase + \
-                    '@aur.archlinux.org>'
+                    '@mpr.hunterwittenborn.com>'
         return headers_reply(thread_id)
 
 
@@ -258,7 +258,7 @@ class UpdateNotification(Notification):
 
     def get_headers(self):
         thread_id = '<pkg-notifications-' + self._pkgbase + \
-                    '@aur.archlinux.org>'
+                    '@mpr.hunterwittenborn.com>'
         return headers_reply(thread_id)
 
 
@@ -492,7 +492,7 @@ class RequestOpenNotification(Notification):
         return refs
 
     def get_headers(self):
-        thread_id = '<pkg-request-' + str(self._reqid) + '@aur.archlinux.org>'
+        thread_id = '<pkg-request-' + str(self._reqid) + '@mpr.hunterwittenborn.com>'
         # Use a deterministic Message-ID for the first email referencing a
         # request.
         headers = headers_msgid(thread_id)
@@ -561,7 +561,7 @@ class RequestCloseNotification(Notification):
             return ()
 
     def get_headers(self):
-        thread_id = '<pkg-request-' + str(self._reqid) + '@aur.archlinux.org>'
+        thread_id = '<pkg-request-' + str(self._reqid) + '@mpr.hunterwittenborn.com>'
         headers = headers_reply(thread_id)
         return headers
 
