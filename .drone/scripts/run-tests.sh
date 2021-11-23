@@ -22,7 +22,7 @@ until : > /dev/tcp/127.0.0.1/3306; do sleep 1s; done
 make -C po all install
 make -C test clean
 make -C test sh
-pytest
+docker/scripts/run-pytests.sh --no-coverage
 make -C test coverage
 
 flake8 --count aurweb

@@ -14,7 +14,7 @@ ifdef PROVE
 sh:
 	prove .
 else
-sh: t2500-notify.t
+sh: $(T)
 endif
 
 coverage:
