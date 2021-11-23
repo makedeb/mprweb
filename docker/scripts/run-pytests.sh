@@ -31,11 +31,8 @@ sed -i 's|^password =.*|;&|' conf/config
 sed -i 's|^user =.*|user = root|' conf/config
 sed -i 's|^port =.^|;&|' conf/config
 
-cat conf/config
-exit 1
-
 # Run pytest with optional targets in front of it.
-pytest -vv
+pytest
 
 # By default, report coverage and move it into cache.
 if [ $COVERAGE -eq 1 ]; then
