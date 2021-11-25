@@ -1,5 +1,4 @@
 import http
-import os
 
 from unittest import mock
 
@@ -27,15 +26,6 @@ async def test_asgi_startup_session_secret_exception(monkeypatch):
     with mock.patch("aurweb.config.get", side_effect=mock_get):
         with pytest.raises(Exception):
             await aurweb.asgi.app_startup()
-
-
-@pytest.mark.asyncio
-async def test_asgi_startup_exception(monkeypatch):
-    with mock.patch.dict(os.environ, {"AUR_CONFIG": "conf/config.defaults"}):
-        aurweb.config.rehash()
-        with pytest.raises(Exception):
-            await aurweb.asgi.app_startup()
-    aurweb.config.rehash()
 
 
 @pytest.mark.asyncio

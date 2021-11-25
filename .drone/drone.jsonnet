@@ -22,6 +22,7 @@ local publishImage() = {
     name: "publish-image",
     kind: "pipeline",
     type: "docker",
+	trigger: {branch: ["mprweb"]},
     depends_on: ["run-tests"],
     volumes: [
         {

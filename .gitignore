@@ -32,7 +32,7 @@ po/*.po~
 po/POTFILES
 schema/aur-schema-sqlite.sql
 test/test-results/
-test/trash directory*
+test/trash_directory*
 web/locale/*/
 web/html/*.gz
 

@@ -91,9 +91,9 @@ test_expect_success 'Test Git commit linkification.' '
 	EOD
 	cover "$RENDERCOMMENT" 5 &&
 	cat <<-EOD >expected &&
-		<p><a href="https://aur.archlinux.org/cgit/aur.git/log/?h=foobar&amp;id=${oid:0:12}">${oid:0:12}</a>
-		<a href="https://aur.archlinux.org/cgit/aur.git/log/?h=foobar&amp;id=${oid:0:7}">${oid:0:7}</a>
-		x.<a href="https://aur.archlinux.org/cgit/aur.git/log/?h=foobar&amp;id=${oid:0:12}">${oid:0:12}</a>.x
+		<p><a href="https://mpr.hunterwittenborn.com/cgit/aur.git/log/?h=foobar&amp;id=${oid:0:12}">${oid:0:12}</a>
+		<a href="https://mpr.hunterwittenborn.com/cgit/aur.git/log/?h=foobar&amp;id=${oid:0:7}">${oid:0:7}</a>
+		x.<a href="https://mpr.hunterwittenborn.com/cgit/aur.git/log/?h=foobar&amp;id=${oid:0:12}">${oid:0:12}</a>.x
 		${oid}x
 		0123456789abcdef
 		<code>$oid</code>

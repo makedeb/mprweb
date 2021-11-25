@@ -43,7 +43,7 @@ services:
     entrypoint: /docker/redis-entrypoint.sh
     command: /docker/scripts/run-redis.sh
     ports:
-      - "16379:6379"
+      - "127.0.0.1:16379:6379"
 
   mariadb:
     image: mprweb:latest
@@ -53,7 +53,7 @@ services:
     ports:
       # This will expose mariadbd on 127.0.0.1:13306 in the host.
       # Ex: `mysql -uaur -paur -h 127.0.0.1 -P 13306 aurweb`
-      - "13306:3306"
+      - "127.0.0.1:13306:3306"
     volumes:
       - mariadb_run:/var/run/mysqld # Bind socket in this volume.
       - ./data/mariadb_data:/var/lib/mysql
@@ -81,7 +81,7 @@ services:
     ports:
       # This will expose mariadbd on 127.0.0.1:13307 in the host.
       # Ex: `mysql -uaur -paur -h 127.0.0.1 -P 13306 aurweb`
-      - "13307:3306"
+      - "127.0.0.1:13307:3306"
     volumes:
       - mariadb_test_run:/var/run/mysqld # Bind socket in this volume.
 
@@ -149,7 +149,7 @@ services:
     depends_on:
       - git
     ports:
-      - "13001:3000"
+      - "127.0.0.1:13001:3000"
     volumes:
       - ./conf/cgitrc.proto:/aurweb/conf/cgitrc.proto
       - ./web/html:/aurweb/web/html
@@ -201,7 +201,7 @@ services:
       - ./web/lib:/aurweb/web/lib
       - ./templates:/aurweb/templates
     ports:
-      - "19000:9000"
+      - "127.0.0.1:19000:9000"
 
   fastapi:
     image: mprweb:latest
@@ -234,7 +234,7 @@ services:
       - ./web/lib:/aurweb/web/lib
       - ./templates:/aurweb/templates
     ports:
-      - "18000:8000"
+      - "127.0.0.1:18000:8000"
 
   nginx:
     image: mprweb:latest
@@ -245,8 +245,8 @@ services:
     entrypoint: /docker/nginx-entrypoint.sh
     command: /docker/scripts/run-nginx.sh
     ports:
-      - "8443:8443" # PHP
-      - "8444:8444" # FastAPI
+      - "127.0.0.1:8443:8443" # PHP
+      - "127.0.0.1:8444:8444" # FastAPI
     depends_on:
       - cgit-php
       - cgit-fastapi
@@ -279,6 +279,8 @@ services:
     stdin_open: true
     tty: true
     volumes:
+      - ./conf/config.defaults:/aurweb/conf/config.defaults
+      - ./conf/config.dev:/aurweb/conf/config.dev
       - ./data/git_data:/aurweb/aur.git
       - ./cache:/data
       - ./aurweb:/aurweb/aurweb
@@ -305,6 +307,7 @@ services:
     depends_on:
       - mariadb_test
     volumes:
+      - ./docker:/docker
       - mariadb_test_run:/var/run/mysqld
       - ./conf/config.defaults:/aurweb/conf/config.defaults
       - ./conf/config.dev:/aurweb/conf/config.dev
@@ -334,6 +337,7 @@ services:
     depends_on:
       - mariadb_test
     volumes:
+      - ./docker:/docker
       - mariadb_test_run:/var/run/mysqld
       - ./conf/config.defaults:/aurweb/conf/config.defaults
       - ./conf/config.dev:/aurweb/conf/config.dev

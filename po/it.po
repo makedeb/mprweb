@@ -1,6 +1,6 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the AURWEB package.
+# This file is distributed under the same license as the MPRWEB package.
 # 
 # Translators:
 # Giovanni Scafora <giovanni@archlinux.org>, 2011-2015
@@ -201,9 +201,9 @@ msgstr "Cerca i pacchetti da me co-mantenuti"
 #: html/home.php
 #, php-format
 msgid ""
-"Welcome to the AUR! Please read the %sAUR User Guidelines%s and %sAUR TU "
+"Welcome to the MPR! Please read the %sMPR User Guidelines%s and %sMPR TU "
 "Guidelines%s for more information."
-msgstr "Benvenuto in AUR! Per maggiori informazioni, leggi le %sAUR User Guidelines%s e le %sAUR TU Guidelines%s."
+msgstr "Benvenuto in MPR! Per maggiori informazioni, leggi le %sMPR User Guidelines%s e le %sMPR TU Guidelines%s."
 
 #: html/home.php
 #, php-format
@@ -226,9 +226,9 @@ msgstr "AVVISO"
 
 #: html/home.php template/footer.php
 msgid ""
-"AUR packages are user produced content. Any use of the provided files is at "
+"MPR packages are user produced content. Any use of the provided files is at "
 "your own risk."
-msgstr "i pacchetti presenti in AUR sono stati inviati dagli utenti. Usali a tuo rischio e pericolo."
+msgstr "i pacchetti presenti in MPR sono stati inviati dagli utenti. Usali a tuo rischio e pericolo."
 
 #: html/home.php
 msgid "Learn more..."
@@ -265,10 +265,10 @@ msgstr "Richiesta di rimozione di un pacchetto"
 
 #: html/home.php
 msgid ""
-"Request a package to be removed from the Arch User Repository. Please do not"
+"Request a package to be removed from the makedeb Package Repository. Please do not"
 " use this if a package is broken and can be fixed easily. Instead, contact "
 "the package maintainer and file orphan request if necessary."
-msgstr "richiesta per rimuovere un pacchetto dall'Arch User Repository. Non usare questo tipo di richiesta se un pacchetto non funziona e se può essere sistemato facilmente. Contatta il manutentore del pacchetto e, se necessario, invia una richiesta per renderlo orfano."
+msgstr "richiesta per rimuovere un pacchetto dall'makedeb Package Repository. Non usare questo tipo di richiesta se un pacchetto non funziona e se può essere sistemato facilmente. Contatta il manutentore del pacchetto e, se necessario, invia una richiesta per renderlo orfano."
 
 #: html/home.php
 msgid "Merge Request"
@@ -294,14 +294,14 @@ msgstr "Invio dei pacchetti"
 #: html/home.php
 #, php-format
 msgid ""
-"Git over SSH is now used to submit packages to the AUR. See the %sSubmitting"
-" packages%s section of the Arch User Repository ArchWiki page for more "
+"Git over SSH is now used to submit packages to the MPR. See the %sSubmitting"
+" packages%s section of the makedeb Package Repository ArchWiki page for more "
 "details."
-msgstr "Per inviare i pacchetti in AUR, adesso, si utilizza Git via SSH. Per maggiori informazioni, vedi la sezione %sInviare i pacchetti%s della pagina Arch User Repository dell'ArchWiki."
+msgstr "Per inviare i pacchetti in MPR, adesso, si utilizza Git via SSH. Per maggiori informazioni, vedi la sezione %sInviare i pacchetti%s della pagina makedeb Package Repository dell'ArchWiki."
 
 #: html/home.php
-msgid "The following SSH fingerprints are used for the AUR:"
-msgstr "Per AUR si usano le seguenti fingerprint SSH:"
+msgid "The following SSH fingerprints are used for the MPR:"
+msgstr "Per MPR si usano le seguenti fingerprint SSH:"
 
 #: html/home.php
 msgid "Discussion"
@@ -310,10 +310,10 @@ msgstr "Discussione"
 #: html/home.php
 #, php-format
 msgid ""
-"General discussion regarding the Arch User Repository (AUR) and Trusted User"
+"General discussion regarding the makedeb Package Repository (MPR) and Trusted User"
 " structure takes place on %saur-general%s. For discussion relating to the "
-"development of the AUR web interface, use the %saur-dev%s mailing list."
-msgstr "La discussione generale sull'Arch User Repository (AUR) e sulla struttura dei TU avviene in %saur-general%s. Per la discussione relativa allo sviluppo dell'interfaccia web di AUR, utilizza la lista di discussione %saur-dev%s."
+"development of the MPR web interface, use the %saur-dev%s mailing list."
+msgstr "La discussione generale sull'makedeb Package Repository (MPR) e sulla struttura dei TU avviene in %saur-general%s. Per la discussione relativa allo sviluppo dell'interfaccia web di MPR, utilizza la lista di discussione %saur-dev%s."
 
 #: html/home.php
 msgid "Bug Reporting"
@@ -322,11 +322,11 @@ msgstr "Segnalazione di un bug"
 #: html/home.php
 #, php-format
 msgid ""
-"If you find a bug in the AUR web interface, please fill out a bug report on "
-"our %sbug tracker%s. Use the tracker to report bugs in the AUR web interface"
+"If you find a bug in the MPR web interface, please fill out a bug report on "
+"our %sbug tracker%s. Use the tracker to report bugs in the MPR web interface"
 " %sonly%s. To report packaging bugs contact the package maintainer or leave "
 "a comment on the appropriate package page."
-msgstr "Se trovi un bug nell'interfaccia web di AUR, invia un report al nostro %sbug tracker%s. Usa il tracker %ssolo%s per inviare i bug di AUR. Per segnalare bug inerenti alla pacchettizzazione, contatta il manutentore oppure lascia un commento nella pagina del pacchetto."
+msgstr "Se trovi un bug nell'interfaccia web di MPR, invia un report al nostro %sbug tracker%s. Usa il tracker %ssolo%s per inviare i bug di MPR. Per segnalare bug inerenti alla pacchettizzazione, contatta il manutentore oppure lascia un commento nella pagina del pacchetto."
 
 #: html/home.php
 msgid "Package Search"
@@ -500,8 +500,8 @@ msgstr "Elimina il pacchetto"
 #, php-format
 msgid ""
 "Use this form to delete the package base %s%s%s and the following packages "
-"from the AUR: "
-msgstr "Usa questo modulo per eliminare il pacchetto base %s%s%s e i seguenti pacchetti da AUR:"
+"from the MPR: "
+msgstr "Usa questo modulo per eliminare il pacchetto base %s%s%s e i seguenti pacchetti da MPR:"
 
 #: html/pkgdel.php
 msgid "Deletion of a package is permanent. "
@@ -1135,8 +1135,8 @@ msgstr "La richiesta è stata chiusa con successo."
 
 #: template/account_delete.php
 #, php-format
-msgid "You can use this form to permanently delete the AUR account %s."
-msgstr "Puoi usare questo modulo per eliminare definitivamente da AUR l'account %s."
+msgid "You can use this form to permanently delete the MPR account %s."
+msgstr "Puoi usare questo modulo per eliminare definitivamente da MPR l'account %s."
 
 #: template/account_delete.php
 #, php-format
@@ -1296,7 +1296,7 @@ msgstr "Nascondi l'indirizzo email"
 
 #: template/account_edit_form.php
 msgid ""
-"If you do not hide your email address, it is visible to all registered AUR "
+"If you do not hide your email address, it is visible to all registered MPR "
 "users. If you hide your email address, it is visible to members of the Arch "
 "Linux staff only."
 msgstr ""
@@ -1345,8 +1345,8 @@ msgstr "Riscrivi la password"
 #: template/account_edit_form.php
 msgid ""
 "The following information is only required if you want to submit packages to"
-" the Arch User Repository."
-msgstr "La seguente informazione è richiesta solo se vuoi inviare i pacchetti nell'Arch User Repository."
+" the makedeb Package Repository."
+msgstr "La seguente informazione è richiesta solo se vuoi inviare i pacchetti nell'makedeb Package Repository."
 
 #: template/account_edit_form.php
 msgid "SSH Public Key"
@@ -1378,7 +1378,7 @@ msgstr ""
 
 #: template/account_edit_form.php
 msgid ""
-"To protect the AUR against automated account creation, we kindly ask you to "
+"To protect the MPR against automated account creation, we kindly ask you to "
 "provide the output of the following command:"
 msgstr ""
 
@@ -1597,7 +1597,7 @@ msgstr "Aggiungi un commento"
 
 #: template/pkg_comment_form.php
 msgid ""
-"Git commit identifiers referencing commits in the AUR package repository and"
+"Git commit identifiers referencing commits in the MPR package repository and"
 " URLs are converted to links automatically."
 msgstr ""
 
@@ -2116,8 +2116,8 @@ msgid "Back"
 msgstr "Precedente"
 
 #: scripts/notify.py
-msgid "AUR Password Reset"
-msgstr "Ripristino Password di AUR"
+msgid "MPR Password Reset"
+msgstr "Ripristino Password di MPR"
 
 #: scripts/notify.py
 #, python-brace-format
@@ -2128,19 +2128,19 @@ msgid ""
 msgstr ""
 
 #: scripts/notify.py
-msgid "Welcome to the Arch User Repository"
-msgstr "Benvenuto nel Arch User Repository"
+msgid "Welcome to the makedeb Package Repository"
+msgstr "Benvenuto nel makedeb Package Repository"
 
 #: scripts/notify.py
 msgid ""
-"Welcome to the Arch User Repository! In order to set an initial password for"
+"Welcome to the makedeb Package Repository! In order to set an initial password for"
 " your new account, please click the link [1] below. If the link does not "
 "work, try copying and pasting it into your browser."
-msgstr "Benvenuto nel Arch User Repository! Per impostare una password iniziale per il tuo nuovo account, per favore segui il collegamento [1] sottostante. Se il collegamento non funziona, prova a copiarlo e incollarlo nel tuo browser."
+msgstr "Benvenuto nel makedeb Package Repository! Per impostare una password iniziale per il tuo nuovo account, per favore segui il collegamento [1] sottostante. Se il collegamento non funziona, prova a copiarlo e incollarlo nel tuo browser."
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Comment for {pkgbase}"
+msgid "MPR Comment for {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py
@@ -2157,7 +2157,7 @@ msgstr ""
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Package Update: {pkgbase}"
+msgid "MPR Package Update: {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py
@@ -2167,7 +2167,7 @@ msgstr ""
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Out-of-date Notification for {pkgbase}"
+msgid "MPR Out-of-date Notification for {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py
@@ -2177,7 +2177,7 @@ msgstr ""
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Ownership Notification for {pkgbase}"
+msgid "MPR Ownership Notification for {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py
@@ -2192,7 +2192,7 @@ msgstr ""
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Co-Maintainer Notification for {pkgbase}"
+msgid "MPR Co-Maintainer Notification for {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py
@@ -2207,7 +2207,7 @@ msgstr ""
 
 #: scripts/notify.py
 #, python-brace-format
-msgid "AUR Package deleted: {pkgbase}"
+msgid "MPR Package deleted: {pkgbase}"
 msgstr ""
 
 #: scripts/notify.py
