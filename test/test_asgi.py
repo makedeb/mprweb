@@ -1,5 +1,4 @@
 import http
-import os
 
 from unittest import mock
 
