@@ -24,7 +24,7 @@ make -C test clean
 #make -C test sh
 
 # Config parser isn't using the username value set in 'run-pytests.sh', so we're gonna set it manually here before continuing.
-sed -i 's|*user =.*|user = root|' conf/config.defaults
+sed -i 's|^user =.*|user = root|' conf/config.defaults
 
 PROMETHEUS_MULTIPROC_DIR='/tmp_prometheus' docker/scripts/run-pytests.sh --no-coverage
 make -C test coverage
