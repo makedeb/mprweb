@@ -32,9 +32,6 @@ sed -i 's|^user =.*|user = root|' conf/config
 sed -i 's|^port =.^|;&|' conf/config
 sed -i "s|YOUR_AUR_ROOT|$(pwd)|" conf/config
 
-cat conf/config
-exit 1
-
 # Run pytest with optional targets in front of it.
 pytest
 

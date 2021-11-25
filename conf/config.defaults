@@ -37,7 +37,7 @@ snapshot_uri = /cgit/aur.git/snapshot/%s.tar.gz
 enable-maintenance = 0
 maintenance-exceptions = 127.0.0.1
 render-comment-cmd = /usr/bin/aurweb-rendercomment
-localedir = YOUR_AUR_ROOT/aurweb/web/locale/
+localedir = YOUR_AUR_ROOT/web/locale/
 ; memcache, apc, or redis
 ; memcache/apc are supported in PHP, redis is supported in Python.
 cache = none
