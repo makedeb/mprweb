@@ -23,8 +23,10 @@ make -C po all install
 make -C test clean
 #make -C test sh
 
-# Config parser isn't using the username value set in 'run-pytests.sh', so we're gonna set it manually here before continuing.
+# Set up config file to work properly for unit tests.
 sed -i 's|^user =.*|user = root|' conf/config.defaults
+sed -i 's|^notify-cmd =.*|;&|' conf/config.defaults
+sed -i 's|^sendmail = .*|sendmail = YOUR_AUR_ROOT/util/sendmail|' conf/config.defaults
 
 PROMETHEUS_MULTIPROC_DIR='/tmp_prometheus' docker/scripts/run-pytests.sh --no-coverage
 make -C test coverage
