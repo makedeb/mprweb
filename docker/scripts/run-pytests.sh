@@ -32,6 +32,11 @@ sed -i 's|^user =.*|user = root|' conf/config
 sed -i 's|^port =.^|;&|' conf/config
 sed -i "s|YOUR_AUR_ROOT|$(pwd)|" conf/config
 
+for i in $(find ./conf/ -type f); do
+	echo "=== ${i}"
+	cat "${i}"
+done
+
 # Run pytest with optional targets in front of it.
 pytest
 
