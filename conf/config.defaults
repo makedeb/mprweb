@@ -89,6 +89,7 @@ htmldir = YOUR_AUR_ROOT/web/html
 
 [fastapi]
 session_secret = secret
+bind_address = 127.0.0.1:8082
 
 [serve]
 repo-path = YOUR_AUR_ROOT/aurweb/aur.git/

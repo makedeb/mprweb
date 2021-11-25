@@ -21,7 +21,7 @@ until : > /dev/tcp/127.0.0.1/3306; do sleep 1s; done
 
 make -C po all install
 make -C test clean
-#make -C test sh
+make -C test sh
 
 # Set up config file to work properly for unit tests.
 sed -i 's|^user =.*|user = root|' conf/config.defaults
