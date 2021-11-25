@@ -247,9 +247,6 @@ services:
     ports:
       - "127.0.0.1:8443:8443" # PHP
       - "127.0.0.1:8444:8444" # FastAPI
-    healthcheck:
-      test: "bash /docker/health/nginx.sh"
-      interval: 3s
     depends_on:
       - cgit-php
       - cgit-fastapi
