@@ -26,7 +26,7 @@ sed -i \
     -e "s|ssh-cmdline =.*|ssh-cmdline = ssh mpr@${mpr_url}|" \
     -e "s|commit_hash =.*|commit_hash = ${commit_hash}|" \
     -e "s|session_secret =.*|session_secret = ${fastapi_secret}|" \
-    -e 's|YOUR_AUR_ROOT|/aurweb' \
+    -e 's|YOUR_AUR_ROOT|/aurweb|' \
     conf/config.defaults
 
 echo "+ Building image..."
