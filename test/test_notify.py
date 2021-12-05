@@ -106,7 +106,7 @@ def test_out_of_date(user: User, user1: User, user2: User,
     first = Email(1).parse()
     assert first.headers.get("To") == user1.Email
 
-    expected = f"AUR Out-of-date Notification for {pkgbase.Name}"
+    expected = f"MPR Out-of-date Notification for {pkgbase.Name}"
     assert first.headers.get("Subject") == expected
 
     # Comaintainer 2.
@@ -127,7 +127,7 @@ def test_reset(user: User):
     assert Email.count() == 1
 
     email = Email(1).parse()
-    expected = "AUR Password Reset"
+    expected = "MPR Password Reset"
     assert email.headers.get("Subject") == expected
 
     expected = f"""\
@@ -149,11 +149,11 @@ def test_welcome(user: User):
     assert Email.count() == 1
 
     email = Email(1).parse()
-    expected = "Welcome to the Arch User Repository"
+    expected = "Welcome to the makedeb Package Repository"
     assert email.headers.get("Subject") == expected
 
     expected = f"""\
-Welcome to the Arch User Repository! In order to set an initial
+Welcome to the makedeb Package Repository! In order to set an initial
 password for your new account, please click the link [1] below. If the
 link does not work, try copying and pasting it into your browser.
 
@@ -176,7 +176,7 @@ def test_comment(user: User, user2: User, pkgbases: List[PackageBase]):
 
     email = Email(1).parse()
     assert email.headers.get("To") == user.Email
-    expected = f"AUR Comment for {pkgbase.Name}"
+    expected = f"MPR Comment for {pkgbase.Name}"
     assert email.headers.get("Subject") == expected
 
     expected = f"""\
@@ -205,7 +205,7 @@ def test_update(user: User, user2: User, pkgbases: List[PackageBase]):
 
     email = Email(1).parse()
     assert email.headers.get("To") == user.Email
-    expected = f"AUR Package Update: {pkgbase.Name}"
+    expected = f"MPR Package Update: {pkgbase.Name}"
     assert email.headers.get("Subject") == expected
 
     expected = f"""\
@@ -229,7 +229,7 @@ def test_adopt(user: User, user2: User, pkgbases: List[PackageBase]):
 
     email = Email(1).parse()
     assert email.headers.get("To") == user.Email
-    expected = f"AUR Ownership Notification for {pkgbase.Name}"
+    expected = f"MPR Ownership Notification for {pkgbase.Name}"
     assert email.headers.get("Subject") == expected
 
     expected = f"""\
@@ -249,7 +249,7 @@ def test_disown(user: User, user2: User, pkgbases: List[PackageBase]):
 
     email = Email(1).parse()
     assert email.headers.get("To") == user.Email
-    expected = f"AUR Ownership Notification for {pkgbase.Name}"
+    expected = f"MPR Ownership Notification for {pkgbase.Name}"
     assert email.headers.get("Subject") == expected
 
     expected = f"""\
@@ -269,7 +269,7 @@ def test_comaintainer_addition(user: User, pkgbases: List[PackageBase]):
 
     email = Email(1).parse()
     assert email.headers.get("To") == user.Email
-    expected = f"AUR Co-Maintainer Notification for {pkgbase.Name}"
+    expected = f"MPR Co-Maintainer Notification for {pkgbase.Name}"
     assert email.headers.get("Subject") == expected
 
     expected = f"""\
@@ -288,7 +288,7 @@ def test_comaintainer_removal(user: User, pkgbases: List[PackageBase]):
 
     email = Email(1).parse()
     assert email.headers.get("To") == user.Email
-    expected = f"AUR Co-Maintainer Notification for {pkgbase.Name}"
+    expected = f"MPR Co-Maintainer Notification for {pkgbase.Name}"
     assert email.headers.get("Subject") == expected
 
     expected = f"""\
@@ -307,7 +307,7 @@ def test_delete(user: User, user2: User, pkgbases: List[PackageBase]):
 
     email = Email(1).parse()
     assert email.headers.get("To") == user.Email
-    expected = f"AUR Package deleted: {pkgbase.Name}"
+    expected = f"MPR Package deleted: {pkgbase.Name}"
     assert email.headers.get("Subject") == expected
 
     expected = f"""\
@@ -329,7 +329,7 @@ def test_merge(user: User, user2: User, pkgbases: List[PackageBase]):
 
     email = Email(1).parse()
     assert email.headers.get("To") == user.Email
-    expected = f"AUR Package deleted: {source.Name}"
+    expected = f"MPR Package deleted: {source.Name}"
     assert email.headers.get("Subject") == expected
 
     expected = f"""\
@@ -411,7 +411,7 @@ Request #{pkgreq.ID} has been rejected by {user2.Username} [1].
     assert email.headers.get("Subject") == expected
 
     expected = (f"Request #{pkgreq.ID} has been accepted automatically "
-                "by the Arch User Repository\npackage request system.")
+                "by the makedeb Package Repository\npackage request system.")
     assert email.body == expected
 
 

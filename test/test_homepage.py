@@ -102,7 +102,7 @@ def test_homepage_no_ssh_fingerprints(get_ssh_fingerprints_mock):
     with client as request:
         response = request.get("/")
 
-    assert 'The following SSH fingerprints are used for the AUR' not in response.content.decode()
+    assert 'The following SSH fingerprints are used for the MPR' not in response.content.decode()
 
 
 def test_homepage_stats(redis, packages):
