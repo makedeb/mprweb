@@ -37,9 +37,15 @@ then clears the database for each test function run in that module.
 It is done this way because migration has a large cost; migrating
 ahead of each function takes too long when compared to this method.
 """
+import os
+import pathlib
+
+from multiprocessing import Lock
+
+import py
 import pytest
 
-from filelock import FileLock
+from posix_ipc import O_CREAT, Semaphore
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from sqlalchemy.engine.base import Engine
@@ -50,8 +56,14 @@ import aurweb.config
 import aurweb.db
 
 from aurweb import initdb, logging, testing
+from aurweb.testing.email import Email
+from aurweb.testing.filelock import FileLock
+from aurweb.testing.git import GitRepository
 
 logger = logging.get_logger(__name__)
+
+# Synchronization lock for database setup.
+setup_lock = Lock()
 
 
 def test_engine() -> Engine:
@@ -102,7 +114,12 @@ def _create_database(engine: Engine, dbname: str) -> None:
     try:
         conn.execute(f"CREATE DATABASE {dbname}")
     except ProgrammingError:  # pragma: no cover
-        pass
+        # The database most likely already existed if we hit
+        # a ProgrammingError. Just drop the database and try
+        # again. If at that point things still fail, any
+        # exception will be propogated up to the caller.
+        conn.execute(f"DROP DATABASE {dbname}")
+        conn.execute(f"CREATE DATABASE {dbname}")
     conn.close()
     initdb.run(AlembicArgs)
 
@@ -120,35 +137,49 @@ def _drop_database(engine: Engine, dbname: str) -> None:
     conn.close()
 
 
+def setup_email():
+    # TODO: Fix this data race! This try/catch is ugly; why is it even
+    # racing here? Perhaps we need to multiproc + multithread lock
+    # inside of setup_database to block the check?
+    with Semaphore("/test-emails", flags=O_CREAT, initial_value=1):
+        if not os.path.exists(Email.TEST_DIR):
+            # Create the directory.
+            os.makedirs(Email.TEST_DIR)
+
+        # Cleanup all email files for this test suite.
+        prefix = Email.email_prefix(suite=True)
+        files = os.listdir(Email.TEST_DIR)
+        for file in files:
+            if file.startswith(prefix):
+                os.remove(os.path.join(Email.TEST_DIR, file))
+
+
 @pytest.fixture(scope="module")
-def setup_database(tmp_path_factory: pytest.fixture,
-                   worker_id: pytest.fixture) -> None:
+def setup_database(tmp_path_factory: pathlib.Path, worker_id: str) -> None:
     """ Create and drop a database for the suite this fixture is used in. """
     engine = test_engine()
     dbname = aurweb.db.name()
 
     if worker_id == "master":  # pragma: no cover
         # If we're not running tests through multiproc pytest-xdist.
+        setup_email()
         yield _create_database(engine, dbname)
         _drop_database(engine, dbname)
         return
 
-    root_tmp_dir = tmp_path_factory.getbasetemp().parent
-    fn = root_tmp_dir / dbname
+    def setup(path):
+        setup_email()
+        _create_database(engine, dbname)
 
-    with FileLock(str(fn) + ".lock"):
-        if fn.is_file():
-            # If the data file exists, skip database creation.
-            yield
-        else:
-            # Otherwise, create the data file and create the database.
-            fn.write_text("1")
-            yield _create_database(engine, dbname)
-            _drop_database(engine, dbname)
+    tmpdir = tmp_path_factory.getbasetemp().parent
+    file_lock = FileLock(tmpdir, dbname)
+    file_lock.lock(on_create=setup)
+    yield  # Run the test function depending on this fixture.
+    _drop_database(engine, dbname)  # Cleanup the database.
 
 
 @pytest.fixture(scope="module")
-def db_session(setup_database: pytest.fixture) -> scoped_session:
+def db_session(setup_database: None) -> scoped_session:
     """
     Yield a database session based on aurweb.db.name().
 
@@ -158,6 +189,7 @@ def db_session(setup_database: pytest.fixture) -> scoped_session:
     # configured database, because PYTEST_CURRENT_TEST is removed.
     dbname = aurweb.db.name()
     session = aurweb.db.get_session()
+
     yield session
 
     # Close the session and pop it.
@@ -180,3 +212,8 @@ def db_test(db_session: scoped_session) -> None:
     session via aurweb.db.get_session().
     """
     testing.setup_test_db()
+
+
+@pytest.fixture
+def git(tmpdir: py.path.local) -> GitRepository:
+    yield GitRepository(tmpdir)

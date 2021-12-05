@@ -5,12 +5,14 @@ for archive in packages pkgbase users packages-meta-v1.json packages-meta-ext-v1
     ln -vsf /var/lib/aurweb/archives/${archive}.gz /aurweb/web/html/${archive}.gz
 done
 
-# Setup a config for our mysql db.
-cp -vf "${CONFIG_FILE}" conf/config
-sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
+# Setup database.
+NO_INITDB=1 /docker/mariadb-init-entrypoint.sh
 
-# Enable memcached.
-sed -ri 's/^(cache) = .+$/\1 = memcache/' conf/config
+# Setup some other options.
+aurweb-config set options cache 'memcache'
+aurweb-config set options aur_location "$AURWEB_PHP_PREFIX"
+aurweb-config set options git_clone_uri_anon "${AURWEB_PHP_PREFIX}/%s.git"
+aurweb-config set options git_clone_uri_priv "${AURWEB_SSHD_PREFIX}/%s.git"
 
 # Listen on :9000.
 sed -ri 's/^(listen).*/\1 = 0.0.0.0:9000/' /etc/php/php-fpm.d/www.conf

@@ -13,6 +13,7 @@ from urllib.parse import urlencode, urlparse
 from zoneinfo import ZoneInfo
 
 import fastapi
+import pygit2
 
 from email_validator import EmailNotValidError, EmailUndeliverableError, validate_email
 from jinja2 import pass_context
@@ -84,9 +85,8 @@ def valid_pgp_fingerprint(fp):
 
 
 def valid_ssh_pubkey(pk):
-    valid_prefixes = ("ssh-rsa", "ecdsa-sha2-nistp256",
-                      "ecdsa-sha2-nistp384", "ecdsa-sha2-nistp521",
-                      "ssh-ed25519")
+    valid_prefixes = aurweb.config.get("auth", "valid-keytypes")
+    valid_prefixes = set(valid_prefixes.split(" "))
 
     has_valid_prefix = False
     for prefix in valid_prefixes:
@@ -177,3 +177,36 @@ def strtobool(value: str) -> bool:
     if isinstance(value, str):
         return _strtobool(value)
     return value
+
+
+def file_hash(filepath: str, hash_function: Callable) -> str:
+    """
+    Return a hash of filepath contents using `hash_function`.
+
+    `hash_function` can be any one of the hashlib module's hash
+    functions which implement the `hexdigest()` method -- e.g.
+    hashlib.sha1, hashlib.md5, etc.
+
+    :param filepath: Path to file you want to hash
+    :param hash_function: hashlib hash function
+    :return: hash_function(filepath_content).hexdigest()
+    """
+    with open(filepath, "rb") as f:
+        hash_ = hash_function(f.read())
+    return hash_.hexdigest()
+
+
+def git_search(repo: pygit2.Repository, commit_hash: str) -> int:
+    """
+    Return the shortest prefix length matching `commit_hash` found.
+
+    :param repo: pygit2.Repository instance
+    :param commit_hash: Full length commit hash
+    :return: Shortest unique prefix length found
+    """
+    prefixlen = 12
+    while prefixlen < len(commit_hash):
+        if commit_hash[:prefixlen] in repo:
+            break
+        prefixlen += 1
+    return prefixlen

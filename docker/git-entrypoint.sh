@@ -38,12 +38,12 @@ Match User mpr
     AcceptEnv AUR_OVERWRITE
 EOF
 
-# Setup a config for our mysql db.
-cp -vf "${CONFIG_FILE}" $AUR_CONFIG
-sed -i "s;YOUR_AUR_ROOT;$(pwd);g" $AUR_CONFIG
+# Setup database.
+NO_INITDB=1 /docker/mariadb-init-entrypoint.sh
 
-# Set some defaults needed for pathing and ssh uris.
-sed -ri "s|^(repo-path) = .+|\1 = /aurweb/aur.git/|" $AUR_CONFIG
+# Setup some other options.
+aurweb-config set serve repo-path '/aurweb/aur.git/'
+aurweb-config set serve ssh-cmdline "$SSH_CMDLINE"
 
 # Setup SSH Keys.
 if (( "${GENERATE_SSH_KEYS:-1}" )); then

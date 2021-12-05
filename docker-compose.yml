@@ -28,9 +28,10 @@ services:
     image: mprweb:latest
     init: true
     entrypoint: /docker/ca-entrypoint.sh
-    command: echo
+    command: /docker/scripts/run-ca.sh
     volumes:
-      - ./cache:/data
+      - ./data:/data
+      - step:/root/.step
 
   memcached:
     image: mprweb:latest
@@ -61,7 +62,8 @@ services:
   mariadb_init:
     image: mprweb:latest
     init: true
-    env_file: ./conf/docker.env
+    environment:
+      - AUR_CONFIG_IMMUTABLE=${AUR_CONFIG_IMMUTABLE:-0}
     entrypoint: /docker/mariadb-init-entrypoint.sh
     command: echo "MariaDB tables initialized."
     volumes:
@@ -92,6 +94,7 @@ services:
     environment:
       - AUR_CONFIG=/aurweb/conf/config
       - SSH_CMDLINE=${SSH_CMDLINE:-ssh ssh://aur@localhost:2222}
+      - AUR_CONFIG_IMMUTABLE=${AUR_CONFIG_IMMUTABLE:-0}
     entrypoint: /docker/git-entrypoint.sh
     command: /docker/scripts/run-sshd.sh
     ports:
@@ -102,7 +105,7 @@ services:
       - ./conf/config.defaults:/aurweb/conf/config.defaults
       - ./conf/config.dev:/aurweb/conf/config.dev
       - ./data/git_data:/aurweb/aur.git
-      - ./cache:/data
+      - ./data:/data
       - mariadb_run:/var/run/mysqld
 
   smartgit:
@@ -116,7 +119,7 @@ services:
       - mariadb
     volumes:
       - ./data/git_data:/aurweb/aur.git
-      - ./cache:/data
+      - ./data:/data
       - smartgit_run:/var/run/smartgit
 
   cgit-php:
@@ -129,7 +132,7 @@ services:
     entrypoint: /docker/cgit-entrypoint.sh
     command: /docker/scripts/run-cgit.sh 3000
     ports:
-      - "13000:3000"
+      - "127.0.0.1:13000:3000"
     depends_on:
       - git
     volumes:
@@ -180,6 +183,7 @@ services:
       - AUR_CONFIG=/aurweb/conf/config
       - AURWEB_PHP_PREFIX=${AURWEB_PHP_PREFIX}
       - AURWEB_SSHD_PREFIX=${AURWEB_SSHD_PREFIX}
+      - AUR_CONFIG_IMMUTABLE=${AUR_CONFIG_IMMUTABLE:-0}
     entrypoint: /docker/php-entrypoint.sh
     command: /docker/scripts/run-php.sh
     depends_on:
@@ -190,7 +194,7 @@ services:
     volumes:
       - mariadb_run:/var/run/mysqld
       - ./data/archives:/var/lib/aurweb/archives
-      - ./cache:/data
+      - ./data:/data
       - ./conf/config.defaults:/aurweb/conf/config.defaults
       - ./conf/config.dev:/aurweb/conf/config.dev
       - ./aurweb:/aurweb/aurweb
@@ -214,6 +218,7 @@ services:
       - AURWEB_FASTAPI_PREFIX=${AURWEB_FASTAPI_PREFIX}
       - AURWEB_SSHD_PREFIX=${AURWEB_SSHD_PREFIX}
       - PROMETHEUS_MULTIPROC_DIR=/tmp_prometheus
+      - AUR_CONFIG_IMMUTABLE=${AUR_CONFIG_IMMUTABLE:-0}
     entrypoint: /docker/fastapi-entrypoint.sh
     command: /docker/scripts/run-fastapi.sh "${FASTAPI_BACKEND}"
     depends_on:
@@ -223,7 +228,8 @@ services:
     - cron
     volumes:
       - mariadb_run:/var/run/mysqld
-      - ./cache:/data
+      - ./data:/data
+      - ./docker:/docker
       - ./conf/config.defaults:/aurweb/conf/config.defaults
       - ./conf/config.dev:/aurweb/conf/config.dev
       - ./aurweb:/aurweb/aurweb
@@ -258,7 +264,7 @@ services:
       - ./conf/config.dev:/aurweb/conf/config.dev
       - ./data/archives:/var/lib/aurweb/archives
       - ./data/git_data:/aurweb/aur.git
-      - ./cache:/data
+      - ./data:/data
       - ./logs:/var/log/nginx
       - ./web/html:/aurweb/web/html
       - ./web/template:/aurweb/web/template
@@ -282,7 +288,7 @@ services:
       - ./conf/config.defaults:/aurweb/conf/config.defaults
       - ./conf/config.dev:/aurweb/conf/config.dev
       - ./data/git_data:/aurweb/aur.git
-      - ./cache:/data
+      - ./data:/data
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
       - ./test:/aurweb/test
@@ -312,7 +318,7 @@ services:
       - ./conf/config.defaults:/aurweb/conf/config.defaults
       - ./conf/config.dev:/aurweb/conf/config.dev
       - ./data/git_data:/aurweb/aur.git
-      - ./cache:/data
+      - ./data:/data
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
       - ./test:/aurweb/test
@@ -342,7 +348,7 @@ services:
       - ./conf/config.defaults:/aurweb/conf/config.defaults
       - ./conf/config.dev:/aurweb/conf/config.dev
       - ./data/git_data:/aurweb/aur.git
-      - ./cache:/data
+      - ./data:/data
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
       - ./test:/aurweb/test
@@ -355,3 +361,5 @@ volumes:
   mariadb_test_run: {}
   mariadb_run: {} # Share /var/run/mysqld/mysqld.sock
   smartgit_run: {}
+  archives: {}
+  step: {}

@@ -1,18 +1,21 @@
 #!/bin/bash
 set -eou pipefail
 
-# Setup a config for our mysql db.
-cp -vf "${CONFIG_FILE}" conf/config
-sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
+# Setup database.
+NO_INITDB=1 /docker/mariadb-init-entrypoint.sh
 
-# Setup Redis for FastAPI.
-sed -i 's|^cache = [^1].*|cache = redis|' conf/config
-sed -ri 's|^(redis_address) = .+|\1 = redis://redis|' conf/config
+# Setup some other options.
+aurweb-config set options cache 'redis'
+aurweb-config set options redis_address 'redis://redis'
+aurweb-config set options aur_location "$AURWEB_FASTAPI_PREFIX"
+aurweb-config set options git_clone_uri_anon "${AURWEB_FASTAPI_PREFIX}/%s.git"
+aurweb-config set options git_clone_uri_priv "${AURWEB_SSHD_PREFIX}/%s.git"
 
 if [ ! -z ${COMMIT_HASH+x} ]; then
-    sed -ri "s/^;?(commit_hash) =.*$/\1 = $COMMIT_HASH/" conf/config
+    aurweb-config set devel commit_hash "$COMMIT_HASH"
 fi
 
+# Setup prometheus directory.
 rm -rf $PROMETHEUS_MULTIPROC_DIR
 mkdir -p $PROMETHEUS_MULTIPROC_DIR
 

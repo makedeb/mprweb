@@ -1,45 +1,52 @@
 from datetime import datetime
 
+import fastapi
 import pytest
 
+from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from aurweb import db
-from aurweb.auth import AnonymousUser, BasicAuthBackend, account_type_required, has_credential
+from aurweb.auth import AnonymousUser, BasicAuthBackend, account_type_required, auth_required
 from aurweb.models.account_type import USER, USER_ID
 from aurweb.models.session import Session
 from aurweb.models.user import User
 from aurweb.testing.requests import Request
 
-user = backend = request = None
-
 
 @pytest.fixture(autouse=True)
 def setup(db_test):
-    global user, backend, request
+    return
 
+
+@pytest.fixture
+def user() -> User:
     with db.begin():
         user = db.create(User, Username="test", Email="test@example.com",
                          RealName="Test User", Passwd="testPassword",
                          AccountTypeID=USER_ID)
+    yield user
 
-    backend = BasicAuthBackend()
-    request = Request()
+
+@pytest.fixture
+def backend() -> BasicAuthBackend:
+    yield BasicAuthBackend()
 
 
 @pytest.mark.asyncio
-async def test_auth_backend_missing_sid():
+async def test_auth_backend_missing_sid(backend: BasicAuthBackend):
     # The request has no AURSID cookie, so authentication fails, and
     # AnonymousUser is returned.
-    _, result = await backend.authenticate(request)
+    _, result = await backend.authenticate(Request())
     assert not result.is_authenticated()
 
 
 @pytest.mark.asyncio
-async def test_auth_backend_invalid_sid():
+async def test_auth_backend_invalid_sid(backend: BasicAuthBackend):
     # Provide a fake AURSID that won't be found in the database.
     # This results in our path going down the invalid sid route,
     # which gives us an AnonymousUser.
+    request = Request()
     request.cookies["AURSID"] = "fake"
     _, result = await backend.authenticate(request)
     assert not result.is_authenticated()
@@ -55,21 +62,36 @@ async def test_auth_backend_invalid_user_id():
 
 
 @pytest.mark.asyncio
-async def test_basic_auth_backend():
+async def test_basic_auth_backend(user: User, backend: BasicAuthBackend):
     # This time, everything matches up. We expect the user to
     # equal the real_user.
     now_ts = datetime.utcnow().timestamp()
     with db.begin():
         db.create(Session, UsersID=user.ID, SessionID="realSession",
                   LastUpdateTS=now_ts + 5)
+
+    request = Request()
     request.cookies["AURSID"] = "realSession"
     _, result = await backend.authenticate(request)
     assert result == user
 
 
-def test_has_fake_credential_fails():
-    # Fake credential 666 does not exist.
-    assert not has_credential(user, 666)
+@pytest.mark.asyncio
+async def test_auth_required_redirection_bad_referrer():
+    # Create a fake route function which can be wrapped by auth_required.
+    def bad_referrer_route(request: fastapi.Request):
+        pass
+
+    # Get down to the nitty gritty internal wrapper.
+    bad_referrer_route = auth_required()(bad_referrer_route)
+
+    # Execute the route with a "./blahblahblah" Referer, which does not
+    # match aur_location; `./` has been used as a prefix to attempt to
+    # ensure we're providing a fake referer.
+    with pytest.raises(HTTPException) as exc:
+        request = Request(method="POST", headers={"Referer": "./blahblahblah"})
+        await bad_referrer_route(request)
+        assert exc.detail == "Bad Referer header."
 
 
 def test_account_type_required():
@@ -109,8 +131,3 @@ def test_voted_for():
 def test_notified():
     user_ = AnonymousUser()
     assert not user_.notified(None)
-
-
-def test_has_credential():
-    user_ = AnonymousUser()
-    assert not user_.has_credential("FAKE_CREDENTIAL")

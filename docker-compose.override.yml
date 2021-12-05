@@ -16,6 +16,11 @@ services:
       test: "bash /docker/health/mariadb.sh"
       interval: 3s
 
+  ca:
+    healthcheck:
+      test: "bash /docker/health/run-ca.sh" 
+      interval: 3s
+
   mariadb_init:
     depends_on:
       mariadb:

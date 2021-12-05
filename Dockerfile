@@ -13,13 +13,17 @@ RUN /install-deps.sh
 
 # Copy Docker scripts
 COPY ./docker /docker
-COPY ./docker/scripts/*.sh /usr/local/bin/
+COPY ./docker/scripts/* /usr/local/bin/
 
 # Copy over all aurweb files.
 COPY . /aurweb
 
 # Working directory is aurweb root @ /aurweb.
 WORKDIR /aurweb
+
+# Copy initial config to conf/config.
+RUN cp -vf conf/config.dev conf/config
+RUN sed -i "s;YOUR_AUR_ROOT;/aurweb;g" conf/config
 
 # Install Python dependencies.
 RUN /docker/scripts/install-python-deps.sh

@@ -11,14 +11,11 @@ KEY=/data/production.key.pem
 DEST_CERT=/etc/ssl/certs/web.cert.pem
 DEST_KEY=/etc/ssl/private/web.key.pem
 
-cp -vf "${CONFIG_FILE}" conf/config
-sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
-
 if [ -f "$CERT" ]; then
     cp -vf "$CERT" "$DEST_CERT"
     cp -vf "$KEY" "$DEST_KEY"
 else
-    cat /data/localhost.cert.pem /data/ca.root.pem > "$DEST_CERT"
+    cat /data/localhost.cert.pem /data/root_ca.crt > "$DEST_CERT"
     cp -vf /data/localhost.key.pem "$DEST_KEY"
 fi
 

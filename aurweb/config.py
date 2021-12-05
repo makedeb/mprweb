@@ -1,6 +1,8 @@
 import configparser
 import os
 
+from typing import Any
+
 # Publicly visible version of aurweb. This is used to display
 # aurweb versioning in the footer and must be maintained.
 # Todo: Make this dynamic/automated.
@@ -52,3 +54,18 @@ def getint(section, option, fallback=None):
 def get_section(section):
     if section in _get_parser().sections():
         return _get_parser()[section]
+
+
+def unset_option(section: str, option: str) -> None:
+    _get_parser().remove_option(section, option)
+
+
+def set_option(section: str, option: str, value: Any) -> None:
+    _get_parser().set(section, option, value)
+    return value
+
+
+def save() -> None:
+    aur_config = os.environ.get("AUR_CONFIG", "/etc/aurweb/config")
+    with open(aur_config, "w") as fp:
+        _get_parser().write(fp)

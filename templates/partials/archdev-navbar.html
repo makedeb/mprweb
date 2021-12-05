@@ -21,7 +21,7 @@
             </li>
 
             {# Only CRED_ACCOUNT_SEARCH privileged users see Accounts #}
-            {% if request.user.has_credential("CRED_ACCOUNT_SEARCH") %}
+            {% if request.user.has_credential(creds.ACCOUNT_SEARCH) %}
                 <li>
                     <a href="/accounts">
                         {% trans %}Accounts{% endtrans %}
@@ -36,8 +36,8 @@
                 </a>
             </li>
 
-            {# Only CRED_TU_VOTE privileged users see Trusted User #}
-            {% if request.user.has_credential("CRED_TU_VOTE") %}
+            {# Only CRED_TU_LIST_VOTES privileged users see Trusted User #}
+            {% if request.user.has_credential(creds.TU_LIST_VOTES) %}
                 <li>
                     <a href="/tu">{% trans %}Trusted User{% endtrans %}</a>
                 </li>
@@ -45,9 +45,12 @@
 
             {# All logged in users see Logout #}
             <li>
-                <a href="/logout?next={{ next }}">
-                    {% trans %}Logout{% endtrans %}
-                </a>
+                <form action="/logout" method="post" class="link">
+                    <input type="hidden" name="next" value="{{ next }}" />
+                    <button type="submit">
+                        {% trans %}Logout{% endtrans %}
+                    </button>
+                </form>
             </li>
         {% else %}
             {# All guest users see Register #}

@@ -10,12 +10,13 @@ from sqlalchemy import and_, or_
 import aurweb.config
 
 from aurweb import cookies, db, l10n, logging, models, util
-from aurweb.auth import account_type_required, auth_required
+from aurweb.auth import account_type_required, auth_required, creds
 from aurweb.captcha import get_captcha_salts
 from aurweb.exceptions import ValidationError
 from aurweb.l10n import get_translator_for_request
 from aurweb.models import account_type as at
 from aurweb.models.ssh_pub_key import get_fingerprint
+from aurweb.models.user import generate_unique_resetkey
 from aurweb.scripts.notify import ResetKeyNotification, WelcomeNotification
 from aurweb.templates import make_context, make_variable_context, render_template
 from aurweb.users import update, validate
@@ -26,14 +27,14 @@ logger = logging.get_logger(__name__)
 
 
 @router.get("/passreset", response_class=HTMLResponse)
-@auth_required(False, login=False)
+@auth_required(False)
 async def passreset(request: Request):
     context = await make_variable_context(request, "Password Reset")
     return render_template(request, "passreset.html", context)
 
 
 @router.post("/passreset", response_class=HTMLResponse)
-@auth_required(False, login=False)
+@auth_required(False)
 async def passreset_post(request: Request,
                          user: str = Form(...),
                          resetkey: str = Form(default=None),
@@ -92,12 +93,11 @@ async def passreset_post(request: Request,
                                 status_code=HTTPStatus.SEE_OTHER)
 
     # If we got here, we continue with issuing a resetkey for the user.
-    resetkey = db.make_random_value(models.User, models.User.ResetKey)
+    resetkey = generate_unique_resetkey()
     with db.begin():
         user.ResetKey = resetkey
 
-    executor = db.ConnectionExecutor(db.get_engine().raw_connection())
-    ResetKeyNotification(executor, user.ID).send()
+    ResetKeyNotification(user.ID).send()
 
     # Render ?step=confirm.
     return RedirectResponse(url="/passreset?step=confirm",
@@ -176,7 +176,7 @@ def make_account_form_context(context: dict,
 
     user_account_type_id = context.get("account_types")[0][0]
 
-    if request.user.has_credential("CRED_ACCOUNT_EDIT_DEV"):
+    if request.user.has_credential(creds.ACCOUNT_EDIT_DEV):
         context["account_types"].append((at.DEVELOPER_ID, at.DEVELOPER))
         context["account_types"].append((at.TRUSTED_USER_AND_DEV_ID,
                                          at.TRUSTED_USER_AND_DEV))
@@ -226,7 +226,7 @@ def make_account_form_context(context: dict,
 
 
 @router.get("/register", response_class=HTMLResponse)
-@auth_required(False, login=False)
+@auth_required(False)
 async def account_register(request: Request,
                            U: str = Form(default=str()),    # Username
                            E: str = Form(default=str()),    # Email
@@ -252,7 +252,7 @@ async def account_register(request: Request,
 
 
 @router.post("/register", response_class=HTMLResponse)
-@auth_required(False, login=False)
+@auth_required(False)
 async def account_register_post(request: Request,
                                 U: str = Form(default=str()),  # Username
                                 E: str = Form(default=str()),  # Email
@@ -291,7 +291,7 @@ async def account_register_post(request: Request,
 
     # Create a user with no password with a resetkey, then send
     # an email off about it.
-    resetkey = db.make_random_value(models.User, models.User.ResetKey)
+    resetkey = generate_unique_resetkey()
 
     # By default, we grab the User account type to associate with.
     atype = db.query(models.AccountType,
@@ -322,8 +322,7 @@ async def account_register_post(request: Request,
                                                 Fingerprint=fingerprint)
 
     # Send a reset key notification to the new user.
-    executor = db.ConnectionExecutor(db.get_engine().raw_connection())
-    WelcomeNotification(executor, user.ID).send()
+    WelcomeNotification(user.ID).send()
 
     context["complete"] = True
     context["user"] = user
@@ -333,7 +332,7 @@ async def account_register_post(request: Request,
 def cannot_edit(request, user):
     """ Return a 401 HTMLResponse if the request user doesn't
     have authorization, otherwise None. """
-    has_dev_cred = request.user.has_credential("CRED_ACCOUNT_EDIT_DEV",
+    has_dev_cred = request.user.has_credential(creds.ACCOUNT_EDIT_DEV,
                                                approved=[user])
     if not has_dev_cred:
         return HTMLResponse(status_code=HTTPStatus.UNAUTHORIZED)
@@ -341,7 +340,7 @@ def cannot_edit(request, user):
 
 
 @router.get("/account/{username}/edit", response_class=HTMLResponse)
-@auth_required(True, redirect="/account/{username}")
+@auth_required()
 async def account_edit(request: Request, username: str):
     user = db.query(models.User, models.User.Username == username).first()
 
@@ -357,7 +356,7 @@ async def account_edit(request: Request, username: str):
 
 
 @router.post("/account/{username}/edit", response_class=HTMLResponse)
-@auth_required(True, redirect="/account/{username}")
+@auth_required()
 async def account_edit_post(request: Request,
                             username: str,
                             U: str = Form(default=str()),  # Username
@@ -425,26 +424,20 @@ async def account_edit_post(request: Request,
                                            aurtz=TZ, aurlang=L)
 
 
-account_template = (
-    "account/show.html",
-    ["Account", "{}"],
-    ["username"]  # Query parameters to replace in the title string.
-)
-
-
 @router.get("/account/{username}")
-@auth_required(True, template=account_template,
-               status_code=HTTPStatus.UNAUTHORIZED)
 async def account(request: Request, username: str):
     _ = l10n.get_translator_for_request(request)
     context = await make_variable_context(
         request, _("Account") + " " + username)
+    if not request.user.is_authenticated():
+        return render_template(request, "account/show.html", context,
+                               status_code=HTTPStatus.UNAUTHORIZED)
     context["user"] = get_user_by_name(username)
     return render_template(request, "account/show.html", context)
 
 
 @router.get("/account/{username}/comments")
-@auth_required(redirect="/account/{username}/comments")
+@auth_required()
 async def account_comments(request: Request, username: str):
     user = get_user_by_name(username)
     context = make_context(request, "Accounts")
@@ -455,7 +448,7 @@ async def account_comments(request: Request, username: str):
 
 
 @router.get("/accounts")
-@auth_required(True, redirect="/accounts")
+@auth_required()
 @account_type_required({at.TRUSTED_USER,
                         at.DEVELOPER,
                         at.TRUSTED_USER_AND_DEV})
@@ -465,7 +458,7 @@ async def accounts(request: Request):
 
 
 @router.post("/accounts")
-@auth_required(True, redirect="/accounts")
+@auth_required()
 @account_type_required({at.TRUSTED_USER,
                         at.DEVELOPER,
                         at.TRUSTED_USER_AND_DEV})
@@ -549,7 +542,7 @@ def render_terms_of_service(request: Request,
 
 
 @router.get("/tos")
-@auth_required(True, redirect="/tos")
+@auth_required()
 async def terms_of_service(request: Request):
     # Query the database for terms that were previously accepted,
     # but now have a bumped Revision that needs to be accepted.
@@ -573,7 +566,7 @@ async def terms_of_service(request: Request):
 
 
 @router.post("/tos")
-@auth_required(True, redirect="/tos")
+@auth_required()
 async def terms_of_service_post(request: Request,
                                 accept: bool = Form(default=False)):
     # Query the database for terms that were previously accepted,
