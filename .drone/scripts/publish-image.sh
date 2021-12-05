@@ -9,12 +9,6 @@ fastapi_secret="$(openssl rand -hex 32)"
 echo "+ Setting up config files..."
 
 sed -i \
-    -e "s|AURWEB_FASTAPI_PREFIX=.*|AURWEB_FASTAPI_PREFIX='https://${mpr_url}'|" \
-    -e "s|CONFIG_FILE=.*|CONFIG_FILE='conf/config.defaults'|" \
-    -e "s|GENERATE_SSH_KEYS=.*|GENERATE_SSH_KEYS='0'|" \
-    conf/docker.env
-
-sed -i \
     -e "s|password =.*|password = ${mpr_db_password}|" \
     -e "s|aur_location =.*|aur_location = https://${mpr_url}|" \
     -e "s|git_clone_uri_anon =.*|git_clone_uri_anon = https://${mpr_url}/%s.git|" \
@@ -32,6 +26,7 @@ sed -i \
     -e "s|ssh-cmdline =.*|ssh-cmdline = ssh mpr@${mpr_url}|" \
     -e "s|commit_hash =.*|commit_hash = ${commit_hash}|" \
     -e "s|session_secret =.*|session_secret = ${fastapi_secret}|" \
+    -e 's|YOUR_AUR_ROOT|/aurweb' \
     conf/config.defaults
 
 echo "+ Building image..."
