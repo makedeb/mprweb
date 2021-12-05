@@ -411,7 +411,7 @@ Request #{pkgreq.ID} has been rejected by {user2.Username} [1].
     assert email.headers.get("Subject") == expected
 
     expected = (f"Request #{pkgreq.ID} has been accepted automatically "
-                "by the makedeb Package Repository\npackage request system.")
+                "by the makedeb Package\nRepository package request system.")
     assert email.body == expected
 
 

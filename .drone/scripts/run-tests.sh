@@ -25,7 +25,6 @@ make -C test sh
 
 # Set up config file to work properly for unit tests.
 sed -i 's|^user =.*|user = root|' conf/config.defaults
-sed -i 's|^notify-cmd =.*|;&|' conf/config.defaults
 sed -i 's|^sendmail =.*|sendmail = YOUR_AUR_ROOT/util/sendmail|' conf/config.defaults
 
 PROMETHEUS_MULTIPROC_DIR='/tmp_prometheus' docker/scripts/run-pytests.sh --no-coverage
