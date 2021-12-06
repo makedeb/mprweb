@@ -94,7 +94,7 @@ session_secret = secret
 bind_address = 127.0.0.1:8082
 
 [serve]
-repo-path = YOUR_AUR_ROOT/aurweb/aur.git/
+repo-path = YOUR_AUR_ROOT/aur.git/
 repo-regex = [a-z0-9][a-z0-9.+_-]*$
 git-shell-cmd = /usr/bin/git-shell
 git-update-cmd = /usr/bin/aurweb-git-update
