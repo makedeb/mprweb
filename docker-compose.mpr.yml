@@ -41,5 +41,5 @@ services:
 
     cron:
         environment:
-            AUR_CONFIG=conf/config
-            AUR_CONFIG_IMMUTABLE=1
+            - AUR_CONFIG=conf/config
+            - AUR_CONFIG_IMMUTABLE=1
