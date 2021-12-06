@@ -38,3 +38,8 @@ services:
             - AURWEB_SSHD_PREFIX=${AURWEB_SSHD_PREFIX}
             - PROMETHEUS_MULTIPROC_DIR=/tmp_prometheus
             - AUR_CONFIG_IMMUTABLE=1
+
+    cron:
+        environment:
+            AUR_CONFIG=conf/config
+            AUR_CONFIG_IMMUTABLE=1
