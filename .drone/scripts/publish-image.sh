@@ -11,6 +11,7 @@ echo "+ Setting up config files..."
 sed -i \
     -e "s|user =.*|user = mpr|" \
     -e "s|password =.*|password = ${mpr_db_password}|" \
+    -e 's|^name =.*|name = mprweb|' \
     -e "s|aur_location =.*|aur_location = https://${mpr_url}|" \
     -e "s|git_clone_uri_anon =.*|git_clone_uri_anon = https://${mpr_url}/%s.git|" \
     -e "s|git_clone_uri_priv =.*|git_clone_uri_priv = ssh://mpr@${mpr_url}/%s.git|" \
