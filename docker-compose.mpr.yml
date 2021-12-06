@@ -7,7 +7,7 @@ services:
 
     git:
         environment:
-            - AUR_CONFIG=/aurweb/conf/config
+            - AUR_CONFIG=/aurweb/conf/config.dev
             - SSH_CMDLINE=${SSH_CMDLINE:-ssh ssh://aur@localhost:2222}
             - AUR_CONFIG_IMMUTABLE=1
             - GENERATE_SSH_KEYS=0
