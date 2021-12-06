@@ -42,12 +42,14 @@ docker-compose -f ./docker-compose.yml \
 find ./ -maxdepth 1 \
         -not -path './' \
         -not -path './data' \
+        -not -path './service.sh' \
         -exec rm -rf '{}' +
 
 cd -
 find ./ -maxdepth 1 \
         -not -path './' \
         -not -path './data' \
+        -not -path './service.sh' \
         -exec cp '{}' '/var/www/mpr.hunterwittenborn.com/{}' -R \;
 
 cd /var/www/mpr.hunterwittenborn.com
