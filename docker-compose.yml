@@ -68,7 +68,7 @@ services:
     command: echo "MariaDB tables initialized."
     volumes:
       - ./conf/config.defaults:/aurweb/conf/config.defaults
-      - ./conf/config.dev:/aurweb/conf/config.dev
+      - ./conf/config.dev:/aurweb/conf/config
       - mariadb_run:/var/run/mysqld
     depends_on:
       - mariadb
@@ -90,9 +90,8 @@ services:
   git:
     image: mprweb:latest
     init: true
-    env_file: ./conf/docker.env
     environment:
-      - AUR_CONFIG=/aurweb/conf/config.dev
+      - AUR_CONFIG=/aurweb/conf/config
       - SSH_CMDLINE=${SSH_CMDLINE:-ssh ssh://aur@localhost:2222}
       - AUR_CONFIG_IMMUTABLE=${AUR_CONFIG_IMMUTABLE:-0}
     entrypoint: /docker/git-entrypoint.sh
@@ -103,7 +102,7 @@ services:
       - mariadb_init
     volumes:
       - ./conf/config.defaults:/aurweb/conf/config.defaults
-      - ./conf/config.dev:/aurweb/conf/config.dev
+      - ./conf/config.dev:/aurweb/conf/config
       - ./data/git_data:/aurweb/aur.git
       - ./data:/data
       - mariadb_run:/var/run/mysqld
@@ -172,7 +171,7 @@ services:
       - ./aurweb:/aurweb/aurweb
       - mariadb_run:/var/run/mysqld
       - ./conf/config.defaults:/aurweb/conf/config.defaults
-      - ./conf/config.dev:/aurweb/conf/config.dev
+      - ./conf/config.dev:/aurweb/conf/config
       - ./data/archives:/var/lib/aurweb/archives
 
   php-fpm:
@@ -196,7 +195,7 @@ services:
       - ./data/archives:/var/lib/aurweb/archives
       - ./data:/data
       - ./conf/config.defaults:/aurweb/conf/config.defaults
-      - ./conf/config.dev:/aurweb/conf/config.dev
+      - ./conf/config.dev:/aurweb/conf/config
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
       - ./test:/aurweb/test
@@ -231,7 +230,7 @@ services:
       - ./data:/data
       - ./docker:/docker
       - ./conf/config.defaults:/aurweb/conf/config.defaults
-      - ./conf/config.dev:/aurweb/conf/config.dev
+      - ./conf/config.dev:/aurweb/conf/config
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
       - ./test:/aurweb/test
@@ -261,7 +260,7 @@ services:
       - php-fpm
     volumes:
       - ./conf/config.defaults:/aurweb/conf/config.defaults
-      - ./conf/config.dev:/aurweb/conf/config.dev
+      - ./conf/config.dev:/aurweb/conf/config
       - ./data/archives:/var/lib/aurweb/archives
       - ./data/git_data:/aurweb/aur.git
       - ./data:/data
@@ -286,7 +285,7 @@ services:
     tty: true
     volumes:
       - ./conf/config.defaults:/aurweb/conf/config.defaults
-      - ./conf/config.dev:/aurweb/conf/config.dev
+      - ./conf/config.dev:/aurweb/conf/config
       - ./data/git_data:/aurweb/aur.git
       - ./data:/data
       - ./aurweb:/aurweb/aurweb
@@ -316,7 +315,7 @@ services:
       - ./docker:/docker
       - mariadb_test_run:/var/run/mysqld
       - ./conf/config.defaults:/aurweb/conf/config.defaults
-      - ./conf/config.dev:/aurweb/conf/config.dev
+      - ./conf/config.dev:/aurweb/conf/config
       - ./data/git_data:/aurweb/aur.git
       - ./data:/data
       - ./aurweb:/aurweb/aurweb
@@ -346,7 +345,7 @@ services:
       - ./docker:/docker
       - mariadb_test_run:/var/run/mysqld
       - ./conf/config.defaults:/aurweb/conf/config.defaults
-      - ./conf/config.dev:/aurweb/conf/config.dev
+      - ./conf/config.dev:/aurweb/conf/config
       - ./data/git_data:/aurweb/aur.git
       - ./data:/data
       - ./aurweb:/aurweb/aurweb
