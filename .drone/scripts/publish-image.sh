@@ -9,6 +9,7 @@ fastapi_secret="$(openssl rand -hex 32)"
 echo "+ Setting up config files..."
 
 sed -i \
+    -e "s|user =.*|user = mpr|" \
     -e "s|password =.*|password = ${mpr_db_password}|" \
     -e "s|aur_location =.*|aur_location = https://${mpr_url}|" \
     -e "s|git_clone_uri_anon =.*|git_clone_uri_anon = https://${mpr_url}/%s.git|" \
@@ -27,7 +28,7 @@ sed -i \
     -e "s|commit_hash =.*|commit_hash = ${commit_hash}|" \
     -e "s|session_secret =.*|session_secret = ${fastapi_secret}|" \
     -e 's|YOUR_AUR_ROOT|/aurweb|' \
-    conf/config.defaults
+    conf/config.dev
 
 echo "+ Building image..."
 docker-compose build --pull --no-cache mprweb-image
