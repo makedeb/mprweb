@@ -28,7 +28,10 @@ sed -i \
     -e "s|commit_hash =.*|commit_hash = ${commit_hash}|" \
     -e "s|session_secret =.*|session_secret = ${fastapi_secret}|" \
     -e 's|YOUR_AUR_ROOT|/aurweb|' \
-    conf/config.dev
+    conf/config.defaults
+
+rm conf/config.dev
+cp conf/config.defaults conf/config.dev
 
 echo "+ Building image..."
 docker-compose build --pull --no-cache mprweb-image
