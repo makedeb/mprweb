@@ -21,7 +21,13 @@ until : > /dev/tcp/127.0.0.1/3306; do sleep 1s; done
 
 make -C po all install
 make -C test clean
+
+cp logging.conf logging.conf.bak
+cp logging.prod.conf logging.conf
+
 make -C test sh
+
+cp logging.conf.bak logging.conf
 
 # Set up config file to work properly for unit tests.
 sed -i 's|^user =.*|user = root|' conf/config.defaults

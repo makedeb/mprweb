@@ -678,7 +678,7 @@ test_expect_code() {
 #
 # Returns the exit code of the command set by TEST_CMP.
 test_cmp() {
-	${TEST_CMP:-diff -u} "$@"
+	${TEST_CMP:-diff -ua} "$@"
 }
 
 # Public: portably print a sequence of numbers.
