@@ -1,22 +1,26 @@
 import hashlib
 
 from datetime import datetime
+from http import HTTPStatus
 from typing import List, Set
 
 import bcrypt
 
-from fastapi import Request
+from fastapi import HTTPException, Request
 from sqlalchemy import or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import backref, relationship
 
 import aurweb.config
 import aurweb.models.account_type
 import aurweb.schema
 
-from aurweb import db, schema
+from aurweb import db, logging, schema, util
 from aurweb.models.account_type import AccountType as _AccountType
 from aurweb.models.ban import is_banned
 from aurweb.models.declarative import Base
+
+logger = logging.get_logger(__name__)
 
 SALT_ROUNDS_DEFAULT = 12
 
@@ -108,33 +112,42 @@ class User(Base):
         if not self.authenticated:
             return None
 
-        now_ts = datetime.utcnow().timestamp()
-        session_ts = now_ts + (
-            session_time if session_time
-            else aurweb.config.getint("options", "login_timeout")
-        )
+        # Maximum number of iterations where we attempt to generate
+        # a unique SID. In cases where the Session table has
+        # exhausted all possible values, this will catch exceptions
+        # instead of raising them and include details about failing
+        # generation in an HTTPException.
+        tries = 36
 
-        sid = None
+        exc = None
+        for i in range(tries):
+            exc = None
+            now_ts = datetime.utcnow().timestamp()
+            try:
+                with db.begin():
+                    self.LastLogin = now_ts
+                    self.LastLoginIPAddress = request.client.host
+                    if not self.session:
+                        sid = generate_unique_sid()
+                        self.session = db.create(Session, User=self,
+                                                 SessionID=sid,
+                                                 LastUpdateTS=now_ts)
+                    else:
+                        last_updated = self.session.LastUpdateTS
+                        if last_updated and last_updated < now_ts:
+                            self.session.SessionID = generate_unique_sid()
+                        self.session.LastUpdateTS = now_ts
+                    break
+            except IntegrityError as exc_:
+                exc = exc_
 
-        with db.begin():
-            self.LastLogin = now_ts
-            self.LastLoginIPAddress = request.client.host
-            if not self.session:
-                sid = generate_unique_sid()
-                self.session = Session(UsersID=self.ID, SessionID=sid,
-                                       LastUpdateTS=session_ts)
-                db.add(self.session)
-            else:
-                last_updated = self.session.LastUpdateTS
-                if last_updated and last_updated < now_ts:
-                    self.session.SessionID = sid = generate_unique_sid()
-                else:
-                    # Session is still valid; retrieve the current SID.
-                    sid = self.session.SessionID
+        if exc:
+            detail = ("Unable to generate a unique session ID in "
+                      f"{tries} iterations.")
+            logger.error(str(exc))
+            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
+                                detail=detail)
 
-                self.session.LastUpdateTS = session_ts
-
-        request.cookies["AURSID"] = self.session.SessionID
         return self.session.SessionID
 
     def has_credential(self, credential: Set[int],
@@ -142,8 +155,7 @@ class User(Base):
         from aurweb.auth.creds import has_credential
         return has_credential(self, credential, approved)
 
-    def logout(self, request):
-        del request.cookies["AURSID"]
+    def logout(self, request: Request):
         self.authenticated = False
         if self.session:
             with db.begin():
@@ -233,5 +245,5 @@ class User(Base):
             self.ID, str(self.AccountType), self.Username)
 
 
-def generate_unique_resetkey():
-    return db.make_random_value(User, User.ResetKey, 32)
+def generate_resetkey():
+    return util.make_random_string(32)

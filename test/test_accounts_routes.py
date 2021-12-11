@@ -620,16 +620,19 @@ def test_get_account_edit_unauthorized(client: TestClient, user: User):
     request = Request()
     sid = user.login(request, "testPassword")
 
-    create(User, Username="test2", Email="test2@example.org",
-           Passwd="testPassword")
+    with db.begin():
+        user2 = create(User, Username="test2", Email="test2@example.org",
+                       Passwd="testPassword", AccountTypeID=USER_ID)
 
+    endpoint = f"/account/{user2.Username}/edit"
     with client as request:
         # Try to edit `test2` while authenticated as `test`.
-        response = request.get("/account/test2/edit", cookies={
-            "AURSID": sid
-        }, allow_redirects=False)
+        response = request.get(endpoint, cookies={"AURSID": sid},
+                               allow_redirects=False)
+    assert response.status_code == int(HTTPStatus.SEE_OTHER)
 
-    assert response.status_code == int(HTTPStatus.UNAUTHORIZED)
+    expected = f"/account/{user2.Username}"
+    assert response.headers.get("location") == expected
 
 
 def test_post_account_edit(client: TestClient, user: User):
@@ -811,7 +814,6 @@ def test_post_account_edit_inactivity(client: TestClient, user: User):
     assert resp.status_code == int(HTTPStatus.OK)
 
     # Make sure the user record got updated correctly.
-    assert user.Suspended
     assert user.InactivityTS > 0
 
     post_data.update({"J": False})
@@ -820,16 +822,44 @@ def test_post_account_edit_inactivity(client: TestClient, user: User):
                             cookies=cookies)
     assert resp.status_code == int(HTTPStatus.OK)
 
-    assert not user.Suspended
     assert user.InactivityTS == 0
+
+
+def test_post_account_edit_suspended(client: TestClient, user: User):
+    with db.begin():
+        user.AccountTypeID = TRUSTED_USER_ID
+    assert not user.Suspended
+
+    cookies = {"AURSID": user.login(Request(), "testPassword")}
+    post_data = {
+        "U": "test",
+        "E": "test@example.org",
+        "S": True,
+        "passwd": "testPassword"
+    }
+    endpoint = f"/account/{user.Username}/edit"
+    with client as request:
+        resp = request.post(endpoint, data=post_data, cookies=cookies)
+    assert resp.status_code == int(HTTPStatus.OK)
+
+    # Make sure the user record got updated correctly.
+    assert user.Suspended
+
+    post_data.update({"S": False})
+    with client as request:
+        resp = request.post(endpoint, data=post_data, cookies=cookies)
+    assert resp.status_code == int(HTTPStatus.OK)
+
+    assert not user.Suspended
 
 
 def test_post_account_edit_error_unauthorized(client: TestClient, user: User):
     request = Request()
     sid = user.login(request, "testPassword")
 
-    create(User, Username="test2",
-           Email="test2@example.org", Passwd="testPassword")
+    with db.begin():
+        user2 = create(User, Username="test2", Email="test2@example.org",
+                       Passwd="testPassword", AccountTypeID=USER_ID)
 
     post_data = {
         "U": "test",
@@ -838,13 +868,15 @@ def test_post_account_edit_error_unauthorized(client: TestClient, user: User):
         "passwd": "testPassword"
     }
 
+    endpoint = f"/account/{user2.Username}/edit"
     with client as request:
         # Attempt to edit 'test2' while logged in as 'test'.
-        response = request.post("/account/test2/edit", cookies={
-            "AURSID": sid
-        }, data=post_data, allow_redirects=False)
+        response = request.post(endpoint, cookies={"AURSID": sid},
+                                data=post_data, allow_redirects=False)
+    assert response.status_code == int(HTTPStatus.SEE_OTHER)
 
-    assert response.status_code == int(HTTPStatus.UNAUTHORIZED)
+    expected = f"/account/{user2.Username}"
+    assert response.headers.get("location") == expected
 
 
 def test_post_account_edit_ssh_pub_key(client: TestClient, user: User):

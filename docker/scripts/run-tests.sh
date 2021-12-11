@@ -14,7 +14,10 @@ sed -i 's|^port =.^|;&|' conf/config
 sed -i "s|YOUR_AUR_ROOT|$(pwd)|" conf/config
 
 # Run sharness tests.
+cp -vf logging.conf logging.conf.bak
+cp -vf logging.prod.conf logging.conf
 bash $dir/run-sharness.sh
+cp -vf logging.conf.bak logging.conf
 
 # Pytest also sets up the config file, so we'll remove the one we set up.
 rm conf/config

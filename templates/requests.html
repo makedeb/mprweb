@@ -23,12 +23,17 @@
                 <tbody>
                     {% for result in results %}
                         <tr>
-                            <td>
-                                {# Package #}
-                                <a href="/pkgbase/{{ result.PackageBaseName }}">
-                                    {{ result.PackageBaseName }}
-                                </a>
-                            </td>
+                            {% if result.PackageBase %}
+                                {# If the PackageBase still exists, link to it. #}
+                                <td>
+                                    <a href="/pkgbase/{{ result.PackageBaseName }}">
+                                        {{ result.PackageBaseName }}
+                                    </a>
+                                </td>
+                            {% else %}
+                                {# Otherwise, just display PackageBaseName unlinked. #}
+                                <td>{{ result.PackageBaseName }}</td>
+                            {% endif %}
                             {# Type #}
                             <td>
                                 {{ result.RequestType.name_display() | tr }}
@@ -71,12 +76,17 @@
                                         {% set action = "merge" %}
                                         {# Add the 'via' url query parameter. #}
                                         {% set temp_q = temp_q | extend_query(
-                                            ["via", result.ID],
                                             ["into", result.MergeBaseName]
                                         ) %}
                                     {% endif %}
 
-                                    {% if request.user.is_elevated() %}
+                                    {% if request.user.is_elevated() and not result.ClosedTS %}
+                                        {#
+                                        If RequestType is an orphan and it's not yet due, it's locked
+                                        to allow the maintainer time to react to such a request.
+
+                                        On request, orphans are locked for two weeks.
+                                        #}
                                         {% if result.RequestType.ID == 2 and not due %}
                                             {% set time_left = idle_time - time_delta %}
                                             {% if time_left > 48 * 3600 %}
@@ -98,9 +108,11 @@
                                         {% endif %}
                                         <br />
                                     {% endif %}
-                                    <a href="/requests/{{ result.ID }}/close">
-                                        {{ "Close" | tr }}
-                                    </a>
+                                    {% if not result.ClosedTS %}
+                                        <a href="/requests/{{ result.ID }}/close">
+                                            {{ "Close" | tr }}
+                                        </a>
+                                    {% endif %}
                                 {% else %}
                                     {{ result.status_display() }}
                                 {% endif %}

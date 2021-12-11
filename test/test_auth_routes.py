@@ -13,7 +13,6 @@ from aurweb.asgi import app
 from aurweb.models.account_type import USER_ID
 from aurweb.models.session import Session
 from aurweb.models.user import User
-from aurweb.testing.requests import Request
 
 # Some test global constants.
 TEST_USERNAME = "test"
@@ -136,12 +135,11 @@ def test_secure_login(getboolean: bool, client: TestClient, user: User):
 
 def test_authenticated_login(client: TestClient, user: User):
     post_data = {
-        "user": "test",
+        "user": user.Username,
         "passwd": "testPassword",
         "next": "/"
     }
 
-    cookies = {"AURSID": user.login(Request(), "testPassword")}
     with client as request:
         # Try to login.
         response = request.post("/login", data=post_data,
@@ -153,7 +151,7 @@ def test_authenticated_login(client: TestClient, user: User):
         # when requesting GET /login as an authenticated user.
         # Now, let's verify that we receive 403 Forbidden when we
         # try to get /login as an authenticated user.
-        response = request.get("/login", cookies=cookies,
+        response = request.get("/login", cookies=response.cookies,
                                allow_redirects=False)
         assert response.status_code == int(HTTPStatus.OK)
         assert "Logged-in as: <strong>test</strong>" in response.text
@@ -200,14 +198,12 @@ def test_login_remember_me(client: TestClient, user: User):
 
     cookie_timeout = aurweb.config.getint(
         "options", "persistent_cookie_timeout")
-    expected_ts = datetime.utcnow().timestamp() + cookie_timeout
-
+    now_ts = int(datetime.utcnow().timestamp())
     session = db.query(Session).filter(Session.UsersID == user.ID).first()
 
-    # Expect that LastUpdateTS was within 5 seconds of the expected_ts,
-    # which is equal to the current timestamp + persistent_cookie_timeout.
-    assert session.LastUpdateTS > expected_ts - 5
-    assert session.LastUpdateTS < expected_ts + 5
+    # Expect that LastUpdateTS is not past the cookie timeout
+    # for a remembered session.
+    assert session.LastUpdateTS > (now_ts - cookie_timeout)
 
 
 def test_login_incorrect_password_remember_me(client: TestClient, user: User):
@@ -283,3 +279,52 @@ def test_login_bad_referer(client: TestClient):
         response = request.post("/login", data=post_data, headers=BAD_REFERER)
     assert response.status_code == int(HTTPStatus.BAD_REQUEST)
     assert "AURSID" not in response.cookies
+
+
+def test_generate_unique_sid_exhausted(client: TestClient, user: User,
+                                       caplog: pytest.LogCaptureFixture):
+    """
+    In this test, we mock up generate_unique_sid() to infinitely return
+    the same SessionID given to `user`. Within that mocking, we try
+    to login as `user2` and expect the internal server error rendering
+    by our error handler.
+
+    This exercises the bad path of /login, where we can't find a unique
+    SID to assign the user.
+    """
+    now = int(datetime.utcnow().timestamp())
+    with db.begin():
+        # Create a second user; we'll login with this one.
+        user2 = db.create(User, Username="test2", Email="test2@example.org",
+                          ResetKey="testReset", Passwd="testPassword",
+                          AccountTypeID=USER_ID)
+
+        # Create a session with ID == "testSession" for `user`.
+        db.create(Session, User=user, SessionID="testSession",
+                  LastUpdateTS=now)
+
+    # Mock out generate_unique_sid; always return "testSession" which
+    # causes us to eventually error out and raise an internal error.
+    def mock_generate_sid():
+        return "testSession"
+
+    # Login as `user2`; we expect an internal server error response
+    # with a relevent detail.
+    post_data = {
+        "user": user2.Username,
+        "passwd": "testPassword",
+        "next": "/",
+    }
+    generate_unique_sid_ = "aurweb.models.session.generate_unique_sid"
+    with mock.patch(generate_unique_sid_, mock_generate_sid):
+        with client as request:
+            # Set cookies = {} to remove any previous login kept by TestClient.
+            response = request.post("/login", data=post_data, cookies={})
+    assert response.status_code == int(HTTPStatus.INTERNAL_SERVER_ERROR)
+
+    expected = "Unable to generate a unique session ID"
+    assert expected in response.text
+    assert "500 - Internal Server Error" in response.text
+
+    # Make sure an IntegrityError from the DB got logged out.
+    assert "IntegrityError" in caplog.text

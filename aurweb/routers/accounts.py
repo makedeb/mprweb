@@ -16,7 +16,7 @@ from aurweb.exceptions import ValidationError
 from aurweb.l10n import get_translator_for_request
 from aurweb.models import account_type as at
 from aurweb.models.ssh_pub_key import get_fingerprint
-from aurweb.models.user import generate_unique_resetkey
+from aurweb.models.user import generate_resetkey
 from aurweb.scripts.notify import ResetKeyNotification, WelcomeNotification
 from aurweb.templates import make_context, make_variable_context, render_template
 from aurweb.users import update, validate
@@ -93,7 +93,7 @@ async def passreset_post(request: Request,
                                 status_code=HTTPStatus.SEE_OTHER)
 
     # If we got here, we continue with issuing a resetkey for the user.
-    resetkey = generate_unique_resetkey()
+    resetkey = generate_resetkey()
     with db.begin():
         user.ResetKey = resetkey
 
@@ -291,7 +291,7 @@ async def account_register_post(request: Request,
 
     # Create a user with no password with a resetkey, then send
     # an email off about it.
-    resetkey = generate_unique_resetkey()
+    resetkey = generate_resetkey()
 
     # By default, we grab the User account type to associate with.
     atype = db.query(models.AccountType,
@@ -329,13 +329,23 @@ async def account_register_post(request: Request,
     return render_template(request, "register.html", context)
 
 
-def cannot_edit(request, user):
-    """ Return a 401 HTMLResponse if the request user doesn't
-    have authorization, otherwise None. """
-    has_dev_cred = request.user.has_credential(creds.ACCOUNT_EDIT_DEV,
-                                               approved=[user])
-    if not has_dev_cred:
-        return HTMLResponse(status_code=HTTPStatus.UNAUTHORIZED)
+def cannot_edit(request: Request, user: models.User) \
+        -> typing.Optional[RedirectResponse]:
+    """
+    Decide if `request.user` cannot edit `user`.
+
+    If the request user can edit the target user, None is returned.
+    Otherwise, a redirect is returned to /account/{user.Username}.
+
+    :param request: FastAPI request
+    :param user: Target user to be edited
+    :return: RedirectResponse if approval != granted else None
+    """
+    approved = request.user.has_credential(creds.ACCOUNT_EDIT, approved=[user])
+    if not approved and (to := "/"):
+        if user:
+            to = f"/account/{user.Username}"
+        return RedirectResponse(to, status_code=HTTPStatus.SEE_OTHER)
     return None
 
 
@@ -432,7 +442,23 @@ async def account(request: Request, username: str):
     if not request.user.is_authenticated():
         return render_template(request, "account/show.html", context,
                                status_code=HTTPStatus.UNAUTHORIZED)
-    context["user"] = get_user_by_name(username)
+
+    # Get related User record, if possible.
+    user = get_user_by_name(username)
+    context["user"] = user
+
+    # Format PGPKey for display with a space between each 4 characters.
+    k = user.PGPKey or str()
+    context["pgp_key"] = " ".join([k[i:i + 4] for i in range(0, len(k), 4)])
+
+    login_ts = None
+    session = db.query(models.Session).filter(
+        models.Session.UsersID == user.ID).first()
+    if session:
+        login_ts = user.session.LastUpdateTS
+    context["login_ts"] = login_ts
+
+    # Render the template.
     return render_template(request, "account/show.html", context)
 
 
