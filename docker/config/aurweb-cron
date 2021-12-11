@@ -1,1 +1,2 @@
-*/5 * * * * bash -c 'aurweb-mkpkglists --extended && echo "[$(date -u)] executed mkpkglists" >> /var/log/mkpkglists.log'
+AUR_CONFIG='/aurweb/conf/config'
+*/5 * * * * root bash -c 'aurweb-mkpkglists --extended && echo "[$(date -u)] executed mkpkglists" >> /var/log/mkpkglists.log'
