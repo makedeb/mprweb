@@ -3,6 +3,7 @@ import tempfile
 
 from datetime import datetime
 from http import HTTPStatus
+from logging import DEBUG
 from subprocess import Popen
 
 import lxml.html
@@ -10,11 +11,14 @@ import pytest
 
 from fastapi.testclient import TestClient
 
+import aurweb.models.account_type as at
+
 from aurweb import captcha, db, logging
 from aurweb.asgi import app
 from aurweb.db import create, query
 from aurweb.models.accepted_term import AcceptedTerm
-from aurweb.models.account_type import DEVELOPER_ID, TRUSTED_USER_AND_DEV_ID, TRUSTED_USER_ID, USER_ID, AccountType
+from aurweb.models.account_type import (DEVELOPER_ID, TRUSTED_USER, TRUSTED_USER_AND_DEV_ID, TRUSTED_USER_ID, USER_ID,
+                                        AccountType)
 from aurweb.models.ban import Ban
 from aurweb.models.session import Session
 from aurweb.models.ssh_pub_key import SSHPubKey, get_fingerprint
@@ -54,13 +58,18 @@ def client() -> TestClient:
     yield TestClient(app=app)
 
 
+def create_user(username: str) -> User:
+    email = f"{username}@example.org"
+    user = create(User, Username=username, Email=email,
+                  Passwd="testPassword",
+                  AccountTypeID=USER_ID)
+    return user
+
+
 @pytest.fixture
 def user() -> User:
     with db.begin():
-        user = create(User, Username=TEST_USERNAME, Email=TEST_EMAIL,
-                      RealName="Test UserZ", Passwd="testPassword",
-                      IRCNick="testZ", AccountTypeID=USER_ID)
-
+        user = create_user(TEST_USERNAME)
     yield user
 
 
@@ -604,16 +613,77 @@ def test_post_register_with_ssh_pubkey(client: TestClient):
     assert response.status_code == int(HTTPStatus.OK)
 
 
-def test_get_account_edit(client: TestClient, user: User):
-    request = Request()
-    sid = user.login(request, "testPassword")
+def test_get_account_edit_self_as_tu(client: TestClient, tu_user: User):
+    """ Test edit get route of ourselves as a TU. """
+    cookies = {"AURSID": tu_user.login(Request(), "testPassword")}
+    endpoint = f"/account/{tu_user.Username}/edit"
 
     with client as request:
-        response = request.get("/account/test/edit", cookies={
-            "AURSID": sid
-        }, allow_redirects=False)
-
+        response = request.get(endpoint, cookies=cookies)
     assert response.status_code == int(HTTPStatus.OK)
+
+    # Account type can't be modified when editing ourselves.
+    root = parse_root(response.text)
+    atype = root.xpath('//select[@id="id_type"]/option[@selected="selected"]')
+    assert not atype
+
+    # But other fields should be available and match up.
+    username = root.xpath('//input[@id="id_username"]')[0]
+    assert username.attrib["value"] == tu_user.Username
+    email = root.xpath('//input[@id="id_email"]')[0]
+    assert email.attrib["value"] == tu_user.Email
+
+
+def test_get_account_edit_tu_as_tu(client: TestClient, tu_user: User):
+    """ Test edit get route of another TU as a TU. """
+    with db.begin():
+        user2 = create_user("test2")
+        user2.AccountTypeID = at.TRUSTED_USER_ID
+
+    cookies = {"AURSID": tu_user.login(Request(), "testPassword")}
+    endpoint = f"/account/{user2.Username}/edit"
+
+    with client as request:
+        response = request.get(endpoint, cookies=cookies)
+    assert response.status_code == int(HTTPStatus.OK)
+
+    # Verify that we have an account type selection and that the
+    # "{at.TRUSTED_USER}" option is selected.
+    root = parse_root(response.text)
+    atype = root.xpath('//select[@id="id_type"]/option[@selected="selected"]')
+    expected = at.TRUSTED_USER
+    assert atype[0].text.strip() == expected
+
+    username = root.xpath('//input[@id="id_username"]')[0]
+    assert username.attrib["value"] == user2.Username
+    email = root.xpath('//input[@id="id_email"]')[0]
+    assert email.attrib["value"] == user2.Email
+
+
+def test_get_account_edit_as_tu(client: TestClient, tu_user: User):
+    """ Test edit get route of another user as a TU. """
+    with db.begin():
+        user2 = create_user("test2")
+
+    cookies = {"AURSID": tu_user.login(Request(), "testPassword")}
+    endpoint = f"/account/{user2.Username}/edit"
+
+    with client as request:
+        response = request.get(endpoint, cookies=cookies)
+    assert response.status_code == int(HTTPStatus.OK)
+
+    # Verify that we have an account type selection and that the
+    # "Normal {at.USER}" option is selected.
+    root = parse_root(response.text)
+    atype = root.xpath('//select[@id="id_type"]/option[@selected="selected"]')
+    expected = f"Normal {at.USER}"
+    assert atype[0].text.strip() == expected
+
+    # Other fields should be available and match up.
+    username = root.xpath('//input[@id="id_username"]')[0]
+    assert username.attrib["value"] == user2.Username
+    email = root.xpath('//input[@id="id_email"]')[0]
+    assert email.attrib["value"] == user2.Email
 
 
 def test_get_account_edit_unauthorized(client: TestClient, user: User):
@@ -986,118 +1056,130 @@ def test_post_account_edit_password(client: TestClient, user: User):
     assert user.valid_password("newPassword")
 
 
-def test_post_account_edit_account_types(client: TestClient, user: User):
-    request = Request()
-    sid = user.login(request, "testPassword")
-    cookies = {"AURSID": sid}
+def test_post_account_edit_self_type_as_user(client: TestClient, user: User):
+    cookies = {"AURSID": user.login(Request(), "testPassword")}
     endpoint = f"/account/{user.Username}/edit"
 
-    # As a normal user, we cannot see the "Account Type:" input.
     with client as request:
         resp = request.get(endpoint, cookies=cookies)
     assert resp.status_code == int(HTTPStatus.OK)
     assert "id_type" not in resp.text
 
-    # Invalid account types return an error.
-    post_data = {
-        "U": user.Username,
-        "E": user.Email,
-        "T": 0,  # Invalid type ID
-        "passwd": "testPassword"
-    }
-    with client as request:
-        resp = request.post(endpoint, data=post_data, cookies=cookies)
-    assert resp.status_code == int(HTTPStatus.BAD_REQUEST)
-    errors = get_errors(resp.text)
-    expected = "Invalid account type provided."
-    assert errors[0].text.strip() == expected
-
-    # Nor can we change any account types.
-    post_data = {
+    data = {
         "U": user.Username,
         "E": user.Email,
         "T": TRUSTED_USER_ID,
         "passwd": "testPassword"
     }
     with client as request:
-        resp = request.post(endpoint, data=post_data, cookies=cookies)
+        resp = request.post(endpoint, data=data, cookies=cookies)
     assert resp.status_code == int(HTTPStatus.BAD_REQUEST)
+
     errors = get_errors(resp.text)
     expected = "You do not have permission to change account types."
     assert errors[0].text.strip() == expected
 
-    # Change user from USER_ID to TRUSTED_USER_ID.
+
+def test_post_account_edit_other_user_as_user(client: TestClient, user: User):
     with db.begin():
-        user.AccountTypeID = TRUSTED_USER_ID
+        user2 = create_user("test2")
 
-    # As a trusted user, we can see the "Account Type:" input.
+    cookies = {"AURSID": user.login(Request(), "testPassword")}
+    endpoint = f"/account/{user2.Username}/edit"
+
     with client as request:
-        resp = request.get(endpoint, cookies=cookies)
+        resp = request.get(endpoint, cookies=cookies,
+                           allow_redirects=False)
+    assert resp.status_code == int(HTTPStatus.SEE_OTHER)
+    assert resp.headers.get("location") == f"/account/{user2.Username}"
+
+
+def test_post_account_edit_self_type_as_tu(client: TestClient, tu_user: User):
+    cookies = {"AURSID": tu_user.login(Request(), "testPassword")}
+    endpoint = f"/account/{tu_user.Username}/edit"
+
+    # We cannot see the Account Type field on our own edit page.
+    with client as request:
+        resp = request.get(endpoint, cookies=cookies, allow_redirects=False)
     assert resp.status_code == int(HTTPStatus.OK)
-    assert "id_type" in resp.text
+    assert "id_type" not in resp.text
 
-    # As a trusted user, we cannot change account type to DEVELOPER_ID.
-    post_data = {
-        "U": user.Username,
-        "E": user.Email,
-        "T": DEVELOPER_ID,
-        "passwd": "testPassword"
-    }
-    with client as request:
-        resp = request.post(endpoint, data=post_data, cookies=cookies)
-    assert resp.status_code == int(HTTPStatus.BAD_REQUEST)
-    errors = get_errors(resp.text)
-    expected = ("You do not have permission to change "
-                "this user's account type to Developer.")
-    assert errors[0].text.strip() == expected
-
-    # However, we can modify our account type to USER_ID.
-    post_data = {
-        "U": user.Username,
-        "E": user.Email,
+    # We cannot modify our own account type.
+    data = {
+        "U": tu_user.Username,
+        "E": tu_user.Email,
         "T": USER_ID,
         "passwd": "testPassword"
     }
     with client as request:
-        resp = request.post(endpoint, data=post_data, cookies=cookies)
-    assert resp.status_code == int(HTTPStatus.OK)
-
-    # No errors should be displayed.
-    errors = get_errors(resp.text)
-    assert not errors
-
-    # Make sure it got changed to USER_ID as we intended.
-    assert user.AccountTypeID == USER_ID
-
-    # Change user to a TU & Dev, which can change themselves to a Developer.
-    with db.begin():
-        user.AccountTypeID = TRUSTED_USER_AND_DEV_ID
-
-    # As a TU & Dev, we can absolutely change all account types.
-    # For example, from TRUSTED_USER_AND_DEV_ID to DEVELOPER_ID:
-    post_data = {
-        "U": user.Username,
-        "E": user.Email,
-        "T": DEVELOPER_ID,
-        "passwd": "testPassword"
-    }
-    with client as request:
-        resp = request.post(endpoint, data=post_data, cookies=cookies)
-    assert resp.status_code == int(HTTPStatus.OK)
-    assert user.AccountTypeID == DEVELOPER_ID
-
-    # But we can't change a user to a Trusted User & Developer when
-    # we're just a Developer.
-    post_data = {
-        "U": user.Username,
-        "E": user.Email,
-        "T": TRUSTED_USER_AND_DEV_ID,
-        "passwd": "testPassword"
-    }
-    with client as request:
-        resp = request.post(endpoint, data=post_data, cookies=cookies)
+        resp = request.post(endpoint, data=data, cookies=cookies)
     assert resp.status_code == int(HTTPStatus.BAD_REQUEST)
-    assert user.AccountTypeID == DEVELOPER_ID
+
+    errors = get_errors(resp.text)
+    expected = ("You do not have permission to change this "
+                "user's account type to User.")
+    assert errors[0].text.strip() == expected
+
+
+def test_post_account_edit_other_user_type_as_tu(
+        client: TestClient, tu_user: User, caplog: pytest.LogCaptureFixture):
+    caplog.set_level(DEBUG)
+
+    with db.begin():
+        user2 = create_user("test2")
+
+    cookies = {"AURSID": tu_user.login(Request(), "testPassword")}
+    endpoint = f"/account/{user2.Username}/edit"
+
+    # As a TU, we can see the Account Type field for other users.
+    with client as request:
+        resp = request.get(endpoint, cookies=cookies, allow_redirects=False)
+    assert resp.status_code == int(HTTPStatus.OK)
+    assert "id_type" in resp.text
+
+    # As a TU, we can modify other user's account types.
+    data = {
+        "U": user2.Username,
+        "E": user2.Email,
+        "T": TRUSTED_USER_ID,
+        "passwd": "testPassword"
+    }
+    with client as request:
+        resp = request.post(endpoint, data=data, cookies=cookies)
+    assert resp.status_code == int(HTTPStatus.OK)
+
+    # Let's make sure the DB got updated properly.
+    assert user2.AccountTypeID == TRUSTED_USER_ID
+
+    # and also that this got logged out at DEBUG level.
+    expected = (f"Trusted User '{tu_user.Username}' has "
+                f"modified '{user2.Username}' account's type to"
+                f" {TRUSTED_USER}.")
+    assert expected in caplog.text
+
+
+def test_post_account_edit_other_user_type_as_tu_invalid_type(
+        client: TestClient, tu_user: User, caplog: pytest.LogCaptureFixture):
+    with db.begin():
+        user2 = create_user("test2")
+
+    cookies = {"AURSID": tu_user.login(Request(), "testPassword")}
+    endpoint = f"/account/{user2.Username}/edit"
+
+    # As a TU, we can modify other user's account types.
+    data = {
+        "U": user2.Username,
+        "E": user2.Email,
+        "T": 0,
+        "passwd": "testPassword"
+    }
+    with client as request:
+        resp = request.post(endpoint, data=data, cookies=cookies)
+    assert resp.status_code == int(HTTPStatus.BAD_REQUEST)
+
+    errors = get_errors(resp.text)
+    expected = "Invalid account type provided."
+    assert errors[0].text.strip() == expected
 
 
 def test_get_account(client: TestClient, user: User):
@@ -1199,11 +1281,7 @@ def test_post_accounts(client: TestClient, user: User, tu_user: User):
     users = [user]
     with db.begin():
         for i in range(10):
-            _user = create(User, Username=f"test_{i}",
-                           Email=f"test_{i}@example.org",
-                           RealName=f"Test #{i}",
-                           Passwd="testPassword",
-                           IRCNick=f"test_#{i}")
+            _user = create_user(f"test_{i}")
             users.append(_user)
 
     sid = user.login(Request(), "testPassword")
@@ -1230,8 +1308,8 @@ def test_post_accounts(client: TestClient, user: User, tu_user: User):
 
         assert atype.text.strip() == str(_user.AccountType)
         assert suspended.text.strip() == "Active"
-        assert real_name.text.strip() == _user.RealName
-        assert irc_nick.text == _user.IRCNick
+        assert real_name.text == (_user.RealName or None)
+        assert irc_nick.text == (_user.IRCNick or None)
         assert pgp_key.text == (_user.PGPKey or None)
 
         edit = edit.xpath("./a")
@@ -1435,15 +1513,9 @@ def test_post_accounts_irc(client: TestClient, user: User, tu_user: User):
 
 def test_post_accounts_sortby(client: TestClient, user: User, tu_user: User):
     # Create a second user so we can compare sorts.
-    account_type = query(AccountType,
-                         AccountType.ID == DEVELOPER_ID).first()
     with db.begin():
-        create(User, Username="test2",
-               Email="test2@example.org",
-               RealName="Test User 2",
-               Passwd="testPassword",
-               IRCNick="test2",
-               AccountType=account_type)
+        user_ = create_user("test2")
+        user_.AccountTypeID = DEVELOPER_ID
 
     sid = user.login(Request(), "testPassword")
     cookies = {"AURSID": sid}
@@ -1464,8 +1536,8 @@ def test_post_accounts_sortby(client: TestClient, user: User, tu_user: User):
     assert len(rows) == 2
 
     def compare_text_values(column, lhs, rhs):
-        return [row[column].text.strip() for row in lhs] \
-            == [row[column].text.strip() for row in rhs]
+        return [row[column].text for row in lhs] \
+            == [row[column].text for row in rhs]
 
     # Test the username rows are ordered the same.
     assert compare_text_values(0, first_rows, rows) is True

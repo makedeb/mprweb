@@ -43,24 +43,25 @@
         </p>
 
         {% if request.user.has_credential(creds.ACCOUNT_CHANGE_TYPE) %}
-            <p>
-                <label for="id_type">
-                    {% trans %}Account Type{% endtrans %}:
-                </label>
-                <select name="T" id="id_type">
-                    {% for value, type in account_types %}
-                        <option value="{{ value }}"
-                                {% if request.user.AccountType.ID == value %}
-                                selected="selected"
-                                {% endif %}
-                        >
-                            {{ type | tr }}
-                        </option>
-                    {% endfor %}
+            {% if request.user != user %}
+                <p>
+                    <label for="id_type">
+                        {% trans %}Account Type{% endtrans %}:
+                    </label>
+                    <select name="T" id="id_type">
+                        {% for value, type in account_types %}
+                            <option value="{{ value }}"
+                                    {% if user.AccountType.ID == value %}
+                                    selected="selected"
+                                    {% endif %}
+                            >
+                                {{ type | tr }}
+                            </option>
+                        {% endfor %}
 
-                </select>
-            </p>
-
+                    </select>
+                </p>
+            {% endif %}
             <p>
                 <label for="id_suspended">
                     {% trans %}Account Suspended{% endtrans %}:
@@ -74,7 +75,7 @@
             </p>
         {% endif %}
 
-        {% if request.user.is_elevated() %}
+        {% if request.user.has_credential(creds.ACCOUNT_EDIT, approved=[user]) %}
             <p>
                 <label for="id_inactive">{% trans %}Inactive{% endtrans %}:</label>
                 <input id="id_inactive" type="checkbox" name="J"
