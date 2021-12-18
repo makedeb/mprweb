@@ -15,7 +15,7 @@ sed -i \
     -e "s|aur_location =.*|aur_location = https://${mpr_url}|" \
     -e "s|git_clone_uri_anon =.*|git_clone_uri_anon = https://${mpr_url}/%s.git|" \
     -e "s|git_clone_uri_priv =.*|git_clone_uri_priv = ssh://mpr@${mpr_url}/%s.git|" \
-    -e 's|smtp-server =.*|smtp-server = smtp.zoho.com|' \
+    -e "s|smtp-server =.*|smtp-server = ${hw_url}|" \
     -e 's|smtp-port =.*|smtp-port = 465|' \
     -e 's|smtp-use-ssl =.*|smtp-use-ssl = 1|' \
     -e 's|smtp-user =.*|smtp-user = mpr@hunterwittenborn.com|' \
