@@ -70,7 +70,8 @@ services:
 
   php-fpm:
     healthcheck:
-      test: "bash /docker/health/php.sh"
+      test: "true"
+      #test: "bash /docker/health/php.sh"
       interval: 3s
     depends_on:
       ca:
