@@ -4,7 +4,7 @@
         <th>{{ "Git Clone URL" | tr }}:</th>
         <td>
             <a class="copy" href="{{ git_clone_uri_anon | format(pkgbase.Name) }}">{{ git_clone_uri_anon | format(pkgbase.Name) }}</a> ({{ "read-only" | tr }}, {{ "click to copy" | tr }})
-            {% if is_maintainer %}
+            {% if request.user.is_authenticated() %}
                 <br /> <a class="copy" href="{{ git_clone_uri_priv | format(pkgbase.Name) }}">{{ git_clone_uri_priv | format(pkgbase.Name) }}</a> ({{ "click to copy" | tr }})
             {% endif %}
         </td>
@@ -131,14 +131,14 @@
     </tr>
     <tr>
         <th>{{ "Votes" | tr }}:</th>
-        {% if not is_maintainer %}
-            <td>{{ pkgbase.NumVotes }}</td>
-        {% else %}
+        {% if request.user.has_credential(creds.PKGBASE_LIST_VOTERS) %}
             <td>
                 <a href="/pkgbase/{{ pkgbase.Name }}/voters">
                     {{ pkgbase.NumVotes }}
                 </a>
             </td>
+        {% else %}
+            <td>{{ pkgbase.NumVotes }}</td>
         {% endif %}
     </tr>
     <tr>

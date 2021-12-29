@@ -1,71 +1,103 @@
-; Configuration file for aurweb development.
-;
-; Options are implicitly inherited from conf/config.defaults, which lists all
-; available options for productions, and their default values. This current file
-; overrides only options useful for development, and introduces
-; development-specific options too.
-
 [database]
-; PHP options: mysql, sqlite.
-; FastAPI options: mysql.
 backend = mysql
-
-; If using sqlite, set name to the database file path.
-name = mprweb
-
-; MySQL database information. User defaults to root for containerized
-; testing with mysqldb. This should be set to a non-root user.
-user = mpr
-password = mpr
 host = localhost
-;port = 3306
 socket = /var/run/mysqld/mysqld.sock
+name = aurweb
+user = aur
+password = aur
 
 [options]
 aurwebdir = YOUR_AUR_ROOT
-aur_location = http://127.0.0.1:8080
+username_min_len = 3
+username_max_len = 16
+passwd_min_len = 8
+default_lang = en
+default_timezone = UTC
+sql_debug = 0
+login_timeout = 7200
+persistent_cookie_timeout = 2592000
+max_filesize_uncompressed = 8388608
 disable_http_login = 0
-enable-maintenance = 0
-localedir = YOUR_AUR_ROOT/web/locale
-; In production, salt_rounds should be higher; suggested: 12.
-salt_rounds = 4
-; See config.defaults comment about cache.
-cache = none
-; In docker, the memcached host is available. On a user's system,
-; this should be set to localhost (most likely).
-memcache_servers = memcached:11211
-; If cache = 'redis' this address is used to connect to Redis.
-redis_address = redis://127.0.0.1
+aur_location = https://localhost:8443
+git_clone_uri_anon = https://localhost:8443/%s.git
+git_clone_uri_priv = ssh://mpr@mpr.hunterwittenborn.com/%s.git
+max_rpc_results = 5000
+max_search_results = 2500
+max_depends = 1000
 aur_request_ml = aur-requests@localhost
+request_idle_time = 1209600
+request_archive_time = 15552000
+auto_orphan_age = 15552000
+auto_delete_age = 86400
+source_file_uri = /cgit/aur.git/tree/%s?h=%s
+log_uri = /cgit/aur.git/log/?h=%s
+commit_uri = /cgit/aur.git/commit/?h=%s&id=%s
+snapshot_uri = /cgit/aur.git/snapshot/%s.tar.gz
+enable-maintenance = 0
+maintenance-exceptions = 127.0.0.1
+render-comment-cmd = /usr/bin/aurweb-rendercomment
+localedir = YOUR_AUR_ROOT/web/locale
+cache = memcache
+cache_pkginfo_ttl = 86400
+memcache_servers = memcached:11211
+salt_rounds = 4
+redis_address = redis://127.0.0.1
+
+[ratelimit]
+request_limit = 4000
+window_length = 86400
+cache = 1
 
 [notifications]
-; For development/testing, use /usr/bin/sendmail
+notify-cmd = /usr/bin/aurweb-notify
 sendmail = YOUR_AUR_ROOT/util/sendmail
+smtp-server = localhost
+smtp-port = 25
+smtp-use-ssl = 0
+smtp-use-starttls = 0
+smtp-user = 
+smtp-password = 
 sender = notify@localhost
 reply-to = noreply@localhost
 
-; Single sign-on; see doc/sso.txt.
+[fingerprints]
+Ed25519 = ssh_key
+ECDSA = ssh_key
+RSA = ssh_key
+
+[auth]
+valid-keytypes = ssh-rsa ssh-dss ecdsa-sha2-nistp256 ecdsa-sha2-nistp384 ecdsa-sha2-nistp521 ssh-ed25519 sk-ecdsa-sha2-nistp256@openssh.com sk-ecdsa-sha2-nistp256-cert-v01@openssh.com sk-ssh-ed25519@openssh.com sk-ssh-ed25519-cert-v01@openssh.com
+username-regex = [a-zA-Z0-9]+[.\-_]?[a-zA-Z0-9]+$
+git-serve-cmd = /usr/bin/aurweb-git-serve
+ssh-options = restrict
+
 [sso]
 openid_configuration = http://127.0.0.1:8083/auth/realms/aurweb/.well-known/openid-configuration
 client_id = aurweb
-client_secret =
+client_secret = 
 
 [php]
-; Address PHP should bind when spawned in development mode by aurweb.spawn.
 bind_address = 127.0.0.1:8081
-
-; Directory containing aurweb's PHP code, required by aurweb.spawn.
 htmldir = YOUR_AUR_ROOT/web/html
 
 [fastapi]
-; Address uvicorn should bind when spawned in development mode by aurweb.spawn.
+session_secret = secret
 bind_address = 127.0.0.1:8082
 
-; Passphrase FastAPI uses to sign client-side sessions.
-session_secret = secret
+[serve]
+repo-path = /aurweb/aur.git/
+repo-regex = [a-z0-9][a-z0-9.+_-]*$
+git-shell-cmd = /usr/bin/git-shell
+git-update-cmd = /usr/bin/aurweb-git-update
+ssh-cmdline = ssh ssh://aur@localhost:2222
 
-[devel]
-;commit_hash = 1234567
+[update]
+max-blob-size = 256000
+
+[aurblup]
+db-path = /aurweb/aurblup/
+sync-dbs = core extra community multilib testing community-testing
+server = https://mirrors.kernel.org/archlinux/%s/os/x86_64
 
 [mkpkglists]
 archivedir = /var/lib/aurweb/archives
@@ -75,5 +107,11 @@ packagesmetaextfile = /var/lib/aurweb/archives/packages-meta-ext-v1.json.gz
 pkgbasefile = /var/lib/aurweb/archives/pkgbase.gz
 userfile = /var/lib/aurweb/archives/users.gz
 
-[aurblup]
-db-path = YOUR_AUR_ROOT/aurblup/
+[devel]
+commit_url = https://github.com/makedeb/mprweb/commit/%s
+commit_hash = mprweb
+
+[tuvotereminder]
+range_start = 500
+range_end = 172800
+

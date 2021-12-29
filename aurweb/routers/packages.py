@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 from http import HTTPStatus
 from typing import Any, Dict, List
@@ -9,7 +10,7 @@ from sqlalchemy import and_, case
 import aurweb.filters
 import aurweb.packages.util
 
-from aurweb import db, defaults, l10n, logging, models, util
+from aurweb import config, db, defaults, l10n, logging, models, util
 from aurweb.auth import auth_required, creds
 from aurweb.exceptions import InvariantError, ValidationError
 from aurweb.models.package_request import ACCEPTED_ID, PENDING_ID, REJECTED_ID
@@ -19,7 +20,7 @@ from aurweb.packages import util as pkgutil
 from aurweb.packages import validate
 from aurweb.packages.requests import handle_request, update_closure_comment
 from aurweb.packages.search import PackageSearch
-from aurweb.packages.util import get_pkg_or_base, get_pkgbase_comment, get_pkgreq_by_id, query_notified, query_voted
+from aurweb.packages.util import get_pkg_or_base, get_pkgbase_comment, get_pkgreq_by_id
 from aurweb.scripts import notify, popupdate
 from aurweb.scripts.rendercomment import update_comment_render_fastapi
 from aurweb.templates import make_context, make_variable_context, render_raw_template, render_template
@@ -44,7 +45,7 @@ async def packages_get(request: Request, context: Dict[str, Any],
     search_by = context["SeB"] = request.query_params.get("SeB", "nd")
 
     # Query sort by.
-    sort_by = context["SB"] = request.query_params.get("SB", "n")
+    sort_by = context["SB"] = request.query_params.get("SB", "p")
 
     # Query sort order.
     sort_order = request.query_params.get("SO", None)
@@ -59,6 +60,12 @@ async def packages_get(request: Request, context: Dict[str, Any],
     keywords = keywords.split(" ")
     for keyword in keywords:
         search.search_by(search_by, keyword)
+
+    # Collect search result count here; we've applied our keywords.
+    # Including more query operations below, like ordering, will
+    # increase the amount of time required to collect a count.
+    limit = config.getint("options", "max_search_results")
+    num_packages = search.count(limit)
 
     flagged = request.query_params.get("outdated", None)
     if flagged:
@@ -95,16 +102,23 @@ async def packages_get(request: Request, context: Dict[str, Any],
     context["SO"] = sort_order
 
     # Insert search results into the context.
-    results = search.results()
+    results = search.results().with_entities(
+        models.Package.ID,
+        models.Package.Name,
+        models.Package.PackageBaseID,
+        models.Package.Version,
+        models.Package.Description,
+        models.PackageBase.Popularity,
+        models.PackageBase.NumVotes,
+        models.PackageBase.OutOfDateTS,
+        models.User.Username.label("Maintainer"),
+        models.PackageVote.PackageBaseID.label("Voted"),
+        models.PackageNotification.PackageBaseID.label("Notify")
+    )
 
     packages = results.limit(per_page).offset(offset)
-    util.apply_all(packages, db.refresh)
     context["packages"] = packages
-    context["packages_voted"] = query_voted(
-        context.get("packages"), request.user)
-    context["packages_notified"] = query_notified(
-        context.get("packages"), request.user)
-    context["packages_count"] = search.total_count
+    context["packages_count"] = num_packages
 
     return render_template(request, "packages.html", context,
                            status_code=status_code)
@@ -196,25 +210,34 @@ async def package(request: Request, name: str) -> Response:
     pkg = get_pkg_or_base(name, models.Package)
     pkgbase = pkg.PackageBase
 
+    rels = pkg.package_relations.order_by(models.PackageRelation.RelName.asc())
+    rels_data = defaultdict(list)
+    for rel in rels:
+        if rel.RelTypeID == CONFLICTS_ID:
+            rels_data["c"].append(rel)
+        elif rel.RelTypeID == PROVIDES_ID:
+            rels_data["p"].append(rel)
+        elif rel.RelTypeID == REPLACES_ID:
+            rels_data["r"].append(rel)
+
     # Add our base information.
     context = await make_single_context(request, pkgbase)
     context["package"] = pkg
 
     # Package sources.
-    context["sources"] = pkg.package_sources
+    context["sources"] = pkg.package_sources.order_by(
+        models.PackageSource.Source.asc()).all()
 
     # Package dependencies.
-    dependencies = db.query(models.PackageDependency).join(
-        models.Package).join(models.PackageBase).filter(
-        models.PackageBase.ID == pkgbase.ID)
-    context["dependencies"] = dependencies
+    max_depends = config.getint("options", "max_depends")
+    context["dependencies"] = pkg.package_dependencies.order_by(
+        models.PackageDependency.DepTypeID.asc(),
+        models.PackageDependency.DepName.asc()
+    ).limit(max_depends).all()
 
     # Package requirements (other packages depend on this one).
-    required_by = db.query(models.PackageDependency).join(
-        models.Package).filter(
-        models.PackageDependency.DepName == pkgbase.Name).order_by(
-        models.Package.Name.asc())
-    context["required_by"] = required_by
+    context["required_by"] = pkgutil.pkg_required(
+        pkg.Name, [p.RelName for p in rels_data.get("p", [])], max_depends)
 
     context["licenses"] = pkg.package_licenses
 
@@ -254,6 +277,11 @@ async def package_base(request: Request, name: str) -> Response:
 async def package_base_voters(request: Request, name: str) -> Response:
     # Get the PackageBase.
     pkgbase = get_pkg_or_base(name, models.PackageBase)
+
+    if not request.user.has_credential(creds.PKGBASE_LIST_VOTERS):
+        return RedirectResponse(f"/pkgbase/{name}",
+                                status_code=HTTPStatus.SEE_OTHER)
+
     context = make_context(request, "Voters")
     context["pkgbase"] = pkgbase
     return render_template(request, "pkgbase/voters.html", context)
@@ -896,9 +924,9 @@ async def pkgbase_unvote(request: Request, name: str):
 def pkgbase_disown_instance(request: Request, pkgbase: models.PackageBase):
     disowner = request.user
     notifs = [notify.DisownNotification(disowner.ID, pkgbase.ID)]
-    notifs += handle_request(request, ORPHAN_ID, pkgbase)
 
     if disowner != pkgbase.Maintainer:
+        notifs += handle_request(request, ORPHAN_ID, pkgbase)
         with db.begin():
             pkgbase.Maintainer = None
     else:

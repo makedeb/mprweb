@@ -446,22 +446,22 @@ def test_package_dependencies(client: TestClient, maintainer: User,
     with db.begin():
         dep_pkg = create_package("test-dep-1", maintainer)
         dep = create_package_dep(package, dep_pkg.Name)
-        dep.DepArch = "x86_64"
 
         # Also, create a makedepends.
         make_dep_pkg = create_package("test-dep-2", maintainer)
         make_dep = create_package_dep(package, make_dep_pkg.Name,
                                       dep_type_name="makedepends")
+        make_dep.DepArch = "x86_64"
 
         # And... a checkdepends!
         check_dep_pkg = create_package("test-dep-3", maintainer)
-        check_dep = create_package_dep(package, check_dep_pkg.Name,
-                                       dep_type_name="checkdepends")
+        create_package_dep(package, check_dep_pkg.Name,
+                           dep_type_name="checkdepends")
 
         # Geez. Just stop. This is optdepends.
         opt_dep_pkg = create_package("test-dep-4", maintainer)
-        opt_dep = create_package_dep(package, opt_dep_pkg.Name,
-                                     dep_type_name="optdepends")
+        create_package_dep(package, opt_dep_pkg.Name,
+                           dep_type_name="optdepends")
 
         # Heh. Another optdepends to test one with a description.
         opt_desc_dep_pkg = create_package("test-dep-5", maintainer)
@@ -475,7 +475,7 @@ def test_package_dependencies(client: TestClient, maintainer: User,
         # Create an official provider record.
         db.create(OfficialProvider, Name="test-dep-99",
                   Repo="core", Provides="test-dep-99")
-        official_dep = create_package_dep(package, "test-dep-99")
+        create_package_dep(package, "test-dep-99")
 
         # Also, create a provider who provides our test-dep-99.
         provider = create_package("test-provider", maintainer)
@@ -485,25 +485,25 @@ def test_package_dependencies(client: TestClient, maintainer: User,
         resp = request.get(package_endpoint(package))
     assert resp.status_code == int(HTTPStatus.OK)
 
+    # Let's make sure all the non-broken deps are ordered as we expect.
+    expected = list(filter(
+        lambda e: e.is_package(),
+        package.package_dependencies.order_by(
+            PackageDependency.DepTypeID.asc(),
+            PackageDependency.DepName.asc()
+        ).all()
+    ))
     root = parse_root(resp.text)
-
-    expected = [
-        dep.DepName,
-        make_dep.DepName,
-        check_dep.DepName,
-        opt_dep.DepName,
-        opt_desc_dep.DepName,
-        official_dep.DepName
-    ]
     pkgdeps = root.findall('.//ul[@id="pkgdepslist"]/li/a')
     for i, expectation in enumerate(expected):
-        assert pkgdeps[i].text.strip() == expectation
+        assert pkgdeps[i].text.strip() == expectation.DepName
 
-    # Let's make sure the DepArch was displayed for our first dep.
-    arch = root.findall('.//ul[@id="pkgdepslist"]/li')[0]
-    arch = arch.xpath('./em')[1]
-    assert arch.text.strip() == "(x86_64)"
+    # Let's make sure the DepArch was displayed for our target make dep.
+    arch = root.findall('.//ul[@id="pkgdepslist"]/li')[3]
+    arch = arch.xpath('./em')[0]
+    assert arch.text.strip() == "(make, x86_64)"
 
+    # And let's make sure that the broken package was displayed.
     broken_node = root.find('.//ul[@id="pkgdepslist"]/li/span')
     assert broken_node.text.strip() == broken_dep.DepName
 
@@ -816,6 +816,33 @@ def test_packages_search_by_submitter(client: TestClient,
     assert len(rows) == 1
 
 
+def test_packages_sort_by_name(client: TestClient, packages: List[Package]):
+    with client as request:
+        response = request.get("/packages", params={
+            "SB": "n",  # Name
+            "SO": "a",  # Ascending
+            "PP": "150"
+        })
+    assert response.status_code == int(HTTPStatus.OK)
+
+    root = parse_root(response.text)
+    rows = root.xpath('//table[@class="results"]/tbody/tr')
+    rows = [row.xpath('./td/a')[0].text.strip() for row in rows]
+
+    with client as request:
+        response2 = request.get("/packages", params={
+            "SB": "n",  # Name
+            "SO": "d",  # Ascending
+            "PP": "150"
+        })
+    assert response2.status_code == int(HTTPStatus.OK)
+
+    root = parse_root(response2.text)
+    rows2 = root.xpath('//table[@class="results"]/tbody/tr')
+    rows2 = [row.xpath('./td/a')[0].text.strip() for row in rows2]
+    assert rows == list(reversed(rows2))
+
+
 def test_packages_sort_by_votes(client: TestClient,
                                 maintainer: User,
                                 packages: List[Package]):
@@ -1078,22 +1105,39 @@ def test_packages_per_page(client: TestClient, maintainer: User):
     assert len(rows) == 250
 
 
-def test_pkgbase_voters(client: TestClient, maintainer: User, package: Package):
+def test_pkgbase_voters(client: TestClient, tu_user: User, package: Package):
     pkgbase = package.PackageBase
     endpoint = f"/pkgbase/{pkgbase.Name}/voters"
 
     now = int(datetime.utcnow().timestamp())
     with db.begin():
-        db.create(PackageVote, User=maintainer, PackageBase=pkgbase,
-                  VoteTS=now)
+        db.create(PackageVote, User=tu_user, PackageBase=pkgbase, VoteTS=now)
 
+    cookies = {"AURSID": tu_user.login(Request(), "testPassword")}
     with client as request:
-        resp = request.get(endpoint)
+        resp = request.get(endpoint, cookies=cookies, allow_redirects=False)
     assert resp.status_code == int(HTTPStatus.OK)
 
+    # We should've gotten one link to the voter, tu_user.
     root = parse_root(resp.text)
-    rows = root.xpath('//div[@class="box"]//ul/li')
+    rows = root.xpath('//div[@class="box"]//ul/li/a')
     assert len(rows) == 1
+    assert rows[0].text.strip() == tu_user.Username
+
+
+def test_pkgbase_voters_unauthorized(client: TestClient, user: User,
+                                     package: Package):
+    pkgbase = package.PackageBase
+    endpoint = f"/pkgbase/{pkgbase.Name}/voters"
+
+    now = int(datetime.utcnow().timestamp())
+    with db.begin():
+        db.create(PackageVote, User=user, PackageBase=pkgbase, VoteTS=now)
+
+    with client as request:
+        resp = request.get(endpoint, allow_redirects=False)
+    assert resp.status_code == int(HTTPStatus.SEE_OTHER)
+    assert resp.headers.get("location") == f"/pkgbase/{pkgbase.Name}"
 
 
 def test_pkgbase_comment_not_found(client: TestClient, maintainer: User,
