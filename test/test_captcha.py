@@ -38,7 +38,7 @@ def test_captcha_challenge_answer():
     challenge = captcha.get_captcha_challenge(salt)
 
     token = captcha.get_captcha_token(salt)
-    challenge2 = f"makedeb --dur-check|sed -r 's#[0-9]+#{token}#g'|md5sum|cut -c1-6"
+    challenge2 = f"makedeb --mpr-check|sed -r 's#[0-9]+#{token}#g'|md5sum|cut -c1-6"
 
     assert challenge == challenge2
 
