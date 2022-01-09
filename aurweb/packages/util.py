@@ -1,20 +1,21 @@
 from collections import defaultdict
 from http import HTTPStatus
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 
 import orjson
 
-from fastapi import HTTPException, Request
-from sqlalchemy import and_, orm
+from fastapi import HTTPException
+from sqlalchemy import orm
 
-from aurweb import db, l10n, models, util
-from aurweb.models.official_provider import OFFICIAL_BASE
-from aurweb.models.package import Package
+from aurweb import config, db, models
+from aurweb.models import Package
+from aurweb.models.official_provider import OFFICIAL_BASE, OfficialProvider
 from aurweb.models.package_dependency import PackageDependency
-from aurweb.models.relation_type import PROVIDES_ID
+from aurweb.models.package_relation import PackageRelation
 from aurweb.redis import redis_connection
-from aurweb.scripts import notify
 from aurweb.templates import register_filter
+
+Providers = List[Union[PackageRelation, OfficialProvider]]
 
 
 def dep_extra_with_arch(dep: models.PackageDependency, annotation: str) -> str:
@@ -60,53 +61,40 @@ def dep_extra_desc(dep: models.PackageDependency) -> str:
 
 @register_filter("pkgname_link")
 def pkgname_link(pkgname: str) -> str:
-    base = "/".join([OFFICIAL_BASE, "packages"])
-    official = db.query(models.OfficialProvider).filter(
-        models.OfficialProvider.Name == pkgname).exists()
+    official = db.query(OfficialProvider).filter(
+        OfficialProvider.Name == pkgname).exists()
     if db.query(official).scalar():
+        base = "/".join([OFFICIAL_BASE, "packages"])
         return f"{base}/?q={pkgname}"
     return f"/packages/{pkgname}"
 
 
 @register_filter("package_link")
-def package_link(package: models.Package) -> str:
-    base = "/".join([OFFICIAL_BASE, "packages"])
-    official = db.query(models.OfficialProvider).filter(
-        models.OfficialProvider.Name == package.Name).exists()
-    if db.query(official).scalar():
+def package_link(package: Union[Package, OfficialProvider]) -> str:
+    if package.is_official:
+        base = "/".join([OFFICIAL_BASE, "packages"])
         return f"{base}/?q={package.Name}"
     return f"/packages/{package.Name}"
 
 
-@register_filter("provides_list")
-def provides_list(package: models.Package, depname: str) -> list:
-    providers = db.query(models.Package).join(
-        models.PackageRelation).join(models.RelationType).filter(
-        and_(
-            models.PackageRelation.RelName == depname,
-            models.RelationType.ID == PROVIDES_ID
-        )
-    )
-
-    string = ", ".join([
+@register_filter("provides_markup")
+def provides_markup(provides: Providers) -> str:
+    return ", ".join([
         f'<a href="{package_link(pkg)}">{pkg.Name}</a>'
-        for pkg in providers
+        for pkg in provides
     ])
-
-    if string:
-        # If we actually constructed a string, wrap it.
-        string = f"<em>({string})</em>"
-
-    return string
 
 
 def get_pkg_or_base(
         name: str,
-        cls: Union[models.Package, models.PackageBase] = models.PackageBase):
+        cls: Union[models.Package, models.PackageBase] = models.PackageBase) \
+        -> Union[models.Package, models.PackageBase]:
     """ Get a PackageBase instance by its name or raise a 404 if
     it can't be found in the database.
 
     :param name: {Package,PackageBase}.Name
+    :param exception: Whether to raise an HTTPException or simply return None if
+                      the package can't be found.
     :raises HTTPException: With status code 404 if record doesn't exist
     :return: {Package,PackageBase} instance
     """
@@ -128,14 +116,6 @@ def get_pkgbase_comment(pkgbase: models.PackageBase, id: int) \
     if not comment:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
     return db.refresh(comment)
-
-
-def get_pkgreq_by_id(id: int):
-    pkgreq = db.query(models.PackageRequest).filter(
-        models.PackageRequest.ID == id).first()
-    if not pkgreq:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-    return db.refresh(pkgreq)
 
 
 @register_filter("out_of_date")
@@ -235,85 +215,45 @@ def query_notified(query: List[models.Package],
     return output
 
 
-def remove_comaintainers(pkgbase: models.PackageBase,
-                         usernames: List[str]) -> None:
+def pkg_required(pkgname: str, provides: List[str], limit: int) \
+        -> List[PackageDependency]:
     """
-    Remove comaintainers from `pkgbase`.
+    Get dependencies that match a string in `[pkgname] + provides`.
 
-    :param pkgbase: PackageBase instance
-    :param usernames: Iterable of username strings
-    :return: None
+    :param pkgname: Package.Name
+    :param provides: List of PackageRelation.Name
+    :param limit: Maximum number of dependencies to query
+    :return: List of PackageDependency instances
     """
-    notifications = []
-    with db.begin():
-        for username in usernames:
-            # We know that the users we passed here are in the DB.
-            # No need to check for their existence.
-            comaintainer = pkgbase.comaintainers.join(models.User).filter(
-                models.User.Username == username
-            ).first()
-            notifications.append(
-                notify.ComaintainerRemoveNotification(
-                    comaintainer.User.ID, pkgbase.ID)
-            )
-            db.delete(comaintainer)
-
-    # Send out notifications if need be.
-    util.apply_all(notifications, lambda n: n.send())
-
-
-def add_comaintainers(request: Request, pkgbase: models.PackageBase,
-                      priority: int, usernames: List[str]) -> None:
-    """
-    Add comaintainers to `pkgbase`.
-
-    :param request: FastAPI request
-    :param pkgbase: PackageBase instance
-    :param priority: Initial priority value
-    :param usernames: Iterable of username strings
-    :return: None on success, an error string on failure
-    """
-
-    # First, perform a check against all usernames given; for each
-    # username, add its related User object to memo.
-    _ = l10n.get_translator_for_request(request)
-    memo = {}
-    for username in usernames:
-        user = db.query(models.User).filter(
-            models.User.Username == username).first()
-        if not user:
-            return _("Invalid user name: %s") % username
-        memo[username] = user
-
-    # Alright, now that we got past the check, add them all to the DB.
-    notifications = []
-    with db.begin():
-        for username in usernames:
-            user = memo.get(username)
-            if pkgbase.Maintainer == user:
-                # Already a maintainer. Move along.
-                continue
-
-            # If we get here, our user model object is in the memo.
-            comaintainer = db.create(
-                models.PackageComaintainer,
-                PackageBase=pkgbase,
-                User=user,
-                Priority=priority)
-            priority += 1
-
-            notifications.append(
-                notify.ComaintainerAddNotification(
-                    comaintainer.User.ID, pkgbase.ID)
-            )
-
-    # Send out notifications.
-    util.apply_all(notifications, lambda n: n.send())
-
-
-def pkg_required(pkgname: str, provides: List[str], limit: int):
-    targets = set(provides + [pkgname])
+    targets = set([pkgname] + provides)
     query = db.query(PackageDependency).join(Package).filter(
         PackageDependency.DepName.in_(targets)
     ).order_by(Package.Name.asc()).limit(limit)
     return query.all()
+
+
+@register_filter("source_uri")
+def source_uri(pkgsrc: models.PackageSource) -> Tuple[str, str]:
+    """
+    Produce a (text, uri) tuple out of `pkgsrc`.
+
+    In this filter, we cover various cases:
+    1. If "::" is anywhere in the Source column, split the string,
+       which should produce a (text, uri), where text is before "::"
+       and uri is after "::".
+    2. Otherwise, if "://" is anywhere in the Source column, it's just
+       some sort of URI, which we'll return varbatim as both text and uri.
+    3. Otherwise, we'll return a path to the source file in a uri produced
+       out of options.source_file_uri formatted with the source file and
+       the package base name.
+
+    :param pkgsrc: PackageSource instance
+    :return (text, uri) tuple
+    """
+    if "::" in pkgsrc.Source:
+        return pkgsrc.Source.split("::", 1)
+    elif "://" in pkgsrc.Source:
+        return (pkgsrc.Source, pkgsrc.Source)
+    path = config.get("options", "source_file_uri")
+    pkgbasename = pkgsrc.Package.PackageBase.Name
+    return (pkgsrc.Source, path % (pkgsrc.Source, pkgbasename))

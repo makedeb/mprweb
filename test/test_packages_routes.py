@@ -75,14 +75,19 @@ def client() -> TestClient:
     yield TestClient(app=asgi.app)
 
 
+def create_user(username: str) -> User:
+    with db.begin():
+        user = db.create(User, Username=username,
+                         Email=f"{username}@example.org",
+                         Passwd="testPassword",
+                         AccountTypeID=USER_ID)
+    return user
+
+
 @pytest.fixture
 def user() -> User:
     """ Yield a user. """
-    with db.begin():
-        user = db.create(User, Username="test",
-                         Email="test@example.org",
-                         Passwd="testPassword",
-                         AccountTypeID=USER_ID)
+    user = create_user("test")
     yield user
 
 
@@ -2478,9 +2483,9 @@ def test_packages_post_delete(caplog: pytest.fixture, client: TestClient,
     assert successes[0].text.strip() == expected
 
     # Expect that the package deletion was logged.
-    packages = [package.Name]
+    pkgbases = [package.PackageBase.Name]
     expected = (f"Privileged user '{tu_user.Username}' deleted the "
-                f"following packages: {str(packages)}.")
+                f"following package bases: {str(pkgbases)}.")
     assert expected in caplog.text
 
 

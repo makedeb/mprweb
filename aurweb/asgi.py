@@ -1,6 +1,6 @@
-import asyncio
 import http
 import os
+import re
 import sys
 import typing
 
@@ -9,28 +9,35 @@ from urllib.parse import quote_plus
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from jinja2 import TemplateNotFound
 from prometheus_client import multiprocess
 from sqlalchemy import and_, or_
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 import aurweb.config
 import aurweb.logging
+import aurweb.pkgbase.util as pkgbaseutil
 
+from aurweb import logging, prometheus, util
 from aurweb.auth import BasicAuthBackend
 from aurweb.db import get_engine, query
 from aurweb.models import AcceptedTerm, Term
-from aurweb.prometheus import http_api_requests_total, http_requests_total, instrumentator
-from aurweb.routers import accounts, auth, html, packages, rpc, rss, sso, trusted_user
+from aurweb.packages.util import get_pkg_or_base
+from aurweb.prometheus import instrumentator
+from aurweb.routers import APP_ROUTES
 from aurweb.templates import make_context, render_template
+
+logger = logging.get_logger(__name__)
 
 # Setup the FastAPI app.
 app = FastAPI()
 
 # Instrument routes with the prometheus-fastapi-instrumentator
 # library with custom collectors and expose /metrics.
-instrumentator().add(http_api_requests_total())
-instrumentator().add(http_requests_total())
+instrumentator().add(prometheus.http_api_requests_total())
+instrumentator().add(prometheus.http_requests_total())
 instrumentator().instrument(app)
 
 
@@ -74,14 +81,9 @@ async def app_startup():
     app.add_middleware(SessionMiddleware, secret_key=session_secret)
 
     # Add application routes.
-    app.include_router(sso.router)
-    app.include_router(html.router)
-    app.include_router(auth.router)
-    app.include_router(accounts.router)
-    app.include_router(trusted_user.router)
-    app.include_router(rss.router)
-    app.include_router(packages.router)
-    app.include_router(rpc.router)
+    def add_router(module):
+        app.include_router(module.router)
+    util.apply_all(APP_ROUTES, add_router)
 
     # Initialize the database engine and ORM.
     get_engine()
@@ -93,7 +95,7 @@ def child_exit(server, worker):  # pragma: no cover
     multiprocess.mark_process_dead(worker.pid)
 
 
-@app.exception_handler(HTTPException)
+@app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) \
         -> Response:
     """ Handle an HTTPException thrown in a route. """
@@ -101,8 +103,24 @@ async def http_exception_handler(request: Request, exc: HTTPException) \
     context = make_context(request, phrase)
     context["exc"] = exc
     context["phrase"] = phrase
-    return render_template(request, "errors/detail.html", context,
-                           exc.status_code)
+
+    # Additional context for some exceptions.
+    if exc.status_code == http.HTTPStatus.NOT_FOUND:
+        tokens = request.url.path.split("/")
+        matches = re.match("^([a-z0-9][a-z0-9.+_-]*?)(\\.git)?$", tokens[1])
+        if matches:
+            try:
+                pkgbase = get_pkg_or_base(matches.group(1))
+                context = pkgbaseutil.make_context(request, pkgbase)
+            except HTTPException:
+                pass
+
+    try:
+        return render_template(request, f"errors/{exc.status_code}.html",
+                               context, exc.status_code)
+    except TemplateNotFound:
+        return render_template(request, "errors/detail.html",
+                               context, exc.status_code)
 
 
 @app.middleware("http")
@@ -115,9 +133,7 @@ async def add_security_headers(request: Request, call_next: typing.Callable):
     RP: Referrer-Policy
     XFO: X-Frame-Options
     """
-    response = asyncio.create_task(call_next(request))
-    await asyncio.wait({response}, return_when=asyncio.FIRST_COMPLETED)
-    response = response.result()
+    response = await util.error_or_result(call_next, request)
 
     # Add CSP header.
     nonce = request.user.nonce
@@ -157,9 +173,7 @@ async def check_terms_of_service(request: Request, call_next: typing.Callable):
             return RedirectResponse(
                 "/tos", status_code=int(http.HTTPStatus.SEE_OTHER))
 
-    task = asyncio.create_task(call_next(request))
-    await asyncio.wait({task}, return_when=asyncio.FIRST_COMPLETED)
-    return task.result()
+    return await util.error_or_result(call_next, request)
 
 
 @app.middleware("http")
@@ -177,6 +191,4 @@ async def id_redirect_middleware(request: Request, call_next: typing.Callable):
         path = request.url.path.rstrip('/')
         return RedirectResponse(f"{path}/{id}{qs}")
 
-    task = asyncio.create_task(call_next(request))
-    await asyncio.wait({task}, return_when=asyncio.FIRST_COMPLETED)
-    return task.result()
+    return await util.error_or_result(call_next, request)
