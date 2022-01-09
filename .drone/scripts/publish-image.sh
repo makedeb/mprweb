@@ -34,6 +34,8 @@ sed -i \
 rm conf/config.dev
 cp conf/config.defaults conf/config.dev
 
+cp logging.prod.conf logging.conf
+
 echo "+ Building image..."
 docker-compose build --pull --no-cache mprweb-image
 
