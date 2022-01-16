@@ -22,9 +22,9 @@ sed -i \
     -e "s|smtp-password =.*|smtp-password = ${mpr_smtp_password}|" \
     -e 's|sender =.*|sender = mpr@hunterwittenborn.com|' \
     -e 's|reply-to =.*|reply-to = mpr@hunterwittenborn.com|' \
-    -e 's|Ed25519 =.*|Ed25519 = SHA256:TQtnFwjBwpDOHnHTaANeudpXVmomlYo6Td/8T51FA/w|' \
-    -e 's|ECDSA =.*|ECDSA = SHA256:AgnXFB7JfJopUSFFJCQHvoaIQqx1RYxMLyyg2Ax7du0|' \
-    -e 's|RSA =.*|RSA = SHA256:b7DzV4xdxMgUftFUFu2geQHmpe/w2c9dYEvXtJqap9Y|' \
+    -e 's|Ed25519 =.*|Ed25519 = SHA256:8A1Asmd6rEtypl+h1WM/3Jgonauwx6Hez5FaytLFdwY|' \
+    -e 's|ECDSA =.*|ECDSA = SHA256:7Wki/ZTENAVOYmAtH4+vhqZB8vHkLURS+eK1SQy0jTs|' \
+    -e 's|RSA =.*|RSA = SHA256:bAWQvVgBKyuUn8acQIrEQ7Hh1PTXjghXSYovSWhrh7Y|' \
     -e "s|ssh-cmdline =.*|ssh-cmdline = ssh mpr@${mpr_url}|" \
     -e "s|commit_hash =.*|commit_hash = ${commit_hash}|" \
     -e "s|session_secret =.*|session_secret = ${fastapi_secret}|" \
