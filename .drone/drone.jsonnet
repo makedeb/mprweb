@@ -66,7 +66,7 @@ local publishImage() = {
         ],
         commands: [
             "apt-get update",
-            "apt-get install docker.io -yq",
+            "apt-get install docker.io python3 -yq",
             "bash .drone/scripts/publish-image.sh"
         ]
     }]

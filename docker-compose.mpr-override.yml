@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  mariadb:
+    volumes:
+      - mariadb_run:/var/run/mysqld
+      - ./data/mariadb_data:/var/lib/mysql
+
+  cgit-php:
+    volumes:
+      - ./data/git_data:/aurweb/aur.git
+
+  cgit-fastapi:
+    volumes:
+      - ./data/git_data:/aurweb/aur.git

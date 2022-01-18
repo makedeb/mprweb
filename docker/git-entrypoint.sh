@@ -31,10 +31,10 @@ chmod 755 $AUTH_SCRIPT
 
 # Add AUR SSH config.
 cat >> $SSHD_CONFIG << EOF
-Match User mpr
+Match User aur
     PasswordAuthentication no
     AuthorizedKeysCommand $AUTH_SCRIPT "%t" "%k"
-    AuthorizedKeysCommandUser mpr
+    AuthorizedKeysCommandUser aur
     AcceptEnv AUR_OVERWRITE
 EOF
 
@@ -46,9 +46,7 @@ aurweb-config set serve repo-path '/aurweb/aur.git/'
 aurweb-config set serve ssh-cmdline "$SSH_CMDLINE"
 
 # Setup SSH Keys.
-if (( "${GENERATE_SSH_KEYS:-1}" )); then
-    ssh-keygen -A
-fi
+ssh-keygen -A
 
 # In docker-compose.aur-dev.yml, we bind ./data to /aurweb/data.
 # Production users wishing to include their own SSH keys should
@@ -71,7 +69,7 @@ if [ ! -f $GIT_REPO/config ]; then
     git config --local --add transfer.hideRefs '!HEAD'
     ln -sf /usr/bin/aurweb-git-update hooks/update
     cd $curdir
-    chown -R mpr:mpr $GIT_REPO
+    chown -R aur:aur $GIT_REPO
 fi
 
 exec "$@"
