@@ -260,6 +260,10 @@ services:
     healthcheck:
       test: "bash /docker/health/nginx.sh"
       interval: 2s
+    volumes:
+      - ./data:/data
+      - archives:/var/lib/aurweb/archives
+      - smartgit_run:/var/run/smartgit
     depends_on:
       ca:
         condition: service_started
