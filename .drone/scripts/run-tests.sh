@@ -5,9 +5,10 @@ if echo "${DRONE_COMMIT_MESSAGE}" | grep -q 'TEST SKIP'; then
 fi
 
 set -ex
-source conf/docker.env
 export PATH="$HOME/.poetry/bin:${PATH}"
-export AURWEB_FASTAPI_PREFIX CONFIG_FILE
+export AUR_CONFIG='conf/config'
+export DB_HOST='localhost'
+export CURRENT_DIR="$(pwd)"
 
 ./docker/scripts/install-deps.sh
 ./docker/scripts/install-python-deps.sh
