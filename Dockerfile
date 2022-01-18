@@ -32,7 +32,7 @@ RUN /docker/scripts/install-python-deps.sh
 RUN make -C doc
 
 # Add our aur user.
-RUN useradd -U -d /aurweb -c 'AUR User' aur
+RUN useradd -U -d /aurweb -c 'AUR User' mpr
 
 # Setup some default system stuff.
 RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime

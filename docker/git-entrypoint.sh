@@ -31,10 +31,10 @@ chmod 755 $AUTH_SCRIPT
 
 # Add AUR SSH config.
 cat >> $SSHD_CONFIG << EOF
-Match User aur
+Match User mpr
     PasswordAuthentication no
     AuthorizedKeysCommand $AUTH_SCRIPT "%t" "%k"
-    AuthorizedKeysCommandUser aur
+    AuthorizedKeysCommandUser mpr
     AcceptEnv AUR_OVERWRITE
 EOF
 
@@ -69,7 +69,7 @@ if [ ! -f $GIT_REPO/config ]; then
     git config --local --add transfer.hideRefs '!HEAD'
     ln -sf /usr/bin/aurweb-git-update hooks/update
     cd $curdir
-    chown -R aur:aur $GIT_REPO
+    chown -R mpr:mpr $GIT_REPO
 fi
 
 exec "$@"
