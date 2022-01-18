@@ -17,25 +17,17 @@ useradd -U -d /aurweb -c 'MPR User' mpr
 ./docker/mariadb-entrypoint.sh
 (cd /usr && /usr/bin/mysqld_safe --datadir=/var/lib/mysql) &
 until : > /dev/tcp/127.0.0.1/3306; do sleep 1s; done
+cp -v conf/config.dev conf/config
+sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
 ./docker/test-mysql-entrypoint.sh
 
+cp -vf logging.test.conf logging.conf
 make -C po all install
+make -C doc
 make -C test clean
-
-cp logging.conf logging.conf.bak
-cp logging.prod.conf logging.conf
-
 make -C test sh
-
-cp logging.conf.bak logging.conf
-
-# Set up config file to work properly for unit tests.
-sed -i 's|^user =.*|user = root|' conf/config.defaults
-sed -i 's|^sendmail =.*|sendmail = YOUR_AUR_ROOT/util/sendmail|' conf/config.defaults
-
-PROMETHEUS_MULTIPROC_DIR='/tmp_prometheus' docker/scripts/run-pytests.sh --no-coverage
+pytest
 make -C test coverage
-
 flake8 --count aurweb
 flake8 --count test
 flake8 --count migrations

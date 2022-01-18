@@ -24,7 +24,6 @@ git_clone_uri_priv = ssh://mpr@mpr.hunterwittenborn.com/%s.git
 max_rpc_results = 5000
 max_search_results = 2500
 max_depends = 1000
-aur_request_ml = aur-requests@localhost
 request_idle_time = 1209600
 request_archive_time = 15552000
 auto_orphan_age = 15552000
@@ -42,11 +41,8 @@ cache_pkginfo_ttl = 86400
 memcache_servers = memcached:11211
 salt_rounds = 4
 redis_address = redis://127.0.0.1
-
-[ratelimit]
-request_limit = 4000
-window_length = 86400
-cache = 1
+aur_request_ml = aur-requests@localhost
+traceback = 1
 
 [notifications]
 notify-cmd = /usr/bin/aurweb-notify

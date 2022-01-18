@@ -144,8 +144,7 @@ span.hover-help {
 	cursor:help;
 }
 
-label.confirmation,
-#merge-into {
+label.confirmation {
 	width: auto;
 }
 
@@ -256,4 +255,13 @@ div.box form.link p {
 }
 div.box form.link button {
     padding: 0;
+}
+
+pre.traceback {
+    /* https://css-tricks.com/snippets/css/make-pre-text-wrap/ */
+    white-space: pre-wrap;
+    white-space: -moz-pre-wrap;
+    white-space: -pre-wrap;
+    white-space: -o-pre-wrap;
+    word-wrap: break-all;
 }
