@@ -2,7 +2,7 @@
 set -e
 
 aurweb_config() {
-    AURWEB_CONFIG='conf/config.dev' python3 -m aurweb.scripts.config "${@}"
+    AUR_CONFIG='conf/config.dev' python3 -m aurweb.scripts.config "${@}"
 }
 
 # Get needed data.
