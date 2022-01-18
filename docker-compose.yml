@@ -33,6 +33,9 @@ services:
     healthcheck:
       test: "bash /docker/health/run-ca.sh"
       interval: 2s
+    volumes:
+      - ./data:/data
+      - step:/root/.step
 
   memcached:
     image: aurweb:latest
@@ -130,6 +133,10 @@ services:
     healthcheck:
       test: "bash /docker/health/smartgit.sh"
       interval: 2s
+    volumes:
+      - git_data:/aurweb/aur.git
+      - ./data:/data
+      - smartgit_run:/var/run/smartgit
 
   cgit-php:
     image: aurweb:latest
