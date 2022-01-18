@@ -1,10 +1,9 @@
 [database]
 backend = mysql
 name = aurweb
-user = 7
+user = root
 host = localhost
 socket = /var/run/mysqld/mysqld.sock
-me = 7
 
 [options]
 aurwebdir = YOUR_AUR_ROOT
@@ -19,6 +18,8 @@ redis_address = redis://127.0.0.1
 aur_request_ml = aur-requests@localhost
 traceback = 1
 
+[ratelimit]
+
 [notifications]
 sendmail = YOUR_AUR_ROOT/util/sendmail
 sender = notify@localhost
@@ -29,6 +30,10 @@ openid_configuration = http://127.0.0.1:8083/auth/realms/aurweb/.well-known/open
 client_id = aurweb
 client_secret = 
 
+[fingerprints]
+
+[auth]
+
 [php]
 bind_address = 127.0.0.1:8081
 htmldir = YOUR_AUR_ROOT/web/html
@@ -36,6 +41,10 @@ htmldir = YOUR_AUR_ROOT/web/html
 [fastapi]
 bind_address = 127.0.0.1:8082
 session_secret = secret
+
+[serve]
+
+[update]
 
 [devel]
 
@@ -48,5 +57,7 @@ pkgbasefile = /var/lib/aurweb/archives/pkgbase.gz
 userfile = /var/lib/aurweb/archives/users.gz
 
 [aurblup]
-db-path = hi
+db-path = YOUR_AUR_ROOT/aurblup/
+
+[tuvotereminder]
 
