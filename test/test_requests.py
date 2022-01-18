@@ -397,7 +397,7 @@ def test_deletion_request(client: TestClient, user: User, tu_user: User,
 
     # We should've also had a DeleteNotification sent out.
     email = Email(3).parse()
-    subject = r"^AUR Package deleted: [^ ]+$"
+    subject = r"^MPR Package deleted: [^ ]+$"
     assert re.match(subject, email.headers.get("Subject"))
     body = r"%s [1] deleted %s [2]." % (tu_user.Username, pkgbase.Name)
     assert body in email.body
