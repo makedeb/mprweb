@@ -20,6 +20,7 @@ aurweb_config set database name 'mprweb'
 aurweb_config set options aur_location "https://${mpr_url}"
 aurweb_config set options git_clone_uri_anon "https://${mpr_url}/%s.git"
 aurweb_config set options git_clone_uri_priv "ssh://mpr@${mpr_url}/%s.git"
+aurweb_config set options traceback 0
 
 aurweb_config set notifications smtp-server "${hw_url}"
 aurweb_config set notifications smtp-port '465'
