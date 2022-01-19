@@ -24,9 +24,7 @@ The mprweb project includes:
 * `schema`: schema for the SQL database
 * `test`: test suite and test cases
 * `upgrading`: instructions for upgrading setups from one release to another
-* `web`: PHP-based web interface for the AUR
-
+* `web`: PHP-based web interface for the MPR
 
 ## Testing
-
 See [test/README.md](test/README.md) for details on dependencies and testing.

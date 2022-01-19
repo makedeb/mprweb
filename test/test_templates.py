@@ -1,13 +1,14 @@
 import re
 
-from datetime import datetime
 from typing import Any, Dict
 
 import pytest
 
 import aurweb.filters  # noqa: F401
 
-from aurweb import config, db, templates
+from aurweb import config, db, templates, time
+from aurweb.filters import as_timezone, number_format
+from aurweb.filters import timestamp_to_datetime as to_dt
 from aurweb.models import Package, PackageBase, User
 from aurweb.models.account_type import USER_ID
 from aurweb.models.license import License
@@ -17,8 +18,6 @@ from aurweb.models.relation_type import PROVIDES_ID, REPLACES_ID
 from aurweb.templates import base_template, make_context, register_filter, register_function
 from aurweb.testing.html import parse_root
 from aurweb.testing.requests import Request
-from aurweb.util import as_timezone, number_format
-from aurweb.util import timestamp_to_datetime as to_dt
 
 GIT_CLONE_URI_ANON = "anon_%s"
 GIT_CLONE_URI_PRIV = "priv_%s"
@@ -59,7 +58,7 @@ def user(db_test) -> User:
 
 @pytest.fixture
 def pkgbase(user: User) -> PackageBase:
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     with db.begin():
         pkgbase = db.create(PackageBase, Name="test-pkg", Maintainer=user,
                             SubmittedTS=now, ModifiedTS=now)
@@ -77,15 +76,6 @@ def create_license(pkg: Package, license_name: str) -> PackageLicense:
     lic = db.create(License, Name=license_name)
     pkglic = db.create(PackageLicense, License=lic, Package=pkg)
     return pkglic
-
-
-def test_register_filter_exists_key_error():
-    """ Most instances of register_filter are tested through module
-    imports or template renders, so we only test failures here. """
-    with pytest.raises(KeyError):
-        @register_filter("func")
-        def some_func():
-            pass
 
 
 def test_register_function_exists_key_error():
@@ -152,7 +142,7 @@ def test_pager_no_results():
     """ Test the pager partial with no results. """
     num_packages = 0
     context = pager_context(num_packages)
-    body = base_template("partials/widgets/pager.html").render(context)
+    body = base_template("partials/pager.html").render(context)
 
     root = parse_root(body)
     stats = root.xpath('//div[@class="pkglist-stats"]/p')
@@ -164,7 +154,7 @@ def test_pager():
     """ Test the pager partial with two pages of results. """
     num_packages = 100
     context = pager_context(num_packages)
-    body = base_template("partials/widgets/pager.html").render(context)
+    body = base_template("partials/pager.html").render(context)
 
     root = parse_root(body)
     stats = root.xpath('//div[@class="pkglist-stats"]/p')

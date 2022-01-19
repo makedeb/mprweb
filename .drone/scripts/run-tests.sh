@@ -22,7 +22,6 @@ cp -v conf/config.dev conf/config
 sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
 ./docker/test-mysql-entrypoint.sh
 
-cp -vf logging.test.conf logging.conf
 make -C po all install
 make -C doc
 make -C test clean
