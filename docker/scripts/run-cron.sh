@@ -1,10 +1,6 @@
 #!/bin/bash
 
 cd /aurweb
-aurweb-aurblup
-if [ $? -eq 0 ]; then
-    echo "[$(date -u)] executed aurblup" >> /var/log/aurblup.log
-fi
 
 aurweb-mkpkglists --extended
 if [ $? -eq 0 ]; then
