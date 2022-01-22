@@ -38,6 +38,7 @@ aurweb_config set fingerprints RSA 'SHA256:bAWQvVgBKyuUn8acQIrEQ7Hh1PTXjghXSYovS
 aurweb_config set serve ssh-cmdline "ssh mpr@${mpr_url}"
 aurweb_config set serve repo-path '/aurweb/aur.git'
 aurweb_config set devel commit_hash "$(git rev-parse --short HEAD)"
+aurweb_config set devel commit_url 'https://github.com/makedeb/mprweb/commit/%s'
 aurweb_config set fastapi session_secret "$(openssl rand -hex 32)"
 
 echo "+ Building image..."
