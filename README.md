@@ -1,8 +1,8 @@
 # mprweb
 
-mprweb is a hosting platform for the makedeb Package Repository (MPR), a collection
-of packaging scripts that are created and submitted by the makedeb
-community. The scripts contained in the repository can be built using `makedeb`
+mprweb is a hosting platform for the makedeb Package Repository (MPR), a fork of
+aurweb, the underlying platform that powers the Arch User Repository (AUR).
+The scripts contained in the repository can be built using `makedeb`
 and installed using Debian package managers such as `dpkg` and `apt`.
 
 The mprweb project includes:
@@ -26,5 +26,19 @@ The mprweb project includes:
 * `upgrading`: instructions for upgrading setups from one release to another
 * `web`: PHP-based web interface for the MPR
 
-## Testing
+Documentation
+-------------
+
+| What         | Link                                             |
+|--------------|--------------------------------------------------|
+| Installation | [INSTALL](./INSTALL)                             |
+| Testing      | [test/README.md](./test/README.md)               |
+| Git          | [doc/git-interface.txt](./doc/git-interface.txt) |
+| Maintenance  | [doc/maintenance.txt](./doc/maintenance.txt)     |
+| RPC          | [doc/rpc.txt](./doc/rpc.txt)                     |
+| Docker       | [doc/docker.md](./doc/docker.md)                 |
+
+Testing
+-------
+
 See [test/README.md](test/README.md) for details on dependencies and testing.
