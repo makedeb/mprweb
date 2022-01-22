@@ -1,11 +1,10 @@
-from datetime import datetime
 from http import HTTPStatus
 
 from fastapi import APIRouter, Form, HTTPException, Query, Request, Response
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import and_
 
-from aurweb import config, db, l10n, logging, templates, util
+from aurweb import config, db, l10n, logging, templates, time, util
 from aurweb.auth import creds, requires_auth
 from aurweb.exceptions import InvariantError, ValidationError
 from aurweb.models import PackageBase
@@ -49,7 +48,7 @@ async def pkgbase(request: Request, name: str) -> Response:
     context = pkgbaseutil.make_context(request, pkgbase)
     context["packages"] = pkgbase.packages.all()
 
-    return render_template(request, "pkgbase.html", context)
+    return render_template(request, "pkgbase/index.html", context)
 
 
 @router.get("/pkgbase/{name}/voters")
@@ -85,7 +84,7 @@ async def pkgbase_flag_comment(request: Request, name: str):
 
     context = templates.make_context(request, "Flag Comment")
     context["pkgbase"] = pkgbase
-    return render_template(request, "packages/flag-comment.html", context)
+    return render_template(request, "pkgbase/flag-comment.html", context)
 
 
 @router.post("/pkgbase/{name}/keywords")
@@ -127,7 +126,7 @@ async def pkgbase_flag_get(request: Request, name: str):
 
     context = templates.make_context(request, "Flag Package Out-Of-Date")
     context["pkgbase"] = pkgbase
-    return render_template(request, "packages/flag.html", context)
+    return render_template(request, "pkgbase/flag.html", context)
 
 
 @router.post("/pkgbase/{name}/flag")
@@ -141,12 +140,12 @@ async def pkgbase_flag_post(request: Request, name: str,
         context["pkgbase"] = pkgbase
         context["errors"] = ["The selected packages have not been flagged, "
                              "please enter a comment."]
-        return render_template(request, "packages/flag.html", context,
+        return render_template(request, "pkgbase/flag.html", context,
                                status_code=HTTPStatus.BAD_REQUEST)
 
     has_cred = request.user.has_credential(creds.PKGBASE_FLAG)
     if has_cred and not pkgbase.Flagger:
-        now = int(datetime.utcnow().timestamp())
+        now = time.utcnow()
         with db.begin():
             pkgbase.OutOfDateTS = now
             pkgbase.Flagger = request.user
@@ -170,7 +169,7 @@ async def pkgbase_comments_post(
 
     # If the provided comment is different than the record's version,
     # update the db record.
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     with db.begin():
         comment = db.create(PackageComment, User=request.user,
                             PackageBase=pkgbase,
@@ -249,7 +248,7 @@ async def pkgbase_comment_edit(request: Request, name: str, id: int,
 
     context = await make_variable_context(request, "Edit comment", next=next)
     context["comment"] = comment
-    return render_template(request, "packages/comments/edit.html", context)
+    return render_template(request, "pkgbase/comments/edit.html", context)
 
 
 @router.post("/pkgbase/{name}/comments/{id}")
@@ -268,7 +267,7 @@ async def pkgbase_comment_post(
 
     # If the provided comment is different than the record's version,
     # update the db record.
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     if db_comment.Comments != comment:
         with db.begin():
             db_comment.Comments = comment
@@ -316,7 +315,7 @@ async def pkgbase_comment_pin(request: Request, name: str, id: int,
             status_code=HTTPStatus.UNAUTHORIZED,
             detail=_("You are not allowed to pin this comment."))
 
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     with db.begin():
         comment.PinnedTS = now
 
@@ -387,7 +386,7 @@ async def pkgbase_comment_delete(request: Request, name: str, id: int,
             status_code=HTTPStatus.UNAUTHORIZED,
             detail=_("You are not allowed to delete this comment."))
 
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     with db.begin():
         comment.Deleter = request.user
         comment.DelTS = now
@@ -446,7 +445,7 @@ async def pkgbase_vote(request: Request, name: str):
     ).first()
     has_cred = request.user.has_credential(creds.PKGBASE_VOTE)
     if has_cred and not vote:
-        now = int(datetime.utcnow().timestamp())
+        now = time.utcnow()
         with db.begin():
             db.create(PackageVote,
                       User=request.user,
@@ -520,7 +519,7 @@ async def pkgbase_disown_get(request: Request, name: str):
 
     context = templates.make_context(request, "Disown Package")
     context["pkgbase"] = pkgbase
-    return render_template(request, "packages/disown.html", context)
+    return render_template(request, "pkgbase/disown.html", context)
 
 
 @router.post("/pkgbase/{name}/disown")
@@ -541,7 +540,7 @@ async def pkgbase_disown_post(request: Request, name: str,
     if not confirm:
         context["errors"] = [("The selected packages have not been disowned, "
                               "check the confirmation checkbox.")]
-        return render_template(request, "packages/disown.html", context,
+        return render_template(request, "pkgbase/disown.html", context,
                                status_code=HTTPStatus.BAD_REQUEST)
 
     with db.begin():
@@ -551,7 +550,7 @@ async def pkgbase_disown_post(request: Request, name: str,
         actions.pkgbase_disown_instance(request, pkgbase)
     except InvariantError as exc:
         context["errors"] = [str(exc)]
-        return render_template(request, "packages/disown.html", context,
+        return render_template(request, "pkgbase/disown.html", context,
                                status_code=HTTPStatus.BAD_REQUEST)
 
     return RedirectResponse(f"/pkgbase/{name}",
@@ -683,7 +682,7 @@ async def pkgbase_request_post(request: Request, name: str,
         return render_template(request, "pkgbase/request.html", context)
 
     # All good. Create a new PackageRequest based on the given type.
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     with db.begin():
         pkgreq = db.create(PackageRequest,
                            ReqTypeID=types.get(type),
@@ -740,7 +739,7 @@ async def pkgbase_delete_get(request: Request, name: str):
 
     context = templates.make_context(request, "Package Deletion")
     context["pkgbase"] = get_pkg_or_base(name, PackageBase)
-    return render_template(request, "packages/delete.html", context)
+    return render_template(request, "pkgbase/delete.html", context)
 
 
 @router.post("/pkgbase/{name}/delete")
@@ -759,7 +758,7 @@ async def pkgbase_delete_post(request: Request, name: str,
         context["pkgbase"] = pkgbase
         context["errors"] = [("The selected packages have not been deleted, "
                               "check the confirmation checkbox.")]
-        return render_template(request, "packages/delete.html", context,
+        return render_template(request, "pkgbase/delete.html", context,
                                status_code=HTTPStatus.BAD_REQUEST)
 
     if comments:

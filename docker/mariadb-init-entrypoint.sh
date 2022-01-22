@@ -1,6 +1,7 @@
 #!/bin/bash
 set -eou pipefail
 
+# Setup a config for our mysql db.
 aurweb-config set database name 'aurweb'
 aurweb-config set database user 'aur'
 aurweb-config set database password 'aur'

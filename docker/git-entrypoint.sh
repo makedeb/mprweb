@@ -46,9 +46,7 @@ aurweb-config set serve repo-path '/aurweb/aur.git/'
 aurweb-config set serve ssh-cmdline "$SSH_CMDLINE"
 
 # Setup SSH Keys.
-if (( "${GENERATE_SSH_KEYS:-1}" )); then
-    ssh-keygen -A
-fi
+ssh-keygen -A
 
 # In docker-compose.aur-dev.yml, we bind ./data to /aurweb/data.
 # Production users wishing to include their own SSH keys should

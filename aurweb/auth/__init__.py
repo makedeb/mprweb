@@ -1,6 +1,5 @@
 import functools
 
-from datetime import datetime
 from http import HTTPStatus
 from typing import Callable
 
@@ -13,7 +12,7 @@ from starlette.requests import HTTPConnection
 
 import aurweb.config
 
-from aurweb import db, l10n, util
+from aurweb import db, filters, l10n, time, util
 from aurweb.models import Session, User
 from aurweb.models.account_type import ACCOUNT_TYPE_ID
 
@@ -110,7 +109,7 @@ class BasicAuthBackend(AuthenticationBackend):
                                            "persistent_cookie_timeout")
 
         # If no session with sid and a LastUpdateTS now or later exists.
-        now_ts = int(datetime.utcnow().timestamp())
+        now_ts = time.utcnow()
         record = db.query(Session).filter(Session.SessionID == sid).first()
         if not record:
             return unauthenticated
@@ -122,8 +121,8 @@ class BasicAuthBackend(AuthenticationBackend):
         # At this point, we cannot have an invalid user if the record
         # exists, due to ForeignKey constraints in the schema upheld
         # by mysqlclient.
-        user = db.query(User).filter(User.ID == record.UsersID).first()
-        db.refresh(user)
+        with db.begin():
+            user = db.query(User).filter(User.ID == record.UsersID).first()
         user.nonce = util.make_nonce()
         user.authenticated = True
 
@@ -166,7 +165,7 @@ def _auth_required(auth_goal: bool = True):
                     raise HTTPException(status_code=HTTPStatus.BAD_REQUEST,
                                         detail=_("Bad Referer header."))
                 url = referer[len(aur) - 1:]
-            url = "/login?" + util.urlencode({"next": url})
+            url = "/login?" + filters.urlencode({"next": url})
             return RedirectResponse(url, status_code=int(HTTPStatus.SEE_OTHER))
         return wrapper
 

@@ -1,15 +1,15 @@
 import re
 
-from datetime import datetime
 from http import HTTPStatus
 from logging import DEBUG
+from typing import List
 
 import pytest
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
-from aurweb import asgi, config, db
+from aurweb import asgi, config, db, defaults, time
 from aurweb.models import Package, PackageBase, PackageRequest, User
 from aurweb.models.account_type import TRUSTED_USER_ID, USER_ID
 from aurweb.models.package_notification import PackageNotification
@@ -18,7 +18,7 @@ from aurweb.models.request_type import DELETION_ID, MERGE_ID, ORPHAN_ID
 from aurweb.packages.requests import ClosureFactory
 from aurweb.requests.util import get_pkgreq_by_id
 from aurweb.testing.email import Email
-from aurweb.testing.html import get_errors
+from aurweb.testing.html import get_errors, parse_root
 from aurweb.testing.requests import Request
 
 
@@ -79,6 +79,54 @@ def auser2(user2: User) -> User:
 
 
 @pytest.fixture
+def maintainer() -> User:
+    """ Yield a specific User used to maintain packages. """
+    with db.begin():
+        maintainer = db.create(User, Username="test_maintainer",
+                               Email="test_maintainer@example.org",
+                               Passwd="testPassword",
+                               AccountTypeID=USER_ID)
+    yield maintainer
+
+
+@pytest.fixture
+def packages(maintainer: User) -> List[Package]:
+    """ Yield 55 packages named pkg_0 .. pkg_54. """
+    packages_ = []
+    now = time.utcnow()
+    with db.begin():
+        for i in range(55):
+            pkgbase = db.create(PackageBase,
+                                Name=f"pkg_{i}",
+                                Maintainer=maintainer,
+                                Packager=maintainer,
+                                Submitter=maintainer,
+                                ModifiedTS=now)
+            package = db.create(Package,
+                                PackageBase=pkgbase,
+                                Name=f"pkg_{i}")
+            packages_.append(package)
+
+    yield packages_
+
+
+@pytest.fixture
+def requests(user: User, packages: List[Package]) -> List[PackageRequest]:
+    pkgreqs = []
+    with db.begin():
+        for i in range(55):
+            pkgreq = db.create(PackageRequest,
+                               ReqTypeID=DELETION_ID,
+                               User=user,
+                               PackageBase=packages[i].PackageBase,
+                               PackageBaseName=packages[i].Name,
+                               Comments=f"Deletion request for pkg_{i}",
+                               ClosureComment=str())
+            pkgreqs.append(pkgreq)
+    yield pkgreqs
+
+
+@pytest.fixture
 def tu_user() -> User:
     """ Yield an authenticated Trusted User instance. """
     user = create_user("test_tu", "test_tu@example.org")
@@ -99,7 +147,7 @@ def create_pkgbase(user: User, name: str) -> PackageBase:
     :param name: PackageBase.Name
     :return: PackageBase instance
     """
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     with db.begin():
         pkgbase = db.create(PackageBase, Name=name,
                             Maintainer=user, Packager=user,
@@ -136,7 +184,7 @@ def create_request(reqtype_id: int, user: User, pkgbase: PackageBase,
     :param comments: PackageRequest.Comments
     :return: PackageRequest instance
     """
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     with db.begin():
         pkgreq = db.create(PackageRequest, ReqTypeID=reqtype_id,
                            User=user, PackageBase=pkgbase,
@@ -225,7 +273,7 @@ def test_request_post_deletion_autoaccept(client: TestClient, auser: User,
     """ Test the request route for deletion as maintainer. """
     caplog.set_level(DEBUG)
 
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     auto_delete_age = config.getint("options", "auto_delete_age")
     with db.begin():
         pkgbase.ModifiedTS = now - auto_delete_age + 100
@@ -348,7 +396,7 @@ def test_deletion_request(client: TestClient, user: User, tu_user: User,
 
     # We should've also had a DeleteNotification sent out.
     email = Email(3).parse()
-    subject = r"^AUR Package deleted: [^ ]+$"
+    subject = r"^MPR Package deleted: [^ ]+$"
     assert re.match(subject, email.headers.get("Subject"))
     body = r"%s [1] deleted %s [2]." % (tu_user.Username, pkgbase.Name)
     assert body in email.body
@@ -454,7 +502,7 @@ def test_orphan_request(client: TestClient, user: User, tu_user: User,
                         pkgbase: PackageBase, pkgreq: PackageRequest):
     """ Test the standard orphan request route. """
     idle_time = config.getint("options", "request_idle_time")
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     with db.begin():
         pkgreq.ReqTypeID = ORPHAN_ID
         # Set the request time so it's seen as due (idle_time has passed).
@@ -483,7 +531,7 @@ def test_request_post_orphan_autogenerated_closure(client: TestClient,
                                                    pkgbase: PackageBase,
                                                    pkgreq: PackageRequest):
     idle_time = config.getint("options", "request_idle_time")
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     with db.begin():
         pkgreq.ReqTypeID = ORPHAN_ID
         # Set the request time so it's seen as due (idle_time has passed).
@@ -510,7 +558,7 @@ def test_request_post_orphan_autoaccept(client: TestClient, auser: User,
                                         caplog: pytest.LogCaptureFixture):
     """ Test the standard pkgbase request route GET method. """
     caplog.set_level(DEBUG)
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     auto_orphan_age = config.getint("options", "auto_orphan_age")
     with db.begin():
         pkgbase.OutOfDateTS = now - auto_orphan_age - 100
@@ -590,3 +638,122 @@ def test_closure_factory_invalid_reqtype_id():
 def test_pkgreq_by_id_not_found():
     with pytest.raises(HTTPException):
         get_pkgreq_by_id(0)
+
+
+def test_requests_unauthorized(client: TestClient):
+    with client as request:
+        resp = request.get("/requests", allow_redirects=False)
+    assert resp.status_code == int(HTTPStatus.SEE_OTHER)
+
+
+def test_requests(client: TestClient,
+                  tu_user: User,
+                  packages: List[Package],
+                  requests: List[PackageRequest]):
+    cookies = {"AURSID": tu_user.login(Request(), "testPassword")}
+    with client as request:
+        resp = request.get("/requests", params={
+            # Pass in url query parameters O, SeB and SB to exercise
+            # their paths inside of the pager_nav used in this request.
+            "O": 0,  # Page 1
+            "SeB": "nd",
+            "SB": "n"
+        }, cookies=cookies)
+    assert resp.status_code == int(HTTPStatus.OK)
+
+    assert "Next ›" in resp.text
+    assert "Last »" in resp.text
+
+    root = parse_root(resp.text)
+    # We have 55 requests, our defaults.PP is 50, so expect we have 50 rows.
+    rows = root.xpath('//table[@class="results"]/tbody/tr')
+    assert len(rows) == defaults.PP
+
+    # Request page 2 of the requests page.
+    with client as request:
+        resp = request.get("/requests", params={
+            "O": 50  # Page 2
+        }, cookies=cookies)
+    assert resp.status_code == int(HTTPStatus.OK)
+
+    assert "‹ Previous" in resp.text
+    assert "« First" in resp.text
+
+    root = parse_root(resp.text)
+    rows = root.xpath('//table[@class="results"]/tbody/tr')
+    assert len(rows) == 5  # There are five records left on the second page.
+
+
+def test_requests_selfmade(client: TestClient, user: User,
+                           requests: List[PackageRequest]):
+    cookies = {"AURSID": user.login(Request(), "testPassword")}
+    with client as request:
+        resp = request.get("/requests", cookies=cookies)
+    assert resp.status_code == int(HTTPStatus.OK)
+
+    # As the user who creates all of the requests, we should see all of them.
+    # However, we are not allowed to accept any of them ourselves.
+    root = parse_root(resp.text)
+    rows = root.xpath('//table[@class="results"]/tbody/tr')
+    assert len(rows) == defaults.PP
+
+    # Our first and only link in the last row should be "Close".
+    for row in rows:
+        last_row = row.xpath('./td')[-1].xpath('./a')[0]
+        assert last_row.text.strip() == "Close"
+
+
+def test_requests_close(client: TestClient, user: User,
+                        pkgreq: PackageRequest):
+    cookies = {"AURSID": user.login(Request(), "testPassword")}
+    with client as request:
+        resp = request.get(f"/requests/{pkgreq.ID}/close", cookies=cookies,
+                           allow_redirects=False)
+    assert resp.status_code == int(HTTPStatus.OK)
+
+
+def test_requests_close_unauthorized(client: TestClient, maintainer: User,
+                                     pkgreq: PackageRequest):
+    cookies = {"AURSID": maintainer.login(Request(), "testPassword")}
+    with client as request:
+        resp = request.get(f"/requests/{pkgreq.ID}/close", cookies=cookies,
+                           allow_redirects=False)
+    assert resp.status_code == int(HTTPStatus.SEE_OTHER)
+    assert resp.headers.get("location") == "/"
+
+
+def test_requests_close_post_unauthorized(client: TestClient, maintainer: User,
+                                          pkgreq: PackageRequest):
+    cookies = {"AURSID": maintainer.login(Request(), "testPassword")}
+    with client as request:
+        resp = request.post(f"/requests/{pkgreq.ID}/close", data={
+            "reason": ACCEPTED_ID
+        }, cookies=cookies, allow_redirects=False)
+    assert resp.status_code == int(HTTPStatus.SEE_OTHER)
+    assert resp.headers.get("location") == "/"
+
+
+def test_requests_close_post(client: TestClient, user: User,
+                             pkgreq: PackageRequest):
+    cookies = {"AURSID": user.login(Request(), "testPassword")}
+    with client as request:
+        resp = request.post(f"/requests/{pkgreq.ID}/close",
+                            cookies=cookies, allow_redirects=False)
+    assert resp.status_code == int(HTTPStatus.SEE_OTHER)
+
+    assert pkgreq.Status == REJECTED_ID
+    assert pkgreq.Closer == user
+    assert pkgreq.ClosureComment == str()
+
+
+def test_requests_close_post_rejected(client: TestClient, user: User,
+                                      pkgreq: PackageRequest):
+    cookies = {"AURSID": user.login(Request(), "testPassword")}
+    with client as request:
+        resp = request.post(f"/requests/{pkgreq.ID}/close",
+                            cookies=cookies, allow_redirects=False)
+    assert resp.status_code == int(HTTPStatus.SEE_OTHER)
+
+    assert pkgreq.Status == REJECTED_ID
+    assert pkgreq.Closer == user
+    assert pkgreq.ClosureComment == str()

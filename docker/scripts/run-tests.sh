@@ -2,25 +2,11 @@
 set -eou pipefail
 dir=$(dirname $0)
 
-
 # Clean up coverage and stuff.
 make -C test clean
 
-# Set up config file.
-cp "${CONFIG_FILE}" conf/config
-sed -i 's|^password =.*|;&|' conf/config
-sed -i 's|^user =.*|user = root|' conf/config
-sed -i 's|^port =.^|;&|' conf/config
-sed -i "s|YOUR_AUR_ROOT|$(pwd)|" conf/config
-
 # Run sharness tests.
-cp -vf logging.conf logging.conf.bak
-cp -vf logging.prod.conf logging.conf
 bash $dir/run-sharness.sh
-cp -vf logging.conf.bak logging.conf
-
-# Pytest also sets up the config file, so we'll remove the one we set up.
-rm conf/config
 
 # Run Python tests with MariaDB database.
 # Pass --silence to avoid reporting coverage. We will do that below.

@@ -3,7 +3,7 @@ clone-prefix=https://aur.archlinux.org
 noheader=0
 favicon=/images/favicon.ico
 logo=
-css=/static/css/cgit.css
+css=/css/cgit.css
 snapshots=tar.gz
 readme=:README.md
 readme=:README
@@ -18,8 +18,8 @@ cache-root-ttl=60
 cache-scanrc-ttl=120
 cache-static-ttl=60
 
-root-title=MPR Package Repositories
-root-desc=Web interface to the MPR Package Repositories
+root-title=AUR Package Repositories
+root-desc=Web interface to the AUR Package Repositories
 header=/srv/http/aurweb/web/template/cgit/header.html
 footer=/srv/http/aurweb/web/template/cgit/footer.html
 max-repodesc-length=50
@@ -29,4 +29,4 @@ enable-http-clone=1
 
 repo.url=aur.git
 repo.path=/srv/http/aurweb/aur.git
-repo.desc=MPR Package Repositories
+repo.desc=AUR Package Repositories

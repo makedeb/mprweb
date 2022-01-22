@@ -1,6 +1,5 @@
 import re
 
-from datetime import datetime
 from http import HTTPStatus
 from unittest.mock import patch
 
@@ -8,7 +7,7 @@ import pytest
 
 from fastapi.testclient import TestClient
 
-from aurweb import db
+from aurweb import db, time
 from aurweb.asgi import app
 from aurweb.models.account_type import USER_ID
 from aurweb.models.package import Package
@@ -38,6 +37,14 @@ def user():
 
 
 @pytest.fixture
+def user2():
+    with db.begin():
+        user = db.create(User, Username="test2", Email="test2@example.org",
+                         Passwd="testPassword", AccountTypeID=USER_ID)
+    yield user
+
+
+@pytest.fixture
 def redis():
     redis = redis_connection()
 
@@ -56,13 +63,24 @@ def redis():
 
 
 @pytest.fixture
+def package(user: User) -> Package:
+    now = time.utcnow()
+    with db.begin():
+        pkgbase = db.create(PackageBase, Name="test-pkg",
+                            Maintainer=user, Packager=user,
+                            SubmittedTS=now, ModifiedTS=now)
+        pkg = db.create(Package, PackageBase=pkgbase, Name=pkgbase.Name)
+    yield pkg
+
+
+@pytest.fixture
 def packages(user):
     """ Yield a list of num_packages Package objects maintained by user. """
     num_packages = 50  # Tunable
 
     # For i..num_packages, create a package named pkg_{i}.
     pkgs = []
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
     with db.begin():
         for i in range(num_packages):
             pkgbase = db.create(PackageBase, Name=f"pkg_{i}",
@@ -184,7 +202,7 @@ def test_homepage_dashboard(redis, packages, user):
 
 
 def test_homepage_dashboard_requests(redis, packages, user):
-    now = int(datetime.utcnow().timestamp())
+    now = time.utcnow()
 
     pkg = packages[0]
     reqtype = db.query(RequestType, RequestType.ID == DELETION_ID).first()
@@ -210,7 +228,7 @@ def test_homepage_dashboard_flagged_packages(redis, packages, user):
     # Set the first Package flagged by setting its OutOfDateTS column.
     pkg = packages[0]
     with db.begin():
-        pkg.PackageBase.OutOfDateTS = int(datetime.utcnow().timestamp())
+        pkg.PackageBase.OutOfDateTS = time.utcnow()
 
     cookies = {"AURSID": user.login(Request(), "testPassword")}
     with client as request:
@@ -222,3 +240,36 @@ def test_homepage_dashboard_flagged_packages(redis, packages, user):
     flagged_pkg = root.xpath('//table[@id="flagged-packages"]/tbody/tr').pop(0)
     flagged_name = flagged_pkg.xpath('./td/a').pop(0)
     assert flagged_name.text.strip() == pkg.Name
+
+
+def test_homepage_dashboard_flagged(user: User, user2: User, package: Package):
+    pkgbase = package.PackageBase
+
+    now = time.utcnow()
+    with db.begin():
+        db.create(PackageComaintainer, User=user2,
+                  PackageBase=pkgbase, Priority=1)
+        pkgbase.OutOfDateTS = now - 5
+        pkgbase.Flagger = user
+
+    # Test that a comaintainer viewing the dashboard shows them their
+    # flagged co-maintained packages.
+    comaint_cookies = {"AURSID": user2.login(Request(), "testPassword")}
+    with client as request:
+        resp = request.get("/", cookies=comaint_cookies)
+    assert resp.status_code == int(HTTPStatus.OK)
+
+    root = parse_root(resp.text)
+    flagged = root.xpath('//table[@id="flagged-packages"]//tr/td/a')[0]
+    assert flagged.text.strip() == package.Name
+
+    # Test that a maintainer viewing the dashboard shows them their
+    # flagged maintained packages.
+    cookies = {"AURSID": user.login(Request(), "testPassword")}
+    with client as request:
+        resp = request.get("/", cookies=cookies)
+    assert resp.status_code == int(HTTPStatus.OK)
+
+    root = parse_root(resp.text)
+    flagged = root.xpath('//table[@id="flagged-packages"]//tr/td/a')[0]
+    assert flagged.text.strip() == package.Name

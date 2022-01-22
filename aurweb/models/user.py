@@ -1,12 +1,10 @@
 import hashlib
 
-from datetime import datetime
-from http import HTTPStatus
 from typing import List, Set
 
 import bcrypt
 
-from fastapi import HTTPException, Request
+from fastapi import Request
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import backref, relationship
@@ -15,7 +13,7 @@ import aurweb.config
 import aurweb.models.account_type
 import aurweb.schema
 
-from aurweb import db, logging, schema, util
+from aurweb import db, logging, schema, time, util
 from aurweb.models.account_type import AccountType as _AccountType
 from aurweb.models.ban import is_banned
 from aurweb.models.declarative import Base
@@ -122,7 +120,7 @@ class User(Base):
         exc = None
         for i in range(tries):
             exc = None
-            now_ts = datetime.utcnow().timestamp()
+            now_ts = time.utcnow()
             try:
                 with db.begin():
                     self.LastLogin = now_ts
@@ -142,11 +140,7 @@ class User(Base):
                 exc = exc_
 
         if exc:
-            detail = ("Unable to generate a unique session ID in "
-                      f"{tries} iterations.")
-            logger.error(str(exc))
-            raise HTTPException(status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                                detail=detail)
+            raise exc
 
         return self.session.SessionID
 

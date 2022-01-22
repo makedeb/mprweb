@@ -2,13 +2,12 @@
 backend = mysql
 host = localhost
 socket = /var/run/mysqld/mysqld.sock
-port = 3306
-name = aurweb
+;port = 3306
+name = AUR
 user = aur
-password = aur
+;password = aur
 
 [options]
-aurwebdir = YOUR_AUR_ROOT
 username_min_len = 3
 username_max_len = 16
 passwd_min_len = 8
@@ -18,14 +17,14 @@ sql_debug = 0
 login_timeout = 7200
 persistent_cookie_timeout = 2592000
 max_filesize_uncompressed = 8388608
-disable_http_login = 0
-aur_location = https://mpr.hunterwittenborn.com
-git_clone_uri_anon = https://mpr.hunterwittenborn.com/%s.git
-git_clone_uri_priv = ssh://mpr@mpr.hunterwittenborn.com/%s.git
+disable_http_login = 1
+aur_location = https://aur.archlinux.org
+git_clone_uri_anon = https://aur.archlinux.org/%s.git
+git_clone_uri_priv = ssh://aur@aur.archlinux.org/%s.git
 max_rpc_results = 5000
 max_search_results = 2500
 max_depends = 1000
-aur_request_ml = mpr-requests@lists.hunterwittenborn.com
+aur_request_ml = aur-requests@lists.archlinux.org
 request_idle_time = 1209600
 request_archive_time = 15552000
 auto_orphan_age = 15552000
@@ -34,10 +33,10 @@ source_file_uri = /cgit/aur.git/tree/%s?h=%s
 log_uri = /cgit/aur.git/log/?h=%s
 commit_uri = /cgit/aur.git/commit/?h=%s&id=%s
 snapshot_uri = /cgit/aur.git/snapshot/%s.tar.gz
-enable-maintenance = 0
+enable-maintenance = 1
 maintenance-exceptions = 127.0.0.1
 render-comment-cmd = /usr/bin/aurweb-rendercomment
-localedir = YOUR_AUR_ROOT/web/locale/
+localedir = /srv/http/aurweb/web/locale/
 ; memcache, apc, or redis
 ; memcache/apc are supported in PHP, redis is supported in Python.
 cache = none
@@ -45,6 +44,8 @@ cache_pkginfo_ttl = 86400
 memcache_servers = 127.0.0.1:11211
 salt_rounds = 12
 redis_address = redis://localhost
+; Toggles traceback display in templates/errors/500.html.
+traceback = 0
 
 [ratelimit]
 request_limit = 4000
@@ -64,13 +65,16 @@ smtp-use-ssl = 0
 smtp-use-starttls = 0
 smtp-user =
 smtp-password =
-sender = mpr@hunterwittenborn.com
-reply-to = mpr@hunterwittenborn.com
+sender = notify@aur.archlinux.org
+reply-to = noreply@aur.archlinux.org
+; Administration email which will receive notifications about
+; various server details like uncaught exceptions.
+postmaster = admin@example.org
 
 [fingerprints]
-Ed25519 = ssh_key
-ECDSA = ssh_key
-RSA = ssh_key
+Ed25519 = SHA256:HQ03dn6EasJHNDlt51KpQpFkT3yBX83x7BoIkA1iv2k
+ECDSA = SHA256:L71Q91yHwmHPYYkJMDgj0xmUuw16qFOhJbBr1mzsiOI
+RSA = SHA256:Ju+yWiMb/2O+gKQ9RJCDqvRg7l+Q95KFAeqM5sr6l2s
 
 [auth]
 ; For U2F key prefixes, see the following documentation from openssh:
@@ -85,40 +89,35 @@ openid_configuration =
 client_id =
 client_secret =
 
-[php]
-bind_address = 127.0.0.1:8081
-htmldir = YOUR_AUR_ROOT/web/html
-
 [fastapi]
-session_secret = secret
-bind_address = 127.0.0.1:8082
+session_secret =
 
 [serve]
-repo-path = YOUR_AUR_ROOT/aur.git/
+repo-path = /srv/http/aurweb/aur.git/
 repo-regex = [a-z0-9][a-z0-9.+_-]*$
 git-shell-cmd = /usr/bin/git-shell
 git-update-cmd = /usr/bin/aurweb-git-update
-ssh-cmdline = ssh mpr@mpr.hunterwittenborn.com
+ssh-cmdline = ssh aur@aur.archlinux.org
 
 [update]
 max-blob-size = 256000
 
 [aurblup]
-db-path = YOUR_AUR_ROOT/aurweb/aurblup/
+db-path = /srv/http/aurweb/aurblup/
 sync-dbs = core extra community multilib testing community-testing
 server = https://mirrors.kernel.org/archlinux/%s/os/x86_64
 
 [mkpkglists]
-archivedir = /var/lib/aurweb/archives
-packagesfile = /var/lib/aurweb/archives/packages.gz
-packagesmetafile = /var/lib/aurweb/archives/packages-meta-v1.json.gz
-packagesmetaextfile = /var/lib/aurweb/archives/packages-meta-ext-v1.json.gz
-pkgbasefile = /var/lib/aurweb/archives/pkgbase.gz
-userfile = /var/lib/aurweb/archives/users.gz
+archivedir = /srv/http/aurweb/web/html
+packagesfile = /srv/http/aurweb/web/html/packages.gz
+packagesmetafile = /srv/http/aurweb/web/html/packages-meta-v1.json.gz
+packagesmetaextfile = /srv/http/aurweb/web/html/packages-meta-ext-v1.json.gz
+pkgbasefile = /srv/http/aurweb/web/html/pkgbase.gz
+userfile = /srv/http/aurweb/web/html/users.gz
 
 [devel]
 ; commit_url is a format string used to produce a link to a commit hash.
-commit_url = https://github.com/makedeb/mprweb/commit/%s
+commit_url = https://gitlab.archlinux.org/archlinux/aurweb/-/commits/%s
 
 ; If commit_hash is configured, a link to the commit based on commit_url
 ; will be displayed in aurweb's footer with the release version.
@@ -126,7 +125,7 @@ commit_url = https://github.com/makedeb/mprweb/commit/%s
 ; during testing of development branches.
 ; Example deployment configuration step:
 ; sed -r "s/^;?(commit_hash) =.*$/\1 = $(git rev-parse HEAD)/" config
-commit_hash = mprweb
+;commit_hash = 1234567
 
 [tuvotereminder]
 ; Offsets used to determine when TUs should be reminded about

@@ -24,13 +24,6 @@ done
 rm -rf $PROMETHEUS_MULTIPROC_DIR
 mkdir -p $PROMETHEUS_MULTIPROC_DIR
 
-# Set up config file.
-cp "${CONFIG_FILE}" conf/config
-sed -i 's|^password =.*|;&|' conf/config
-sed -i 's|^user =.*|user = root|' conf/config
-sed -i 's|^port =.^|;&|' conf/config
-sed -i "s|YOUR_AUR_ROOT|$(pwd)|" conf/config
-
 # Run pytest with optional targets in front of it.
 pytest
 
