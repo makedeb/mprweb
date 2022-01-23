@@ -4,7 +4,7 @@
         {{ "Welcome to the MPR! Contributed PKGBUILDs %smust%s conform to the %sMPR user guidelines%s; otherwise they will be deleted!"
             | tr
 	    | format("<strong>", "</strong>",
-		     '<a href="https://makedeb.hunterwittenborn.com/mpr/mpr-user-guidelines/marking-maintainers-in-a-pkgbuild/">',
+		     '<a href="https://docs.makedeb.org/mpr/mpr-user-guidelines/marking-maintainers-in-a-pkgbuild/">',
 		     "</a>")
             | safe
         }}
@@ -16,7 +16,7 @@
         {% trans %}DISCLAIMER{% endtrans %}:
         {% trans %}MPR packages are user produced content. Any use of the provided files is at your own risk.{% endtrans %}
     </p>
-    <p class="readmore"><a href="https://makedeb.hunterwittenborn.com/mpr/introduction/">{% trans %}Learn more...{% endtrans %}</a></p>
+    <p class="readmore"><a href="https://docs.makedeb.org/mpr/introduction/">{% trans %}Learn more...{% endtrans %}</a></p>
 </div>
 
 <div id="news">
@@ -40,7 +40,7 @@
     <p>
         {{ "Git over SSH is used to submit packages to the MPR. See the %sUploading PKGBUILDs%s section of the makedeb docs for more details."
            | tr
-           | format('<a href="https://makedeb.hunterwittenborn.com/mpr/using-the-mpr/uploading-pkgbuilds/">', "</a>")
+           | format('<a href="https://docs.makedeb.org/mpr/using-the-mpr/uploading-pkgbuilds/">', "</a>")
            | safe
         }}
     </p>
