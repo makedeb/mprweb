@@ -37,7 +37,7 @@ local publishImage() = {
 
         {
             name: "mprweb",
-            host: {path: "/var/www/mpr.hunterwittenborn.com"}
+            host: {path: "/var/www/mpr.makedeb.org"}
         }
     ],
 
@@ -61,7 +61,7 @@ local publishImage() = {
 
             {
                 name: "mprweb",
-                path: "/var/www/mpr.hunterwittenborn.com"
+                path: "/var/www/mpr.makedeb.org"
             }
         ],
         commands: [
