@@ -47,7 +47,7 @@ echo "+ Building image..."
 docker-compose build --pull --no-cache aurweb-image
 
 echo "+ Deploying..."
-cd /var/www/mpr.hunterwittenborn.com
+cd /var/www/mpr.makedeb.org
 docker-compose -f ./docker-compose.yml \
                -f ./docker-compose.mpr-override.yml \
                down --remove-orphans
@@ -63,9 +63,9 @@ find ./ -maxdepth 1 \
         -not -path './' \
         -not -path './data' \
         -not -path './service.sh' \
-        -exec cp '{}' '/var/www/mpr.hunterwittenborn.com/{}' -R \;
+        -exec cp '{}' '/var/www/mpr.makedeb.org/{}' -R \;
 
-cd /var/www/mpr.hunterwittenborn.com
+cd /var/www/mpr.makedeb.org
 docker-compose -f ./docker-compose.yml \
                -f ./docker-compose.mpr-override.yml \
                up -d nginx
