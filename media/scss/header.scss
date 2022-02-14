@@ -1,0 +1,81 @@
+@import "variables";
+
+$header-max-width: 550px;
+
+header {
+	height: 100%;
+	background-color: $header-bg-color;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+
+	@media (max-width: $header-max-width) {
+		grid-template-columns: 1fr;
+
+		.makedeb-brand {
+			justify-content: center;
+		}
+	}
+
+	// Logo and "makedeb" text.
+	.makedeb-brand {
+		height: 100%;
+		display: flex;
+		align-self: center;
+		align-items: center;
+		padding: 0.5em 0em;
+	}
+
+	.makedeb-logo {
+		height: 3em;
+		width: 3em;
+		padding: 0 0.5em;
+	}
+
+	.makedeb-logo-text, .makedeb-logo-text:visited {
+		font-size: 1.75em;
+		text-decoration: none;
+		color: $black;
+	}
+
+	// Links.
+	.links {
+		justify-self: end;
+		align-self: center;
+		display: flex;
+		flex-direction: row;
+
+		@media (max-width: $header-max-width) {
+			display: none;
+		}
+
+		p, a {
+			font-size: 1.15em;
+			padding: 0 1.5em 0 0em;
+			display: inline;
+		}
+		
+		p {
+			color: $black;
+			cursor: default;
+		}
+
+		a {
+			color: $inactive-link;
+			transition-property: color;
+			transition-duration: 0.2s;
+		}
+
+		a:hover {
+			color: $orange-hover;
+		}
+	}
+}
+
+.header-hr {
+	width: 100%;
+	margin: 0;
+	border: 0;
+	color: $header-hg-color;
+	background-color: $header-hg-color;
+	height: 0.25em;
+}

@@ -39,16 +39,12 @@ services:
   fastapi:
     volumes:
       - ./data:/data
+      - ./docker:/docker
       - ./aurweb:/aurweb/aurweb
+      - ./media:/aurweb/media
       - ./migrations:/aurweb/migrations
       - ./test:/aurweb/test
       - ./web/html:/aurweb/web/html
       - ./web/template:/aurweb/web/template
       - ./web/lib:/aurweb/web/lib
       - ./templates:/aurweb/templates
-
-  nginx:
-    volumes:
-      - ./data:/data
-      - archives:/var/lib/aurweb/archives
-      - smartgit_run:/var/run/smartgit

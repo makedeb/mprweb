@@ -1,0 +1,30 @@
+@import "variables";
+
+.intro {
+	text-align: center;
+	
+	.big-intro {
+		padding: 3em 10%;
+		
+		h2 {
+			font-size: 3em;
+		}
+
+		p {
+			font-size: 1.5em;
+			color: $inactive-link;
+			padding: 0.5em 5% 0;
+		}
+	}
+
+	.metrics {
+		background-color: $silver;
+		display: flex;
+		padding: 1em 0;
+
+		p {
+			flex: 1;
+			font-size: 1.1em;
+		}
+	}
+}

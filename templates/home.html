@@ -1,89 +1,15 @@
-<div id="intro" class="box">
-    <h2>MPR  {% trans %}Home{% endtrans %}</h2>
-    <p>
-        {{ "Welcome to the MPR! Contributed PKGBUILDs %smust%s conform to the %sMPR user guidelines%s; otherwise they will be deleted!"
-            | tr
-	    | format("<strong>", "</strong>",
-		     '<a href="https://docs.makedeb.org/mpr/mpr-user-guidelines/marking-maintainers-in-a-pkgbuild/">',
-		     "</a>")
-            | safe
-        }}
-     </p>
-     <p>
-        {% trans %}Remember to vote for your favorite packages!{% endtrans %}
-    </p>
-    <p class="important">
-        {% trans %}DISCLAIMER{% endtrans %}:
-        {% trans %}MPR packages are user produced content. Any use of the provided files is at your own risk.{% endtrans %}
-    </p>
-    <p class="readmore"><a href="https://docs.makedeb.org/mpr/introduction/">{% trans %}Learn more...{% endtrans %}</a></p>
-</div>
-
-<div id="news">
-    <h3><a>{% trans %}News{% endtrans %}</a><span class="arrow"></span></h3>
-    <h4>{% trans %}Beta Testing{% endtrans %}</h4>
-    <div class="article-content">
-    <p>
-    	{{ "The MPR is currently being powered by the Python rewrite of the AUR interface. If you have any issues, report a bug in the issue tracker (linked under %sBug Reporting%s in "
-    	    | tr
-    	    | format("<strong>", "</strong>")
-    	    | safe
-    	}}<strong>{% trans %}Support{% endtrans %}</strong>{{ ")." }}
-    </p>
-    </div>
-</div>
-
-<div id="news">
-    <h3><a>{% trans %}Support{% endtrans %}</a><span class="arrow"></span></h3>
-    <h4>{% trans %}Submitting Packages{% endtrans %}</h4>
-    <div class="article-content">
-    <p>
-        {{ "Git over SSH is used to submit packages to the MPR. See the %sUploading PKGBUILDs%s section of the makedeb docs for more details."
-           | tr
-           | format('<a href="https://docs.makedeb.org/mpr/using-the-mpr/uploading-pkgbuilds/">', "</a>")
-           | safe
-        }}
-    </p>
-    {% if ssh_fingerprints %}
-        <p>
-            {% trans %}The following SSH fingerprints are used for the MPR:{% endtrans %}
-        <p>
-        <ul>
-        {% for keytype in ssh_fingerprints %} 
-            <li><code>{{ keytype }}</code>: <code>{{ ssh_fingerprints[keytype] }}</code>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    </div>
-    <h4>{% trans %}Discussion{% endtrans %}</h4>
-    <div class="article-content">
-        <p>
-        {{ "General discussion regarding the makedeb Package Repository (MPR) takes place in %s#makedeb-mpr:hunterwittenborn.com%s on Matrix. For discussion relating to the development of the MPR, use %s#makedeb-contributing:hunterwittenborn.com%s."
-           | tr
-           | format('<a href="https://matrix.to/#/#makedeb-mpr:hunterwittenborn.com">', "</a>",
-                    '<a href="https://matrix.to/#/#makedeb-contributing:hunterwittenborn.com">', "</a>")
-           | safe
-        }}
-        <p>
-    </div>
-    <h4>{% trans %}Bug Reporting{% endtrans %}</h4>
-    <div class="article-content">
-        <p>
-        {{ "If you find a bug in the MPR interfaces (i.e. the web UI, SSH interface), please file a bug report via the %sissue tracker%s on GitHub. Use the tracker to report bugs for the MPR's interfaces %sonly%s. To report packaging bugs, contact the package maintainer or leave a comment on the appropriate package's page."
-           | tr
-           | format('<a href="https://github.com/makedeb/mprweb/issues">', "</a>",
-                    "<strong>", "</strong>")
-           | safe 
-        }}
-        </p>
-    </div>
-</div>
-
 <!-- Bootstrap typeahead for the homepage. -->
 <script type="text/javascript" src="/static/js/typeahead-home.js"></script>
 
-<!-- Stub inline javascript with a nonce. Used for testing purposes. -->
-<script type="text/javascript" nonce={{ request.user.nonce }}>
-function NONEXISTENT() {}
-NONEXISTENT();
-</script>
+<div class="intro">
+	<div class="big-intro">
+		<h2>The makedeb Package Repository</h2>
+		<p>The community-maintained repository for the makedeb packaging tool.</p>
+		<p><a href="/packages">View available packages</a>, <a href="https://docs.makedeb.org/mpr/using-the-mpr/installing-packages/">install a package</a>, or <a href="https://docs.makedeb.org/mpr/using-the-mpr/uploading-pkgbuilds/">upload your own</a>.</p>
+	</div>
+	<div class="newest-packages">
+		{% for item in package_updates %}
+		<p>{{ item.Name }} {{ item.Version }}<hr>{{ item.Description }}</p>
+		{% endfor %}
+	</div>
+</div>

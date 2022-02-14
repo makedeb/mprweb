@@ -82,6 +82,9 @@ async def app_startup():
     app.mount("/static/images",
               StaticFiles(directory="web/html/images"),
               name="static_images")
+    app.mount("/static/media",
+            StaticFiles(directory="media/"),
+            name="static_media")
 
     # Add application middlewares.
     app.add_middleware(AuthenticationMiddleware, backend=BasicAuthBackend())
@@ -202,11 +205,19 @@ async def add_security_headers(request: Request, call_next: typing.Callable):
 
     # Add CSP header.
     nonce = request.user.nonce
-    csp = "default-src 'self'; "
+    csp = "default-src 'self';"
     script_hosts = []
-    csp += f"script-src 'self' 'nonce-{nonce}' " + ' '.join(script_hosts)
+    css_hosts = ["https://fonts.googleapis.com", "https://meyerweb.com"]
+    font_hosts = ["https://fonts.gstatic.com"]
+
+    # Scripts.
+    csp += f"script-src 'self' 'nonce-{nonce}' " + ' '.join(script_hosts) + ";"
+
     # It's fine if css is inlined.
-    csp += "; style-src 'self' 'unsafe-inline'"
+    csp += "style-src 'self' 'unsafe-inline' " + ' '.join(css_hosts) + ";"
+
+    # Fonts.
+    csp += "font-src 'self' " + '.'.join(font_hosts) + ";"
     response.headers["Content-Security-Policy"] = csp
 
     # Add XTCO header.

@@ -231,6 +231,7 @@ services:
       - AURWEB_SSHD_PREFIX=${AURWEB_SSHD_PREFIX}
       - PROMETHEUS_MULTIPROC_DIR=/tmp_prometheus
       - AUR_CONFIG_IMMUTABLE=${AUR_CONFIG_IMMUTABLE:-0}
+      - WATCH_SASS_FILES=${WATCH_SASS_FILES:-1}
     entrypoint: /docker/fastapi-entrypoint.sh
     command: /docker/scripts/run-fastapi.sh "${FASTAPI_BACKEND}"
     healthcheck:
@@ -256,12 +257,12 @@ services:
     entrypoint: /docker/nginx-entrypoint.sh
     command: /docker/scripts/run-nginx.sh
     ports:
-      - "127.0.0.1:8443:8443" # PHP
-      - "127.0.0.1:8444:8444" # FastAPI
+      - "127.0.0.1:8080:80" # FastAPI
     healthcheck:
       test: "bash /docker/health/nginx.sh"
       interval: 2s
     volumes:
+      - ./docker:/docker
       - ./data:/data
       - archives:/var/lib/aurweb/archives
       - smartgit_run:/var/run/smartgit

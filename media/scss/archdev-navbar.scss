@@ -1,0 +1,35 @@
+@import "variables";
+
+#archdev-navbar {
+	height: 100%;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	padding: 0.5em 0;
+
+	ul {
+		height: 100%;
+		display: flex;
+		align-items: center;
+
+		li {
+			font-size: 1.1em;
+			padding: 0 0.5em;
+		}
+	}
+
+	form {
+		text-align: right;
+		padding-right: 1em;
+
+		.search-box {
+			font-size: 1.05em;
+			width: 10em;
+			border: none;
+			border-width: 0.15em;
+			border-radius: 0.2em;
+			padding: 0.2em 0.3em;
+			transition-property: outline-width;
+			transition-duration: 0.2s;
+		}
+	}
+}

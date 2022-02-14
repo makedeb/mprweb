@@ -60,4 +60,9 @@
             <li><a href="/login?next={{ next }}">{% trans %}Login{% endtrans %}</a></li>
         {% endif %}
     </ul>
+
+    <form action="/packages" method="GET">
+	    <input type="hidden" name="O" value="0">
+	    <input class="search-box" name="K" type="input" placeholder="Search" autocomplete="off">
+    </form>
 </div>
