@@ -279,7 +279,7 @@ def post_register(request, **kwargs):
 
     data = {
         "U": "newUser",
-        "E": "newUser@email.org",
+        "E": "newUser@example.com",
         "P": "newUserPassword",
         "C": "newUserPassword",
         "L": "en",
