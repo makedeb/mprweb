@@ -41,7 +41,19 @@ CLOSE_PROPOSALS = int(os.environ.get("CLOSE_PROPOSALS", 50))
 RANDOM_TLDS = ("edu", "com", "org", "net", "tw", "ru", "pl", "de", "es")
 RANDOM_URL = ("http://www.", "ftp://ftp.", "http://", "ftp://")
 RANDOM_LOCS = ("pub", "release", "files", "downloads", "src")
-FORTUNE_FILE = os.environ.get("FORTUNE_FILE", "/usr/share/fortune/cookie")
+
+if (os.name == 'posix'):
+    OS = getosname()
+    if OS in 'Arch Linux':
+        FORTUNE_FILE = os.environ.get("FORTUNE_FILE", '/usr/share/fortune/cookie')
+    elif OS in 'Debian':
+        FORTUNE_FILE = os.environ.get("FORTUNE_FILE", '/usr/share/games/fortunes/fortune')
+    elif OS in 'Ubuntu':
+        # Needs to be verified.
+        FORTUNE_FILE = os.environ.get("FORTUNE_FILE", '/usr/share/games/fortunes/fortune')
+    else:
+        print(f"Please check and Install Fortune for your os: {sys.platform} and set path for FORTUNE_FILE env var.")
+        FORTUNE_FILE = os.environ.get('FORTUNE_FILE')
 
 # setup logging
 logformat = "%(levelname)s: %(message)s"
@@ -73,6 +85,17 @@ user_keys = []
 
 # some functions to generate random data
 #
+def getosname():
+    if (os.name == 'posix'):
+        try:
+            with open('/etc/os-release', 'r') as f:
+                for lines in f:
+                    if(lines.find('NAME') > -1):
+                        osname = lines.split('=')[1].strip()
+        except:
+            print(f"For {os.name} release file not found!")
+    return osname
+
 def genVersion():
     ver = []
     ver.append("%d" % random.randrange(0, 10))
