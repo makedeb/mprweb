@@ -18,6 +18,18 @@ import time
 
 import bcrypt
 
+def getosname():
+    if (os.name == 'posix'):
+        try:
+            with open('/etc/os-release', 'r') as f:
+                for lines in f:
+                    if(lines.find('NAME') > -1):
+                        osname = lines.split('=')[1].strip()
+        except:
+            print(f"For {os.name} release file not found!")
+    return osname
+
+
 LOG_LEVEL = logging.DEBUG  # logging level. set to logging.INFO to reduce output
 SEED_FILE = "/usr/share/dict/words"
 USER_ID = 5            # Users.ID of first bogus user
@@ -85,17 +97,6 @@ user_keys = []
 
 # some functions to generate random data
 #
-def getosname():
-    if (os.name == 'posix'):
-        try:
-            with open('/etc/os-release', 'r') as f:
-                for lines in f:
-                    if(lines.find('NAME') > -1):
-                        osname = lines.split('=')[1].strip()
-        except:
-            print(f"For {os.name} release file not found!")
-    return osname
-
 def genVersion():
     ver = []
     ver.append("%d" % random.randrange(0, 10))
