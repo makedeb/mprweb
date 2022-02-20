@@ -1,0 +1,10 @@
+name: Bug report
+description: Functionality issues with mprweb, such as irregular/inconsistent behavior, or otherwise broken features.
+labels: ["bug"]
+body:
+  - type: textarea
+    attributes:
+      label: Issue
+      placeholder: Type a complete description of your issue
+    validations:
+      required: true
