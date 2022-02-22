@@ -4,6 +4,7 @@
 @import "footer";
 @import "archdev-navbar";
 @import "homepage";
+@import "profile";
 
 // External CSS.
 @import url('https://meyerweb.com/eric/tools/css/reset/reset.css');
@@ -31,6 +32,13 @@ h2 {
 	font-size: 1.8em;
 }
 
+hr {
+	background-color: $light-grey;
+	height: 0.1em;
+	border: none;
+}
+
+// Makes the footer appear (at minimum) at the bottom of the viewport).
 body {
 	display: flex;
 	flex-direction: column;
@@ -39,4 +47,13 @@ body {
 
 footer {
 	margin-top: auto;
+}
+
+// Default styling for boxes.
+.box {
+	background-color: lighten($silver, 1%);
+	margin: 0 2em;
+	margin-bottom: 2em;
+	padding: 1em;
+	border-radius: 0.15em;
 }

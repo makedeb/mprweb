@@ -5,10 +5,7 @@
 	<div class="navbar-links">
 		{% if request.user.is_authenticated() %}
 		{# Only authenticated users get Dashboard #}
-		<a href="/"><p>{% trans %}Dashboard{% endtrans %}<p></a>
-		{% else %}
-		{# Only guest users get Home #}
-		<a href="/"><p>MPR {% trans %}Home{% endtrans %}</p></a>
+		<a href="/"><p>{% trans %}Dashboard{% endtrans %}</p></a>
 		{% endif %}
 
 		{# All users see Packages #}
