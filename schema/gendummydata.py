@@ -19,11 +19,11 @@ import time
 import bcrypt
 
 def getosname():
-    if (os.name == 'posix'):
+    if (os.name == "posix"):
         try:
-            with open('/etc/os-release', 'r') as f:
+            with open("/etc/os-release", "r") as f:
                 for lines in f:
-                    if(lines.find('NAME') > -1):
+                    if(lines.find("NAME") > -1):
                         osname = lines.split('=')[1].strip()
         except (OSError, IOError) as e:
             print(f"Error: {e} has Occured. For {os.name} release file not found!")
