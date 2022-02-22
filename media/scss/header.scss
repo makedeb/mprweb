@@ -43,14 +43,11 @@ header {
 		align-self: center;
 		display: flex;
 		flex-direction: row;
-
-		@media (max-width: $header-max-width) {
-			display: none;
-		}
+		padding-right: 0.75em;
 
 		p, a {
 			font-size: 1.15em;
-			padding: 0 1.5em 0 0em;
+			margin: 0 0.75em 0em;
 			display: inline;
 		}
 		
@@ -66,7 +63,13 @@ header {
 		}
 
 		a:hover {
-			color: $orange-hover;
+			color: $orange;
+		}
+
+		@media (max-width: $header-max-width) {
+			width: 100%;
+			padding: 0.4em 0 0.8em;
+			justify-content: center;
 		}
 	}
 }

@@ -83,7 +83,9 @@ def make_context(request: Request, title: str, next: str = None):
         "config": aurweb.config,
         "creds": aurweb.auth.creds,
         "next": next if next else request.url.path,
-        "version": os.environ.get("COMMIT_HASH", aurweb.config.AURWEB_VERSION)
+        "version": os.environ.get("COMMIT_HASH", aurweb.config.AURWEB_VERSION),
+        "hw_url": "hunterwittenborn.com",
+        "makedeb_url": "makedeb.org"
     }
 
 

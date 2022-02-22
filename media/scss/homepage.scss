@@ -17,14 +17,51 @@
 		}
 	}
 
-	.metrics {
+	.packages {
 		background-color: $silver;
 		display: flex;
-		padding: 1em 0;
+		padding: 1em;
+		justify-content: center;
 
-		p {
+		@media (max-width: 730px) {
+			flex-direction: column;
+			align-items: center;
+		}
+
+		.newest-packages, .popular-packages {
 			flex: 1;
-			font-size: 1.1em;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			max-width: 25em;
+			padding-bottom: 0.8em;
+
+			@media (max-width: 730px) {
+				padding-top: 2em;
+			}
+		}
+
+		h2 {
+			padding-bottom: 0.8em;
+		}
+
+		.package-item {
+			background-color: lighten($silver, 20%);
+			width: 10em;
+			padding: 0.5em;
+			margin-top: 0.5em;
+			border-radius: 0.2em;
+			border-color: $light-grey;
+			border-width: 0.15em;
+			border-style: solid;
+
+			p {
+				line-height: 1.3em;
+			}
+
+			.description {
+				color: darken($light-grey, 35%);
+			}
 		}
 	}
 }

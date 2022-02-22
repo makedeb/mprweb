@@ -1,35 +1,46 @@
 @import "variables";
 
-#archdev-navbar {
-	height: 100%;
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	padding: 0.5em 0;
+.archdev-navbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 
-	ul {
+	@media (max-width: 580px) {
+		flex-direction: column;
+		align-items: start;
+	}
+
+	.navbar-links {
 		height: 100%;
+		width: 100%;
 		display: flex;
-		align-items: center;
+		justify-content: left;
+		padding: 1em 0;
+		padding-left: 0.4em;
 
-		li {
-			font-size: 1.1em;
-			padding: 0 0.5em;
+		@media (max-width: 580px) {
+			justify-content: center;
+		}
+
+		a, form {
+			margin: 0 0.4em;
 		}
 	}
 
-	form {
-		text-align: right;
-		padding-right: 1em;
+	.search-box {
+		font-size: 1.05em;
+		width: 10em;
+		border: solid;
+		border-color: darken($light-grey, 10%);
+		border-width: 0.15em;
+		border-radius: 0.2em;
+		padding: 0.2em 0.3em;
+		margin-right: 0.4em;
+		transition-property: outline-width;
+		transition-duration: 0.2s;
 
-		.search-box {
-			font-size: 1.05em;
-			width: 10em;
-			border: none;
-			border-width: 0.15em;
-			border-radius: 0.2em;
-			padding: 0.2em 0.3em;
-			transition-property: outline-width;
-			transition-duration: 0.2s;
+		@media (max-width: 580px) {
+			display: none;
 		}
 	}
 }

@@ -1,0 +1,52 @@
+@import "variables";
+
+$footer-max-width: 1230px;
+
+footer {
+	height: 100%;
+	padding: 0.8em 0;
+	padding-left: 1em;
+	font-size: 1.1em;
+	background-color: $dark-grey;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+	@media (max-width: $footer-max-width) {
+		flex-direction: column;
+	}
+
+	.copyright {
+		@media (max-width: $footer-max-width) {
+			padding-bottom: 0.8em;
+			padding-right: 1em;
+		}
+
+		p {
+			color: $light-grey;
+			line-height: 1.2em;
+
+			@media (max-width: $footer-max-width) {
+				text-align: center;
+				padding-bottom: 0.3em;
+			}
+		}
+	}
+
+	.links {
+		a {
+			color: $light-grey;
+			margin-right: 1em;
+			transition-property: color;
+			transition-duration: 0.2s;
+
+			@media (max-width: $footer-max-width) {
+				margin: 0 0.5em;
+			}
+		}
+
+		a:hover {
+			color: $light-orange;
+		}
+	}
+}

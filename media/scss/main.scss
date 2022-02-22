@@ -1,7 +1,7 @@
 // Our CSS.
 @import "variables";
 @import "header";
-//@import "footer";
+@import "footer";
 @import "archdev-navbar";
 @import "homepage";
 
@@ -29,4 +29,14 @@ a:hover {
 
 h2 {
 	font-size: 1.8em;
+}
+
+body {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+footer {
+	margin-top: auto;
 }

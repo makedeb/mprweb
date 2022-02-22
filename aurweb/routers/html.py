@@ -16,9 +16,11 @@ import aurweb.models.package_request
 from aurweb import cookies, db, models, time, util
 from aurweb.cache import db_count_cache
 from aurweb.models.account_type import TRUSTED_USER_AND_DEV_ID, TRUSTED_USER_ID
+from aurweb.models.package_base import PackageBase
 from aurweb.models.package_request import PENDING_ID
 from aurweb.packages.util import query_notified, query_voted, updated_packages
 from aurweb.templates import make_context, render_template
+from aurweb.packages.search import PackageSearch
 
 router = APIRouter()
 
@@ -71,7 +73,14 @@ async def index(request: Request):
     # Get the 10 most recently updated packages.
     context["package_updates"] = updated_packages(10, cache_expire)
 
-    return render_template(request, "index.html", context)
+    # Get the 10 most popular packages.
+    # If for any reason a popular package isn't owned by anyone, we don't want to recommend it on the front page, as there might be a concerning reason why it was orphaned.
+    search = PackageSearch()
+    search.sort_by("p")
+    
+    context["popular_packages"] = search.results().filter(PackageBase.MaintainerUID != None).limit(10)
+
+    return render_template(request, "home.html", context)
 
 
 @router.get("/metrics")
