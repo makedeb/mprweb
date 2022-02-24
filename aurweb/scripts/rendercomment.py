@@ -136,7 +136,9 @@ def update_comment_render(comment: PackageComment) -> None:
 
     allowed_tags = (bleach.sanitizer.ALLOWED_TAGS
                     + ['p', 'pre', 'h4', 'h5', 'h6', 'br', 'hr'])
-    html = bleach.clean(html, tags=allowed_tags)
+    bleach.sanitizer.ALLOWED_ATTRIBUTES["code"] = ["class"]
+
+    html = bleach.clean(html, tags=allowed_tags, attributes=bleach.sanitizer.ALLOWED_ATTRIBUTES)
     save_rendered_comment(comment, html)
     db.refresh(comment)
 

@@ -1,20 +1,28 @@
 // Our CSS.
+@import "syntax-highlighting";
 @import "variables";
 @import "header";
 @import "footer";
 @import "archdev-navbar";
 @import "homepage";
 @import "profile";
+@import "comments";
 
 // External CSS.
 @import url('https://meyerweb.com/eric/tools/css/reset/reset.css');
 
 // Fonts.
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 // Main CSS, shared across entire website.
 body {
 	font-family: "Ubuntu", sans-serif;
+}
+
+p {
+	word-break: break-word;
+	hyphens: auto;
 }
 
 a, a:visited {
@@ -38,6 +46,40 @@ hr {
 	border: none;
 }
 
+em {
+	font-style: italic;
+}
+
+strong {
+	font-weight: bold;
+}
+
+blockquote {
+	border-left: 0.3em;
+	border-style: solid;
+	border-color: $light-grey;
+	margin: 0.2em 0;
+
+	p {
+		padding-left: 0.5em;
+	}
+}
+
+// Styling for code blocks.
+code {
+	background-color: lighten($light-grey, 5%);
+	padding: 0.2em;
+	border-radius: 0.3em;
+	font-family: "Ubuntu Mono", monospace;
+}
+
+pre {
+	margin: 0.5em 0;
+	padding: 0.3em 0.5em;
+	background-color: lighten($light-grey, 5%);
+	overflow: auto;
+}
+
 // Makes the footer appear (at minimum) at the bottom of the viewport).
 body {
 	display: flex;
@@ -56,4 +98,10 @@ footer {
 	margin-bottom: 2em;
 	padding: 1em;
 	border-radius: 0.15em;
+}
+
+// Remove styling for buttons containing SVGs.
+.svg-icon-button {
+	border: none;
+	background-color: transparent;
 }

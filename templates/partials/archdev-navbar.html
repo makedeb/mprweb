@@ -1,6 +1,6 @@
 <div class="archdev-navbar">
 	<!-- Javascript for package autocompletion in searches --!>
-	<script type="text/javascript" src="/static/js/typeahead-home.js"></script>
+	<script type="text/javascript" src="/static/js/navbar-search.js"></script>
 
 	<div class="navbar-links">
 		{% if request.user.is_authenticated() %}
@@ -46,8 +46,10 @@
 
 	</div>
 	{# Package search form #}
-	<form action="/packages" method="GET">
+	<form class="navbar-search" action="/packages" method="GET">
 		<input type="hidden" name="O" value="0">
 		<input class="search-box" name="K" type="input" placeholder="Search" autocomplete="off">
+		<div class="search-results">
+		</div>
 	</form>
 </div>

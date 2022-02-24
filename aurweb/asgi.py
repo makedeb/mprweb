@@ -73,16 +73,7 @@ async def app_startup():
     if not session_secret:
         raise Exception("[fastapi] session_secret must not be empty")
 
-    app.mount("/static/css",
-              StaticFiles(directory="web/html/css"),
-              name="static_css")
-    app.mount("/static/js",
-              StaticFiles(directory="web/html/js"),
-              name="static_js")
-    app.mount("/static/images",
-              StaticFiles(directory="web/html/images"),
-              name="static_images")
-    app.mount("/static/media",
+    app.mount("/static/",
             StaticFiles(directory="media/"),
             name="static_media")
 
@@ -206,12 +197,12 @@ async def add_security_headers(request: Request, call_next: typing.Callable):
     # Add CSP header.
     nonce = request.user.nonce
     csp = "default-src 'self';"
-    script_hosts = []
-    css_hosts = ["https://fonts.googleapis.com", "https://meyerweb.com"]
+    script_hosts = ["https://cdnjs.cloudflare.com"]
+    css_hosts = ["https://fonts.googleapis.com", "https://meyerweb.com", "https://cdnjs.cloudflare.com"]
     font_hosts = ["https://fonts.gstatic.com"]
 
     # Scripts.
-    csp += f"script-src 'self' 'nonce-{nonce}' " + ' '.join(script_hosts) + ";"
+    csp += f"script-src 'self' 'unsafe-inline' " + ' '.join(script_hosts) + ";"
 
     # It's fine if css is inlined.
     csp += "style-src 'self' 'unsafe-inline' " + ' '.join(css_hosts) + ";"

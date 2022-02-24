@@ -10,32 +10,19 @@
                 <input type="hidden"
                        name="next"
                        value="{{ request.url.path }}" />
-                <input type="image"
-                       class="delete-comment"
-                       src="/static/images/x.min.svg"
-                       width="11"
-                       height="11"
-                       alt="{{ 'Delete comment' | tr }}"
-                       title="{{ 'Delete comment' | tr }}"
-                       name="submit" value="1" />
+		<button class="svg-icon-button" type="submit">
+			{% include "svg/delete.svg" %}
+		</button>
             </fieldset>
         </form>
     {% endif %}
 
     {% if request.user.has_credential(creds.COMMENT_EDIT, approved=[comment.User]) %}
-        <a id="comment-edit-link-{{ comment.ID }}"
-           {# /pkgbase/{name}/comments/{id}/edit #}
-           href="/pkgbase/{{ pkgbasename }}/comments/{{ comment.ID }}/edit?{{ {'next': request.url.path} | urlencode }}"
-           class="edit-comment"
-           title="{{ 'Edit comment' | tr }}"
-        >
-            <img src="/static/images/pencil.min.svg" alt="{{ 'Edit comment' | tr }}"
-                 width="11" height="11">
-        </a>
+    <a>{% include "svg/pencil.svg" %}</a>
 
         {# Set the edit event listener for this link. We must do this here
         so that we can utilize Jinja2's values. #}
-        <script type="text/javascript" nonce="{{ request.user.nonce }}">
+        <!--script type="text/javascript" nonce="{{ request.user.nonce }}">
             document.addEventListener("DOMContentLoaded", function() {
                 let link = document.getElementById("comment-edit-link-{{ comment.ID }}");
                 let fn = function(event) {
@@ -43,7 +30,7 @@
                 };
                 link.addEventListener("click", fn);
             });
-        </script>
+        </script-->
 
     {% endif %}
 
@@ -55,13 +42,9 @@
             >
                 <fieldset style="display:inline;">
                     <input type="hidden" name="next" value="{{ request.url.path }}" />
-                    <input type="image"
-                           class="pin-comment"
-                           src="/static/images/unpin.min.svg"
-                           alt="{{ 'Unpin comment' | tr }}"
-                           title="{{ 'Unpin comment' | tr }}"
-                           name="submit"
-                           value="1" width="11" height="11" />
+		<button class="svg-icon-button" type="submit">
+			{% include "svg/unpin.svg" %}
+		</button>
                 </fieldset>
             </form>
         {% else %}
@@ -71,13 +54,9 @@
             >
                 <fieldset style="display:inline;">
                     <input type="hidden" name="next" value="{{ request.url.path }}" />
-                    <input type="image"
-                           class="pin-comment"
-                           src="/static/images/pin.min.svg"
-                           alt="{{ 'Pin comment' | tr }}"
-                           title="{{ 'Pin comment' | tr }}"
-                           name="submit"
-                           value="1" width="11" height="11" />
+		<button class="svg-icon-button" type="submit">
+			{% include "svg/pin.svg" %}
+		</button>
                 </fieldset>
             </form>
         {% endif %}
@@ -89,12 +68,9 @@
         >
             <fieldset style="display:inline;">
                 <input type="hidden" name="next" value="{{ request.url.path }}" />
-                <input type="image"
-                       class="undelete-comment"
-                       src="/static/images/action-undo.min.svg"
-                       alt="{{ 'Undelete comment' | tr }}"
-                       title="{{ 'Undelete comment' | tr }}"
-                       name="submit" value="1" width="11" height="11" />
+		<button class="svg-icon-button" type="submit">
+			{% include "svg/action-undo.svg" %}
+		</button>
             </fieldset>
         </form>
 {% endif %}
