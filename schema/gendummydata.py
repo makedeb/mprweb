@@ -23,7 +23,7 @@ def getosname():
         try:
             with open("/etc/os-release", "r") as f:
                 for lines in f:
-                    if(lines.find("NAME") > -1):
+                    if(lines.find("ID") > -1):
                         osname = lines.split('=')[1].strip()
         except (OSError, IOError) as e:
             print(f"Error: {e} has Occured. For {os.name} release file not found!")
@@ -56,17 +56,20 @@ RANDOM_LOCS = ("pub", "release", "files", "downloads", "src")
 
 if (os.name == 'posix'):
     OS = getosname()
-    if OS in 'Arch Linux':
+    if OS == 'arch':
         FORTUNE_FILE = "/usr/share/fortune/cookie"
-    elif OS in 'Debian':
+    elif OS == 'debian':
         FORTUNE_FILE = "/usr/share/games/fortunes/fortune"
-    elif OS in 'Ubuntu':
+    elif OS == 'ubuntu':
         # Needs to be verified.
+        FORTUNE_FILE = "/usr/share/games/fortunes/fortune"
+    elif OS == 'fedora':
         FORTUNE_FILE = "/usr/share/games/fortunes/fortune"
     else:
         print(f"Please check and Install Fortune for your os: {sys.platform} and set path for FORTUNE_FILE env var.")
-        FORTUNE_FILE = os.environ.get("FORTUNE_FILE", FORTUNE_FILE)
+        FORTUNE_FILE = os.environ.get("FORTUNE_FILE")
 
+FORTUNE_FILE = os.environ.get("FORTUNE_FILE", FORTUNE_FILE)
 # setup logging
 logformat = "%(levelname)s: %(message)s"
 logging.basicConfig(format=logformat, level=LOG_LEVEL)
