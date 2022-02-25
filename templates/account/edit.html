@@ -1,10 +1,13 @@
-{% extends "partials/layout.html" %}
+<!DOCTYPE html>
+<html>
+	{% include "partials/head.html" %}
+	{% include "partials/navbar.html" %}
+	{% include "partials/archdev-navbar.html" %}
 
-{% block pageContent %}
-    <div class="box">
-        <h2>{% trans %}Accounts{% endtrans %}</h2>
+	<div class="box">
+		<h2>{% trans %}Accounts{% endtrans %} - {{ user.Username }}</h2>
 
-        {% if complete %}
+	{% if complete %}
 
             {{
                 "The account, %s%s%s, has been successfully modified."
@@ -24,12 +27,16 @@
                          "</a>")
                 | safe
                 }}
+		</p>
+		<p>
                 {{ "Click %shere%s for user details."
                 | tr
                 | format('<a href="%s">' | format(user | account_url),
                          "</a>")
                 | safe
                 }}
+		</p>
+		<p>
                 {{ "Click %shere%s to list the comments made by this account."
                 | tr
                 | format('<a href="%s/comments">' | format(user | account_url),
@@ -43,4 +50,6 @@
             {% include "partials/account_form.html" %}
         {% endif %}
     </div>
-{% endblock %}
+
+    {% include "partials/footer.html" %}
+</html>

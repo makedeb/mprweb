@@ -25,7 +25,7 @@ def get_captcha_token(salt):
 def get_captcha_challenge(salt):
     """ Get a CAPTCHA challenge string (shell command) for a salt. """
     token = get_captcha_token(salt)
-    return f"makedeb --mpr-check|sed -r 's#[0-9]+#{token}#g'|md5sum|cut -c1-6"
+    return f"makedeb --mpr-check | sed -r 's#[0-9]+#{token}#g' | md5sum | cut -c1-6"
 
 
 def get_captcha_answer(token):

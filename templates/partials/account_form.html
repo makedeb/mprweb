@@ -14,36 +14,29 @@
     is authenticated, there **must** be a `user` supplied, pointing
     to the user being edited.
 -->
-<form id="edit-profile-form" method="post"
-      {% if action %}
-      action="{{ action }}"
-      {% endif %}
->
+<form id="edit-profile-form" method="post" {% if action %}action="{{ action }}"{% endif %}>
     <fieldset>
         <input type="hidden" name="Action" value="{{ form_type }}">
     </fieldset>
     <fieldset>
         <!-- Username -->
-        <p>
-            <label for="id_username">
-                {% trans %}Username{% endtrans %}:
-            </label>
+        <div class="item">
+		<label for="id_username"><h2>
+		{% trans %}Username{% endtrans %} <em>({% trans %}required{% endtrans %})</em>:
+		</h2></label>
 
             <input id="id_username"
                    type="text" size="30"
                    maxlength="16" name="U"
                    value="{{ username }}"
             >
-            ({% trans %}required{% endtrans %})
-        </p>
-        <p>
-            <em>{{ "Your user name is the name you will use to login. "
+            <p class="comment"><em>{{ "Your user name is the name you will use to login. "
             "It is visible to the general public, even if your "
-            "account is inactive." | tr }}</em>
-        </p>
+            "account is inactive." | tr }}</em></p>
+        </div>
 
         {% if request.user.has_credential(creds.ACCOUNT_CHANGE_TYPE) %}
-            <p>
+            <div class="item">
                 <label for="id_type">
                     {% trans %}Account Type{% endtrans %}:
                 </label>
@@ -59,8 +52,8 @@
                     {% endfor %}
 
                 </select>
-            </p>
-            <p>
+            </div>
+            <div class="item">
                 <label for="id_suspended">
                     {% trans %}Account Suspended{% endtrans %}:
                 </label>
@@ -70,61 +63,54 @@
                        checked="checked"
                        {% endif %}
                 >
-            </p>
+            </div>
         {% endif %}
 
         {% if request.user.has_credential(creds.ACCOUNT_EDIT, approved=[user]) %}
-            <p>
-                <label for="id_inactive">{% trans %}Inactive{% endtrans %}:</label>
-                <input id="id_inactive" type="checkbox" name="J"
-                   {% if inactive %}
-                       checked="checked"
-                   {% endif %}
-                >
-            </p>
+            <div class="item checkbox-item">
+                <div class="button">
+                    <label for="id_inactive">{% trans %}Inactive{% endtrans %}:</label>
+                    <input id="id_inactive" type="checkbox" name="J" {% if inactive %}checked="checked"{% endif %}>
+                </div>
+            </div>
         {% endif %}
 
         <!-- Email -->
-        <p>
-            <label for="id_email">
-                {% trans %}Email Address{% endtrans %}:
-            </label>
+        <div class="item">
+	    <label for="id_email"><h2>
+                {% trans %}Email Address{% endtrans %} <em>({% trans %}required{% endtrans %})</em>:
+            </h2></label>
 
             <input id="id_email" type="email"
                    size="30" maxlength="254" name="E" value="{{ email or '' }}">
-            ({% trans %}required{% endtrans %})
-        </p>
-        <p>
-            <em>{{ "Please ensure you correctly entered your email "
-            "address, otherwise you will be locked out." | tr }}</em>
-        </p>
+            <p class="comment"><em>{{ "Please ensure you correctly entered your email "
+                      "address, otherwise you will be locked out." | tr }}</em></p>
+        </div>
 
         <!-- Hide Email -->
-        <p>
-            <label for="id_hide">
-                {% trans %}Hide Email Address{% endtrans %}:
-            </label>
+        <div class="item checkbox-item">
+            <div class="button">
+                <label for="id_hide">
+                    {% trans %}Hide Email Address{% endtrans %}:
+                </label>
 
-            <input id="id_hide" type="checkbox" name="H" value="{{ H }}">
-        </p>
-        <p>
-            <em>{{ "If you do not hide your email address, it is "
+                <input id="id_hide" type="checkbox" name="H" value="{{ H }}">
+            </div>
+            <p class="comment"><em>{{ "If you do not hide your email address, it is "
             "visible to all registered MPR users. If you hide your "
             "email address, it is visible to MPR "
-            "Trusted Users only." | tr }}</em>
-        </p>
+            "Trusted Users only." | tr }}</em></p>
+        </div>
 
         <!-- Backup Email -->
-        <p>
-            <label for="id_backup_email">
+        <div class="item">
+            <label for="id_backup_email"><h2>
                 {% trans %}Backup Email Address{% endtrans %}:
-            </label>
+            </h4></label>
 
             <input id="id_backup_email" type="email" size="30"
                    maxlength="254" name="BE" value="{{ backup_email or '' }}">
-        </p>
-        <p>
-            <em>
+            <p class="comment"><em>
             {{ "Optionally provide a secondary email address that "
             "can be used to restore your account in case you lose "
             "access to your primary email address." | tr }}
@@ -135,54 +121,56 @@
             "setting." | tr
             | format("<em>%s</em>" | format("Hide Email Address" | tr))
             | safe }}
-            </em>
-        </p>
+            </em></p>
+        </div>
 
         <!-- Real Name -->
-        <p>
-            <label for="id_realname">
+        <div class="item">
+            <label for="id_realname"><h2>
                 {% trans %}Real Name{% endtrans %}:
-            </label>
+            </h2></label>
 
             <input id="id_realname" type="text" size="30"
                    maxlength="32" name="R" value="{{ realname }}">
-        </p>
+        </div>
 
         <!-- Homepage -->
-        <p>
-            <label for="id_homepage">
+        <div class="item">
+            <label for="id_homepage"><h2>
                 {% trans %}Homepage{% endtrans %}:
-            </label>
+            </h2></label>
 
             <input id="id_homepage" type="text" size="30" name="HP"
                    value="{{ homepage }}">
-        </p>
+        </div>
 
         <!-- IRC Nick -->
-        <p>
-            <label for="id_irc">
+        <div class="item">
+            <label for="id_irc"><h2>
                 {% trans %}IRC Nick{% endtrans %}:
-            </label>
+            </h2></label>
 
             <input id="id_irc" type="text" size="30"
                    maxlength="32" name="I" value="{{ ircnick }}">
-        </p>
+        </div>
 
         <!-- PGP Key Fingerprint -->
-        <p>
-            <label for="id_pgp">
+        <div class="item">
+            <label for="id_pgp"><h2>
                 {% trans %}PGP Key Fingerprint{% endtrans %}:
-            </label>
+            </h2></label>
 
             <input id="id_pgp" type="text" size="30"
                    maxlength="50" name="K" value="{{ pgp }}">
-        </p>
+        </div>
+
+        <hr>
 
         <!-- Homepage -->
-        <p>
-            <label for="id_language">
+        <div class="item">
+            <label for="id_language"><h2>
                 {% trans %}Language{% endtrans %}:
-            </label>
+            </h2></label>
 
             <select id="id_language" name="L">
                 {% for domain, display in languages.items() %}
@@ -196,13 +184,13 @@
                     </option>
                 {% endfor %}
             </select>
-        </p>
+        </div>
 
         <!-- Homepage -->
-        <p>
-            <label for="id_timezone">
+        <div class="item">
+            <label for="id_timezone"><h2>
                 {% trans %}Timezone{% endtrans %}
-            </label>
+            </h2></label>
 
             <select id="id_timezone" name="TZ">
                 {% for current, offset in timezones.items() %}
@@ -213,58 +201,58 @@
                     >{{ offset }}</option>
                 {% endfor %}
             </select>
-        </p>
+        </div>
 
     </fieldset>
+    <hr>
 
     {% if form_type == "UpdateAccount" %}
         <fieldset>
-            <legend>
-                {{
-                "If you want to change the password, enter a new password "
-                "and confirm the new password by entering it again." | tr
-                }}
-            </legend>
             <p>
-                <label for="id_passwd1">
+            {{ "If you want to change the password, enter a new password "
+               "and confirm the new password by entering it again." | tr
+            }}
+            </p>
+            <div class="item">
+                <label for="id_passwd1"><h2>
                     {% trans %}Password{% endtrans %}:
-                </label>
+                </h2></label>
                 <input id="id_passwd1" type="password"
                        size="30" name="P" value="{{ P or '' }}">
-            </p>
+            </div>
 
-            <p>
-                <label for="id_passwd2">
+            <div class="item">
+                <label for="id_passwd2"><h2>
                     {% trans %}Re-type password{% endtrans %}:
-                </label>
+                </h2></label>
 
                 <input id="id_passwd2" type="password"
                        size="30" name="C" value="{{ C or '' }}">
-            </p>
+            </div>
         </fieldset>
     {% endif %}
-
+    <hr>
     <fieldset>
-        <legend>
+        <p>
             {{
             "The following information is only required if you "
             "want to submit packages to the makedeb Package Repository." | tr
             }}
-        </legend>
-        <p>
-            <label for="id_ssh">
+        </p>
+        <div class="item">
+            <label for="id_ssh"><h2>
                 {% trans %}SSH Public Key{% endtrans %}:
-            </label>
+            </h2></label>
 
             <!-- Only set PK auto-fill when we've got a NewAccount form. -->
             <textarea id="id_ssh" name="PK"
-                      rows="5" cols="30">{{ ssh_pk }}</textarea>
-        </p>
+                      rows="5">{{ ssh_pk }}</textarea>
+        </div>
     </fieldset>
-
-    <fieldset>
-        <legend>{% trans%}Notification settings{% endtrans %}:</legend>
-        <p>
+    <hr>
+    <fieldset class="notify-item">
+        <legend><h2>{% trans%}Notification settings{% endtrans %}:</h2></legend>
+        <div class="item">
             <label for="id_commentnotify">
                 {% trans %}Notify of new comments{% endtrans %}:
             </label>
@@ -274,8 +262,8 @@
                      checked="checked"
                  {% endif %}
             >
-        </p>
-        <p>
+        </div>
+        <div class="item">
             <label for="id_updatenotify">
                 {% trans %}Notify of package updates{% endtrans %}:
             </label>
@@ -285,8 +273,8 @@
                     checked="checked"
                 {% endif %}
             >
-        </p>
-        <p>
+        </div>
+        <div class="item">
             <label for="id_ownershipnotify">
                 {% trans %}Notify of ownership updates{% endtrans %}:
             </label>
@@ -296,48 +284,44 @@
                     checked="checked"
                 {% endif %}
             >
-        </p>
+        </div>
     </fieldset>
-
-    <fieldset>
+    <hr>
+    <fieldset class="confirm-password">
         {% if form_type == "UpdateAccount" %}
             <legend>
                 {{ "To confirm the profile changes, please enter "
                 "your current password:" | tr }}
             </legend>
-            <p>
-                <label for="id_passwd_current">
+            <div class="item">
+                <label for="id_passwd_current"><h2>
                     {% trans %}Your current password{% endtrans %}:
-                </label>
+                </h2></label>
                 <input id="id_passwd_current" type="password"
                        size="30" name="passwd" id="id_passwd_current">
-            </p>
+            </div>
         {% else %}
             <!-- Otherwise, form_type is assumed that it's NewAccount. -->
-            <legend>
-                {{ "To protect the MPR against automated account creation, "
-                "we kindly ask you to provide the output of the following "
-                "command:" | tr }}
-                <code>
-                    {{ captcha_salt | captcha_cmdline }}
-                </code>
-            </legend>
-            <p>
+            <div class="item">
+		<p>{{ "To protect the MPR against automated account creation, "
+                      "we kindly ask you to provide the output of the following "
+		      "command" | tr }} <em>({% trans %}required{% endtrans %})</em>:</p>
+		<pre><code>{{ captcha_salt | captcha_cmdline }}</code></pre>
+            </div>
+            <div class="item">
                 <label for="id_captcha">
-                    {% trans %}Answer{% endtrans %}:
+                    <h2>{% trans %}Answer{% endtrans %}:</h2>
                 </label>
                 <input id="id_captcha"
                        type="text" size="30" maxlength="6" name="captcha">
-                ({% trans %}required{% endtrans %})
-
                 <input type="hidden" name="captcha_salt"
                        value="{{ captcha_salt }}">
-            </p>
+            </div>
         {% endif %}
     </fieldset>
 
     <fieldset>
-        <p>
+        <div class="item">
         <label></label>
             {% if form_type == "UpdateAccount" %}
                 <input class="button" type="submit"
@@ -348,6 +332,6 @@
             {% endif %}
             <input class="button" type="reset"
                                   value="{{ 'Reset' | tr }}">
-        </p>
+        </div>
     </fieldset>
 </form>

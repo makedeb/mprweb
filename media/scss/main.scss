@@ -78,6 +78,10 @@ pre {
 	padding: 0.3em 0.5em;
 	background-color: lighten($light-grey, 5%);
 	overflow: auto;
+
+	code {
+		line-height: 1.6em;
+	}
 }
 
 // Makes the footer appear (at minimum) at the bottom of the viewport).
@@ -98,6 +102,14 @@ footer {
 	margin-bottom: 2em;
 	padding: 1em;
 	border-radius: 0.15em;
+	
+	h2 {
+		padding-bottom: 0.5em;
+	}
+
+	p {
+		line-height: 1.3em;
+	}
 }
 
 // Remove styling for buttons containing SVGs.

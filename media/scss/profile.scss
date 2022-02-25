@@ -2,6 +2,7 @@
 @import "variables";
 
 $profile-mobile-width: 470px;
+$header-color: darken($light-grey, 30%);
 
 .arch-bio-entry {
 	.item {
@@ -15,7 +16,7 @@ $profile-mobile-width: 470px;
 		.caption {
 			text-align: right;
 			width: 11em;
-			color: darken($light-grey, 30%);
+			color: $header-color;
 			padding-right: 0.5em;
 
 			@media (max-width: $profile-mobile-width) {
@@ -26,6 +27,84 @@ $profile-mobile-width: 470px;
 
 		.caption, .data {
 			line-height: 1.6em;
+		}
+	}
+}
+
+#edit-profile-form {
+	fieldset {
+		padding-top: 1em;
+		// For some reason this fixes some overflow issues on small viewports.
+		min-width: auto;
+
+		legend {
+			word-wrap: break-word;
+		}
+
+		h2 {
+			font-size: 1.3em;
+			padding-bottom: 0.5em;
+			padding-top: 1em;
+
+		}
+
+		.comment {
+			color: $header-color;
+			padding-top: 0.2em;
+		}
+
+		.item {
+			display: flex;
+			flex-direction: column;
+
+			input, textarea, select {
+				border-style: solid;
+				font-size: 1.2em;
+				border-radius: 0.25rem;
+				padding: 0.2em 0.3em;
+				overflow: auto;
+				resize: none;
+			}
+		}
+
+		.checkbox-item {
+			display: inherit;
+			padding-top: 1em;
+
+			.button {
+				display: flex;
+				// Strangely this seems to center the checkbox.
+				align-items: end;
+				height: 2em;
+			
+				label {
+					font-size: 1.3em;
+					margin-right: 0.2em;
+				}
+			}
+
+			.comment {
+				padding-top: 0.2em;
+			}
+		}
+	}
+
+	.notify-item .item {
+		display: flex;
+		flex-direction: row;
+		justify-content: start;
+
+		label {
+			width: 14em;
+			font-size: 1.05em;
+		}
+	}
+
+	.confirm-password {
+		padding-top: 0em;
+
+		.item {
+			padding-top: 0;
 		}
 	}
 }

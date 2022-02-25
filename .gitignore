@@ -46,5 +46,4 @@ doc/rpc.html
 .python-version
 
 # Compiled SCSS files.
-media/css/style.css
-media/css/style.css.map
+media/css/
