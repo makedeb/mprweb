@@ -85,13 +85,13 @@ if len(sys.argv) != 2:
 # make sure the seed file exists
 #
 if not os.path.exists(SEED_FILE):
-    log.error("Please install the 'wordlist' Ubuntu/Debian package")
+    log.error("Please install the 'wordlist' (wamerican) Ubuntu/Debian package.\n Please check https://packages.ubuntu.com/bionic/wordlist")
     raise SystemExit(1)
 
 # make sure comments can be created
 #
 if not os.path.exists(FORTUNE_FILE):
-    log.error("Please install the 'fortune-mod' Ubuntu/Debian package")
+    log.error("Please install the 'fortune-mod' Ubuntu/Debian package.\n Please check https://packages.ubuntu.com/bionic/fortune-mod")
     raise SystemExit(1)
 
 # track what users/package names have been used
