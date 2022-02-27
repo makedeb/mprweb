@@ -61,9 +61,7 @@ RANDOM_LOCS = ("pub", "release", "files", "downloads", "src")
 
 if (os.name == 'posix'):
     OS = getosname()
-    if OS == 'arch':
-        FORTUNE_FILE = "/usr/share/fortune/cookie"
-    elif OS == 'debian':
+    if OS == 'debian':
         FORTUNE_FILE = "/usr/share/games/fortunes/fortunes"
     elif OS == 'ubuntu':
         # Needs to be verified.
