@@ -59,12 +59,10 @@ if (os.name == 'posix'):
     if OS == 'arch':
         FORTUNE_FILE = "/usr/share/fortune/cookie"
     elif OS == 'debian':
-        FORTUNE_FILE = "/usr/share/games/fortunes/fortune"
+        FORTUNE_FILE = "/usr/share/games/fortunes/fortunes"
     elif OS == 'ubuntu':
         # Needs to be verified.
-        FORTUNE_FILE = "/usr/share/games/fortunes/fortune"
-    elif OS == 'fedora':
-        FORTUNE_FILE = "/usr/share/games/fortunes/fortune"
+        FORTUNE_FILE = "/usr/share/games/fortunes/fortunes"
     else:
         print(f"Please check and Install Fortune for your os: {sys.platform} and set path for FORTUNE_FILE env var.")
         FORTUNE_FILE = os.environ.get("FORTUNE_FILE")
