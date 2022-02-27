@@ -16,7 +16,11 @@ import random
 import sys
 import time
 
-import bcrypt
+try:
+    import bcrypt
+except ModuleNotFoundError as e:
+    print(f"Unable to import the 'bcrypt' module. Make sure 'python3-bcrypt' is installed and try again.")
+    sys.exit(1)
 
 def getosname():
     if (os.name == "posix"):
