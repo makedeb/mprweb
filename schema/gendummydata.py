@@ -29,6 +29,7 @@ def getosname():
                 for lines in f:
                     if(lines.find("ID") > -1):
                         osname = lines.split('=')[1].strip()
+                        break
         except (OSError, IOError) as e:
             print(f"Error: {e} has Occured. For {os.name} release file not found!")
     return osname
@@ -84,13 +85,13 @@ if len(sys.argv) != 2:
 # make sure the seed file exists
 #
 if not os.path.exists(SEED_FILE):
-    log.error("Please install the 'words' Arch package")
+    log.error("Please install the 'wordlist' Ubuntu/Debian package")
     raise SystemExit(1)
 
 # make sure comments can be created
 #
 if not os.path.exists(FORTUNE_FILE):
-    log.error("Please install the 'fortune-mod' Arch package")
+    log.error("Please install the 'fortune-mod' Ubuntu/Debian package")
     raise SystemExit(1)
 
 # track what users/package names have been used
