@@ -64,7 +64,7 @@ if (os.name == 'posix'):
         # Needs to be verified.
         FORTUNE_FILE = "/usr/share/games/fortunes/fortunes"
     else:
-        print(f"Please check and Install fortune for your os: {sys.platform} and set path for FORTUNE_FILE env var.")
+        print(f"Please check and install fortune for your os: {sys.platform} and set path for FORTUNE_FILE env var.")
         FORTUNE_FILE = os.environ.get("FORTUNE_FILE")
 
 FORTUNE_FILE = os.environ.get("FORTUNE_FILE", FORTUNE_FILE)
