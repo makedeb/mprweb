@@ -52,11 +52,9 @@ def pager_nav(context: Dict[str, Any],
         link_attr={"class": "page"},
         curpage_attr={"class": "page"},
         separator="&nbsp",
-        format="$link_first $link_previous ~5~ $link_next $link_last",
-        symbol_first="« First",
-        symbol_previous="‹ Previous",
-        symbol_next="Next ›",
-        symbol_last="Last »")
+        format="$link_first ~5~ $link_last",
+        symbol_first="«",
+        symbol_last="»")
 
 
 @register_function("config_getint")

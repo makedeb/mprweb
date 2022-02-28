@@ -4,10 +4,10 @@
 O = 0
 
 # Default [P]er [P]age
-PP = 50
+PP = 10
 
 # A whitelist of valid PP values
-PP_WHITELIST = {50, 100, 250}
+PP_WHITELIST = {5, 10, 20}
 
 # Default `by` parameter for RPC search.
 RPC_SEARCH_BY = "name-desc"

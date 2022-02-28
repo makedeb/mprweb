@@ -6,10 +6,11 @@ from http import HTTPStatus
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import and_, or_
+from typing import Any, Dict, List
 
 import aurweb.config
 
-from aurweb import cookies, db, l10n, logging, models, util
+from aurweb import cookies, defaults, db, l10n, logging, models, util
 from aurweb.auth import account_type_required, requires_auth, requires_guest
 from aurweb.captcha import get_captcha_salts
 from aurweb.exceptions import ValidationError
@@ -476,35 +477,26 @@ async def account_comments(request: Request, username: str):
 @account_type_required({at.TRUSTED_USER,
                         at.DEVELOPER,
                         at.TRUSTED_USER_AND_DEV})
-async def accounts(request: Request):
-    context = make_context(request, "Accounts")
-    return render_template(request, "account/search.html", context)
+async def accounts_post(request: Request):
 
-
-@router.post("/accounts")
-@requires_auth
-@account_type_required({at.TRUSTED_USER,
-                        at.DEVELOPER,
-                        at.TRUSTED_USER_AND_DEV})
-async def accounts_post(request: Request,
-                        O: int = Form(default=0),  # Offset
-                        SB: str = Form(default=str()),  # Sort By
-                        U: str = Form(default=str()),  # Username
-                        T: str = Form(default=str()),  # Account Type
-                        S: bool = Form(default=False),  # Suspended
-                        E: str = Form(default=str()),  # Email
-                        R: str = Form(default=str()),  # Real Name
-                        I: str = Form(default=str()),  # IRC Nick
-                        K: str = Form(default=str())):  # PGP Key
     context = await make_variable_context(request, "Accounts")
-    context["pp"] = pp = 50  # Hits per page.
 
-    offset = max(O, 0)  # Minimize offset at 0.
-    context["offset"] = offset  # Offset.
+    offset, per_page = util.sanitize_params(
+        request.query_params.get("O", defaults.O),
+        request.query_params.get("PP", defaults.PP)
+    )
 
-    context["params"] = dict(await request.form())
-    if "O" in context["params"]:
-        context["params"].pop("O")
+    offset = max(offset, 0)  # Minimize offset at 0.
+
+    context["PP"] = per_page
+    context["O"] = offset
+    context["U"] = U = request.query_params.get("U")
+    context["T"] = T = request.query_params.get("T")
+    context["S"] = S = request.query_params.get("S")
+    context["E"] = E = request.query_params.get("E")
+    context["R"] = R = request.query_params.get("R")
+    context["I"] = I = request.query_params.get("I")
+    context["SB"] = SB = request.query_params.get("SB")
 
     # Setup order by criteria based on SB.
     order_by_columns = {
@@ -538,7 +530,6 @@ async def accounts_post(request: Request,
             (bool(E), models.User.Email.like(f"%{E}%")),
             (bool(R), models.User.RealName.like(f"%{R}%")),
             (bool(I), models.User.IRCNick.like(f"%{I}%")),
-            (bool(K), models.User.PGPKey.like(f"%{K}%")),
         ] if k
     ]
 
@@ -551,11 +542,10 @@ async def accounts_post(request: Request,
     context["total_users"] = query.count()
 
     # Finally, order and truncate our users for the current page.
-    users = query.order_by(*order_by).limit(pp).offset(offset).all()
+    users = query.order_by(*order_by).limit(per_page).offset(offset).all()
     context["users"] = util.apply_all(users, db.refresh)
 
-    return render_template(request, "account/index.html", context)
-
+    return render_template(request, "account/search.html", context)
 
 def render_terms_of_service(request: Request,
                             context: dict,

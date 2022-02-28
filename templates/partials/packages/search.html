@@ -4,9 +4,9 @@
         <p><input type='hidden' name='O' value='0'/></p>
 
         <fieldset>
-            <legend>{{ "Enter search criteria" | tr }}</legend>
-            <div>
-                <label for="id_method">{{ "Search by" | tr }}</label>
+            <legend class="comment">{{ "Enter search criteria" | tr }}</legend>
+            <div class="item">
+                <label for="id_method">{{ "Search by" | tr }}:</label>
                 <select name='SeB'>
                     <option value="nd" {% if SeB == "nd" %}selected{% endif %}>{{ "Name, Description" | tr }}</option>
                     <option value="n" {% if SeB == "n" %}selected{% endif %}>{{ "Name Only" | tr }}</option>
@@ -20,20 +20,20 @@
                     <option value="s" {% if SeB == "s" %}selected{% endif %}>{{ "Submitter" | tr }}</option>
                 </select>
             </div>
-            <div>
-                <label for="id_q">{{ "Keywords" | tr }}</label>
+            <div class="item">
+                <label for="id_q">{{ "Keywords" | tr }}:</label>
                 <input type='text' name='K' size='30' value="{{ K or '' }}" maxlength='35'/>
             </div>
-            <div>
-                <label for="id_out_of_date">{{ "Out of Date" | tr }}</label>
+            <div class="item">
+                <label for="id_out_of_date">{{ "Out of Date" | tr }}:</label>
                 <select name='outdated'>
                     <option value=''>{{ "All" | tr }}</option>
                     <option value='on' {% if outdated == "on" %}selected{% endif %}>{{ "Flagged" | tr }}</option>
                     <option value='off' {% if outdated == "off" %}selected{% endif %}>{{ "Not Flagged" | tr }}</option>
                 </select>
             </div>
-            <div>
-                <label for="id_sort_by">{{ "Sort by" | tr }}</label>
+            <div class="item">
+                <label for="id_sort_by">{{ "Sort by" | tr }}:</label>
                 <select name='SB'>
                     <option value='n' {% if SB == "n" %}selected{% endif %}>{{ "Name" | tr }}</option>
                     <option value='v' {% if SB == "v" %}selected{% endif %}>{{ "Votes" | tr }}</option>
@@ -44,29 +44,26 @@
                     <option value='l' {% if SB == "l" %}selected{% endif %}>{{ "Last modified" | tr }}</option>
                 </select>
             </div>
-            <div>
-                <label for="id_order_by">{{ "Sort order" | tr }}</label>
+            <div class="item">
+                <label for="id_order_by">{{ "Sort order" | tr }}:</label>
                 <select name='SO'>
                     <option value='a' {% if SO == "a" %}selected{% endif %}>{{ "Ascending" | tr }}</option>
                     <option value='d' {% if SO == "d" %}selected{% endif %}>{{ "Descending" | tr }}</option>
                 </select>
             </div>
-            <div>
-                <label for="id_per_page">{{ "Per page" | tr }}</label>
+            <div class="item">
+                <label for="id_per_page">{{ "Per page" | tr }}:</label>
                 <select name='PP'>
-                    <option value="50" {% if PP == 50 %}selected{% endif %}>50</option>
-                    <option value="100" {% if PP == 100 %}selected{% endif %}>100</option>
-                    <option value="250" {% if PP == 250 %}selected{% endif %}>250</option>
+                    <option value="5" {% if PP == 5 %}selected{% endif %}>5</option>
+                    <option value="10" {% if PP == 10 %}selected{% endif %}>10</option>
+                    <option value="20" {% if PP == 20 %}selected{% endif %}>20</option>
                 </select>
             </div>
-            <div>
-                <label>&nbsp;</label>
-                <button type='submit' class='button' name='submit' value='Go'>
-                    {{ "Go" | tr }}
-                </button>
-                <button type='submit' class='button' name='submit' value='Orphans'>
-                    {{ "Orphans" | tr }}
-                </button>
+            <div class="item">
+		<label>&nbsp;</label>
+                <input type='submit' class='button' name='submit' value='Go'>
+		&nbsp;
+                <input type='submit' class='button' name='submit' value='Orphans'>
             </div>
         </fieldset>
     </form>
