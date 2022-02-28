@@ -1,68 +1,58 @@
-{% extends "partials/layout.html" %}
+<!DOCTYPE html>
+<html>
+    {% include "partials/head.html" %}
+	{% include "partials/navbar.html" %}
+	{% include "partials/archdev-navbar.html" %}
 
-{% block pageContent %}
     {% if error %}
         <p class="pkgoutput error">{{ error | e }}</p></p>
     {% endif %}
 
     <div class="box">
-        <h2>{{ "Submit a proposal to vote on." | tr }}</h2>
 
         <form action="/addvote" method="post">
+            <fieldset>
+            <p class="overhead-comment">{{ "Submit a proposal to vote on." | tr }}</p>
 
-            <p class="vote-applicant">
-                <label for="id_user">{{ "Applicant/TU" | tr }}</label>
-                <input type="text" name="user" id="id_user"
-                       value="{{ user }}" />
-                {{ "(empty if not applicable)" | tr }}
-            </p>
-            <p class="vote-type">
-                <label for="id_type">{{ "Type" | tr }}</label>
+            <div class="item">
+                <label for="id_user"><h2>{{ "Applicant/TU" | tr }}</h2></label>
+                <input type="text" name="user" id="id_user" value="{{ user }}" />
+                <p class="comment"><em>{{ "Leave empty if not applicable" | tr }}</em></p>
+            </div>
+
+            <div class="item">
+                <label for="id_type"><h2>{{ "Type" | tr }}</h2></label>
                 <select name="type" id="id_type">
-                    <option value="add_tu"
-                        {% if "add_tu" == type %}
-                            selected
-                        {% endif %}
-                    >
+                    <option value="add_tu" {% if "add_tu" == type %}selected{% endif %}>
                         {{ "Addition of a TU" | tr }}
                     </option>
-                    <option value="remove_tu"
-                        {% if "remove_tu" == type %}
-                            selected
-                        {% endif %}
-                    >
+
+                    <option value="remove_tu" {% if "remove_tu" == type %}selected{% endif %}>
                         {{ "Removal of a TU" | tr }}
                     </option>
-                    <option value="remove_inactive_tu"
-                        {% if "remove_inactive_tu" == type %}
-                            selected
-                        {% endif %}
-                    >
+
+                    <option value="remove_inactive_tu" {% if "remove_inactive_tu" == type %}selected{% endif %}>
                         {{ "Removal of a TU (undeclared inactivity)" | tr }}
                     </option>
-                    <option value="bylaws"
-                        {% if "bylaws" == type %}
-                            selected
-                        {% endif %}
-                    >
+
+                    <option value="bylaws" {% if "bylaws" == type %}selected{% endif %}>
                         {{ "Amendment of Bylaws" | tr }}
                     </option>
                 </select>
-            </p>
+            </div>
 
-            <p class="vote-agenda">
-                <label for="id_agenda">{{ "Proposal" | tr }}</label><br />
-                <textarea name="agenda"
-                          id="id_agenda"
-                          rows="15"
-                          cols="80">{{ agenda | e }}</textarea>
+            <div class="item">
+                <label for="id_agenda"><h2>{{ "Proposal" | tr }}</h2></label><br />
+                <textarea name="agenda" id="id_agenda" rows="15" cols="80">{{ agenda | e }}</textarea>
                 <br />
-                <button type="submit" class="button" value="Submit">
-                    {{ "Submit" | tr }}
-                </button>
-            </p>
+            </div>
 
+            <div class="item">
+                <input class="button" type="submit" value="Submit">
+                </input>
+            </div>
+        </fieldset>
         </form>
     </div>
-{% endblock %}
 
+{# vim: set ts=4 sw=4 expandtab: #}
