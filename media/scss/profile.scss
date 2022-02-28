@@ -4,6 +4,7 @@
 $profile-mobile-width: 470px;
 $header-color: darken($light-grey, 30%);
 
+// '/account/{username}/'.
 .arch-bio-entry {
 	.item {
 		display: flex;
@@ -31,80 +32,59 @@ $header-color: darken($light-grey, 30%);
 	}
 }
 
+// '/register' and '/acount/{username}/edit'.
 #edit-profile-form {
 	fieldset {
 		padding-top: 1em;
 		// For some reason this fixes some overflow issues on small viewports.
 		min-width: auto;
 
-		legend {
-			word-wrap: break-word;
-		}
-
-		h2 {
-			font-size: 1.3em;
-			padding-bottom: 0.5em;
-			padding-top: 1em;
-
-		}
-
-		.comment {
-			color: $header-color;
-			padding-top: 0.2em;
-		}
-
 		.item {
-			display: flex;
-			flex-direction: column;
+			padding-bottom: 0.8rem;
+			
+			h2 {
+				padding: 0;
+			}
+			
+			label {
+				pointer-events: none;
+			}
 
-			input, textarea, select {
-				border-style: solid;
+			select, .button {
+				display: block;
+				background-color: lighten($light-grey, 8%);
+
+				&:hover, &:focus {
+					background-color: lighten($light-grey, 6%);
+				}
+			}
+
+			input:not(.checkbox), select, textarea {
+				width: 100%;
 				font-size: 1.2em;
-				border-radius: 0.25rem;
-				padding: 0.2em 0.3em;
-				overflow: auto;
+				border-radius: 0.2rem;
+				border-color: $light-grey;
+				border-style: solid;
+				margin-top: 0.5em;
+				padding: 0.2em;
+				box-sizing: border-box;
+			}
+
+			textarea {
 				resize: none;
 			}
 		}
 
-		.checkbox-item {
-			display: inherit;
-			padding-top: 1em;
-
-			.button {
-				display: flex;
-				// Strangely this seems to center the checkbox.
-				align-items: end;
-				height: 2em;
-			
-				label {
-					font-size: 1.3em;
-					margin-right: 0.2em;
-				}
-			}
-
-			.comment {
-				padding-top: 0.2em;
-			}
+		.comment, .overhead-comment {
+			color: darken($light-grey, 30%);
 		}
-	}
 
-	.notify-item .item {
-		display: flex;
-		flex-direction: row;
-		justify-content: start;
-
-		label {
-			width: 14em;
-			font-size: 1.05em;
+		.comment {
+			padding-top: 0.2em;
 		}
-	}
 
-	.confirm-password {
-		padding-top: 0em;
-
-		.item {
-			padding-top: 0;
+		.overhead-comment {
+			padding-bottom: 0.6em;
 		}
 	}
 }

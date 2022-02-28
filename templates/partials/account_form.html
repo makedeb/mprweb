@@ -18,59 +18,48 @@
     <fieldset>
         <input type="hidden" name="Action" value="{{ form_type }}">
     </fieldset>
+
     <fieldset>
         <!-- Username -->
         <div class="item">
-		<label for="id_username"><h2>
-		{% trans %}Username{% endtrans %} <em>({% trans %}required{% endtrans %})</em>:
-		</h2></label>
+		<label for="id_username">
+            <h2>{% trans %}Username{% endtrans %} <em>({% trans %}required{% endtrans %})</em>:</h2>
+        </label>
 
-            <input id="id_username"
-                   type="text" size="30"
-                   maxlength="16" name="U"
-                   value="{{ username }}"
-            >
-            <p class="comment"><em>{{ "Your user name is the name you will use to login. "
-            "It is visible to the general public, even if your "
-            "account is inactive." | tr }}</em></p>
+        <input id="id_username" type="text" maxlength="16" name="U" value="{{ username }}">
+        <p class="comment">
+            <em>{{ "Your user name is the name you will use to login. It is visible to the general public, even if your account is inactive." | tr }}</em>
+        </p>
         </div>
 
         {% if request.user.has_credential(creds.ACCOUNT_CHANGE_TYPE) %}
             <div class="item">
                 <label for="id_type">
-                    {% trans %}Account Type{% endtrans %}:
+                    <h2>{% trans %}Account Type{% endtrans %}:</h2>
                 </label>
                 <select name="T" id="id_type">
                     {% for value, type in account_types %}
-                        <option value="{{ value }}"
-                                {% if user.AccountType.ID == value %}
-                                selected="selected"
-                                {% endif %}
-                        >
+                        <option value="{{ value }}" {% if user.AccountType.ID == value %}selected="selected"{% endif %}>
                             {{ type | tr }}
                         </option>
                     {% endfor %}
-
                 </select>
             </div>
+
             <div class="item">
                 <label for="id_suspended">
                     {% trans %}Account Suspended{% endtrans %}:
                 </label>
 
-                <input id="suspended" type="checkbox" name="S"
-                       {% if suspended %}
-                       checked="checked"
-                       {% endif %}
-                >
+                <input class="checkbox" id="suspended" type="checkbox" name="S" {% if suspended %}checked="checked"{% endif %}>
             </div>
         {% endif %}
 
         {% if request.user.has_credential(creds.ACCOUNT_EDIT, approved=[user]) %}
             <div class="item checkbox-item">
-                <div class="button">
+                <div>
                     <label for="id_inactive">{% trans %}Inactive{% endtrans %}:</label>
-                    <input id="id_inactive" type="checkbox" name="J" {% if inactive %}checked="checked"{% endif %}>
+                    <input class="checkbox" id="id_inactive" type="checkbox" name="J" {% if inactive %}checked="checked"{% endif %}>
                 </div>
             </div>
         {% endif %}
@@ -81,8 +70,7 @@
                 {% trans %}Email Address{% endtrans %} <em>({% trans %}required{% endtrans %})</em>:
             </h2></label>
 
-            <input id="id_email" type="email"
-                   size="30" maxlength="254" name="E" value="{{ email or '' }}">
+            <input id="id_email" type="email" maxlength="254" name="E" value="{{ email or '' }}">
             <p class="comment"><em>{{ "Please ensure you correctly entered your email "
                       "address, otherwise you will be locked out." | tr }}</em></p>
         </div>
@@ -94,7 +82,7 @@
                     {% trans %}Hide Email Address{% endtrans %}:
                 </label>
 
-                <input id="id_hide" type="checkbox" name="H" value="{{ H }}">
+                <input class="checkbox"class="checkbox" id="id_hide" type="checkbox" name="H" value="{{ H }}">
             </div>
             <p class="comment"><em>{{ "If you do not hide your email address, it is "
             "visible to all registered MPR users. If you hide your "
@@ -108,8 +96,7 @@
                 {% trans %}Backup Email Address{% endtrans %}:
             </h4></label>
 
-            <input id="id_backup_email" type="email" size="30"
-                   maxlength="254" name="BE" value="{{ backup_email or '' }}">
+            <input id="id_backup_email" type="email" maxlength="254" name="BE" value="{{ backup_email or '' }}">
             <p class="comment"><em>
             {{ "Optionally provide a secondary email address that "
             "can be used to restore your account in case you lose "
@@ -130,8 +117,7 @@
                 {% trans %}Real Name{% endtrans %}:
             </h2></label>
 
-            <input id="id_realname" type="text" size="30"
-                   maxlength="32" name="R" value="{{ realname }}">
+            <input id="id_realname" type="text" maxlength="32" name="R" value="{{ realname }}">
         </div>
 
         <!-- Homepage -->
@@ -140,8 +126,7 @@
                 {% trans %}Homepage{% endtrans %}:
             </h2></label>
 
-            <input id="id_homepage" type="text" size="30" name="HP"
-                   value="{{ homepage }}">
+            <input id="id_homepage" type="text" name="HP" value="{{ homepage }}">
         </div>
 
         <!-- IRC Nick -->
@@ -150,8 +135,7 @@
                 {% trans %}IRC Nick{% endtrans %}:
             </h2></label>
 
-            <input id="id_irc" type="text" size="30"
-                   maxlength="32" name="I" value="{{ ircnick }}">
+            <input id="id_irc" type="text" maxlength="32" name="I" value="{{ ircnick }}">
         </div>
 
         <!-- PGP Key Fingerprint -->
@@ -160,8 +144,7 @@
                 {% trans %}PGP Key Fingerprint{% endtrans %}:
             </h2></label>
 
-            <input id="id_pgp" type="text" size="30"
-                   maxlength="50" name="K" value="{{ pgp }}">
+            <input id="id_pgp" type="text" maxlength="50" name="K" value="{{ pgp }}">
         </div>
 
         <hr>
@@ -208,7 +191,7 @@
 
     {% if form_type == "UpdateAccount" %}
         <fieldset>
-            <p>
+            <p class="overhead-comment">
             {{ "If you want to change the password, enter a new password "
                "and confirm the new password by entering it again." | tr
             }}
@@ -217,8 +200,7 @@
                 <label for="id_passwd1"><h2>
                     {% trans %}Password{% endtrans %}:
                 </h2></label>
-                <input id="id_passwd1" type="password"
-                       size="30" name="P" value="{{ P or '' }}">
+                <input id="id_passwd1" type="password" name="P" value="{{ P or '' }}">
             </div>
 
             <div class="item">
@@ -226,14 +208,13 @@
                     {% trans %}Re-type password{% endtrans %}:
                 </h2></label>
 
-                <input id="id_passwd2" type="password"
-                       size="30" name="C" value="{{ C or '' }}">
+                <input id="id_passwd2" type="password" name="C" value="{{ C or '' }}">
             </div>
         </fieldset>
     {% endif %}
     <hr>
     <fieldset>
-        <p>
+        <p class="overhead-comment">
             {{
             "The following information is only required if you "
             "want to submit packages to the makedeb Package Repository." | tr
@@ -257,33 +238,23 @@
                 {% trans %}Notify of new comments{% endtrans %}:
             </label>
 
-            <input id="id_commentnotify" type="checkbox" name="CN"
-                 {% if cn %}
-                     checked="checked"
-                 {% endif %}
-            >
+            <input class="checkbox" id="id_commentnotify" type="checkbox" name="CN" {% if cn %}checked="checked"{% endif %}>
         </div>
+
         <div class="item">
             <label for="id_updatenotify">
                 {% trans %}Notify of package updates{% endtrans %}:
             </label>
 
-            <input id="id_updatenotify" type="checkbox" name="UN"
-                {% if un %}
-                    checked="checked"
-                {% endif %}
-            >
+            <input class="checkbox" id="id_updatenotify" type="checkbox" name="UN" {% if un %}checked="checked"{% endif %}>
         </div>
+
         <div class="item">
             <label for="id_ownershipnotify">
                 {% trans %}Notify of ownership updates{% endtrans %}:
             </label>
 
-            <input id="id_ownershipnotify" type="checkbox" name="ON"
-                {% if on %}
-                    checked="checked"
-                {% endif %}
-            >
+            <input class="checkbox" id="id_ownershipnotify" type="checkbox" name="ON" {% if on %}checked="checked"{% endif %}>
         </div>
     </fieldset>
     <hr>
@@ -297,8 +268,7 @@
                 <label for="id_passwd_current"><h2>
                     {% trans %}Your current password{% endtrans %}:
                 </h2></label>
-                <input id="id_passwd_current" type="password"
-                       size="30" name="passwd" id="id_passwd_current">
+                <input id="id_passwd_current" type="password" name="passwd" id="id_passwd_current">
             </div>
         {% else %}
             <!-- Otherwise, form_type is assumed that it's NewAccount. -->
@@ -312,10 +282,8 @@
                 <label for="id_captcha">
                     <h2>{% trans %}Answer{% endtrans %}:</h2>
                 </label>
-                <input id="id_captcha"
-                       type="text" size="30" maxlength="6" name="captcha">
-                <input type="hidden" name="captcha_salt"
-                       value="{{ captcha_salt }}">
+                <input id="id_captcha" type="text" maxlength="6" name="captcha">
+                <input type="hidden" name="captcha_salt" value="{{ captcha_salt }}">
             </div>
         {% endif %}
     </fieldset>
@@ -335,3 +303,5 @@
         </div>
     </fieldset>
 </form>
+
+{# vim: set ts=4 sw=4 expandtab: #}
