@@ -1,7 +1,10 @@
-{% extends "partials/layout.html" %}
+<!DOCTYPE html>
+<html>
+	{% include "partials/head.html" %}
+	{% include "partials/navbar.html" %}
+	{% include "partials/archdev-navbar.html" %}
 
-{% block pageContent %}
-    <div class="box">
+<div class="box">
         <h2>{% trans %}Password Reset{% endtrans %}</h2>
 
         <p>
@@ -14,63 +17,60 @@
                 {% include "partials/error.html" %}
 
                 <form method="post">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <td>{% trans %}Confirm your user name or primary e-mail address:{% endtrans %}</td>
-                                <td>
-                                    <input type="text" name="user" size="30" maxlength="64"
-                                           value="{{ user or '' }}">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>{% trans %}Enter your new password:{% endtrans %}</td>
-                                <td>
-                                    <input type="password" name="password" size="30"
-                                           value="{{ password or '' }}">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>{% trans %}Confirm your new password:{% endtrans %}</td>
-                                <td>
-                                    <input type="password" name="confirm" size="30"
-                                           value="{{ confirm or '' }}">
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <br>
-                    <input type="hidden" name="resetkey"
-                           value="{{ resetkey }}">
-                    <input class="button" type="submit"
-                           value="{% trans %}Continue{% endtrans %}">
-                </form>
-            {% else %}
-                <!-- Default page with prompt for user name/e-mail. -->
-                {% set url = "https://matrix.to/#/#makedeb-mpr:hunterwittenborn.com" %}
-                {{ "If you have forgotten the user name and the primary e-mail "
-                "address you used to register, please send a message to the "
-                "%s#makedeb-mpr:hunterwittenborn.com%s Matrix room."
-                | tr
-                | format(
-                    '<a href="%s">' | format(url),
-                    "</a>")
-                | safe
-                }}
-                </p>
+                    <fieldset>
+                        <div class="item">
+                            <h2>{% trans %}Confirm your user name or primary e-mail address:{% endtrans %}</h2>
+                            <input type="text" name="user" size="30" maxlength="64" value="{{ user or '' }}">
+                        </div>
+                        
+                        <div class="item">
+                            <h2>{% trans %}Enter your new password:{% endtrans %}</h2>
+                            <input type="password" name="password" size="30" value="{{ password or '' }}">
+                        </div>
 
-                {% include "partials/error.html" %}
+                        <div class="item">
+                            <h2>{% trans %}Confirm your new password:{% endtrans %}</h2>
+                            <input type="password" name="confirm" size="30" value="{{ confirm or '' }}">
+                        </div>
+
+                        <div class="item">
+                            <input type="hidden" name="resetkey" value="{{ resetkey }}">
+                            <input class="button" type="submit" value="{% trans %}Continue{% endtrans %}">
+                        </div>
+                </form>
+
+            {% else %}
 
                 <form method="post">
-                    <p>
-                        {% trans %}Enter your user name or your primary e-mail address:{% endtrans %}
-                        <input type="text" name="user" size="30" maxlength="64"
-                               value="{{ user or '' }}">
-                    </p>
-                    <input class="button" type="submit"
-                           value="{% trans %}Continue{% endtrans %}">
+                    <fieldset>
+                        {% include "partials/error.html" %}
+
+                        <p class="overhead-comment"><em>
+                        <!-- Default page with prompt for user name/e-mail. -->
+                        {% set url = "https://matrix.to/#/#makedeb-mpr:hunterwittenborn.com" %}
+
+                        {{ "If you have forgotten the user name and the primary e-mail "
+                        "address you used to register, please send a message to the "
+                        "%s#makedeb-mpr:hunterwittenborn.com%s Matrix room."
+                        | tr
+                        | format('<a href="%s">' | format(url),
+                                 "</a>")
+                        | safe }}
+                        </em></p>
+
+                    <div class="item">
+                        <label><h2>{% trans %}Enter your user name or your primary e-mail address:{% endtrans %}</h2></label>
+                        <input type="text" name="user" size="30" maxlength="64" value="{{ user or '' }}">
+                    </div>
+                    
+                    <div class="item">
+                        <input class="button" type="submit" value="{% trans %}Continue{% endtrans %}">
+                    </div>
                 </form>
             {% endif %}
         </p>
     </div>
-{% endblock %}
+
+    {% include "partials/footer.html" %}
+</html>
+{# vim: set ts=4 sw=4 expandtab: #}

@@ -2,11 +2,11 @@
     <ul class="errorlist">
         {% for error in errors %}
             {% if error is string %}
-                <li>{{ error | tr | safe }}</li>
+	      <li><em>{{ error | tr | safe }}</em></li>
             {% elif error is iterable %}
                 <ul>
                     {% for e in error %}
-                        <li>{{ e | tr | safe }}</li>
+		        <li><em>{{ e | tr | safe }}</em></li>
                     {% endfor %}
                 </ul>
             {% endif %}
