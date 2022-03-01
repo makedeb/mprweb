@@ -23,10 +23,10 @@ version: "3.8"
 services:
   aurweb-image:
     build: .
-    image: aurweb:latest
+    image: mprweb:latest
 
   ca:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     entrypoint: /docker/ca-entrypoint.sh
     command: /docker/scripts/run-ca.sh
@@ -38,7 +38,7 @@ services:
       - step:/root/.step
 
   memcached:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     command: /docker/scripts/run-memcached.sh
     healthcheck:
@@ -46,7 +46,7 @@ services:
       interval: 2s
  
   redis:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     entrypoint: /docker/redis-entrypoint.sh
     command: /docker/scripts/run-redis.sh
@@ -57,7 +57,7 @@ services:
       - "127.0.0.1:16379:6379"
 
   mariadb:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     entrypoint: /docker/mariadb-entrypoint.sh
     command: /usr/bin/mysqld_safe --datadir=/var/lib/mysql
@@ -73,7 +73,7 @@ services:
       interval: 2s
 
   mariadb_init:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG_IMMUTABLE=${AUR_CONFIG_IMMUTABLE:-0}
@@ -87,7 +87,7 @@ services:
 
   mariadb_test:
     # Test database.
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - MARIADB_PRIVILEGED=1
@@ -104,7 +104,7 @@ services:
       interval: 2s
 
   git:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
@@ -124,7 +124,7 @@ services:
       - mariadb_run:/var/run/mysqld
 
   smartgit:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
@@ -139,7 +139,7 @@ services:
       - smartgit_run:/var/run/smartgit
 
   cgit-php:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
@@ -159,7 +159,7 @@ services:
       - git_data:/aurweb/aur.git
 
   cgit-fastapi:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
@@ -179,7 +179,7 @@ services:
       - git_data:/aurweb/aur.git
 
   cron:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
@@ -195,7 +195,7 @@ services:
       - archives:/var/lib/aurweb/archives
 
   php-fpm:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=/aurweb/conf/config
@@ -221,7 +221,7 @@ services:
       - "127.0.0.1:19000:9000"
 
   fastapi:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=conf/config
@@ -250,7 +250,7 @@ services:
       - "127.0.0.1:18000:8000"
 
   nginx:
-    image: aurweb:latest
+    image: mprweb:latest
     init: true
     environment:
       - AUR_CONFIG=conf/config
@@ -281,7 +281,7 @@ services:
         condition: service_healthy
 
   sharness:
-    image: aurweb:latest
+    image: mprweb:latest
     profiles: ["dev"]
     init: true
     environment:
@@ -305,7 +305,7 @@ services:
       - ./templates:/aurweb/templates
 
   pytest-mysql:
-    image: aurweb:latest
+    image: mprweb:latest
     profiles: ["dev"]
     init: true
     environment:
@@ -334,7 +334,7 @@ services:
       - ./templates:/aurweb/templates
 
   test:
-    image: aurweb:latest
+    image: mprweb:latest
     profiles: ["dev"]
     init: true
     environment:
