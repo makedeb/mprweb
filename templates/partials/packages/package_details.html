@@ -179,8 +179,10 @@
                 {% endif %}
 
                 {% if requests %}
-                    <p class="comment">{{ requests | tn("%d pending request", "% pending requests") | format(requests) }}</p>
+                    <p class="comment">{{ requests | tn("%d pending request", "%d pending requests") | format(requests) }}</p>
                 {% endif %}
+
+                <p><a href="/pkgbase/{{ pkgbase.Name }}/request">{{ "Submit Request" | tr }}</a</p>
                 
                 {% if request.user.has_credential(creds.PKGBASE_DELETE) %}
                     <p><a href="/pkgbase/{{ pkgbase.Name }}/delete">{{ "Delete Package" | tr }}</a></p>

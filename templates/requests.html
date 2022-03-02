@@ -73,6 +73,8 @@
                                     {% if request.user.is_elevated() and not result.ClosedTS %}
                                         {# If RequestType is an orphan and it's not yet due, it's locked to allow the maintainer time to react to such a request. On request, orphans are locked for two weeks. #}
                                         {% if result.RequestType.ID == 2 and not due %}
+                                            {% set idle_time = config_getint("options", "request_idle_time") %}
+                                            {% set time_delta = (utcnow - result.RequestTS | int) %}
                                             {% set time_left = idle_time - time_delta %}
                                             {% if time_left > (48 * 3600) %}
                                                 {% set n = round(time_left / (24 * 3600)) %}
@@ -86,8 +88,7 @@
                                                 {% set time_left_fmt = ("<1 hour left" | tr) %}
                                             {% endif %}
 
-                                            {{ "Locked" | tr }}
-                                            ({{ time_left_fmt }})
+                                            {{ "Locked" | tr }} ({{ time_left_fmt }})
 
                                         {% else %}
                                             {# Only elevated users (TU or Dev) are allowed to accept requests. #}
@@ -96,7 +97,7 @@
                                     {% endif %}
 
                                     {% if not result.ClosedTS %}
-                                        <a href="/requests/{{ result.ID }}/close">{{ "Close" | tr }}</a>
+                                        | <a href="/requests/{{ result.ID }}/close">{{ "Close" | tr }}</a>
                                     {% endif %}
 
                                 {% else %}
