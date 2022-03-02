@@ -71,6 +71,7 @@ async def pkgbase_voters(request: Request, name: str) -> Response:
 
     context = templates.make_context(request, "Voters")
     context["pkgbase"] = pkgbase
+
     return render_template(request, "pkgbase/voters.html", context)
 
 
