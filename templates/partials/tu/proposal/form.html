@@ -1,14 +1,7 @@
-<form class="action-form" action="/tu/{{ proposal }}" method="POST">
-    <!-- Translate each button's text but leave the value alone. -->
-    <fieldset>
-        <button type="submit" class="button" name="decision" value="Yes">
-            {{ "Yes" | tr }}
-        </button>
-        <button type="submit" class="button" name="decision" value="No">
-            {{ "No" | tr }}
-        </button>
-        <button type="submit" class="button" name="decision" value="Abstain">
-            {{ "Abstain" | tr }}
-        </button>
-    </fieldset>
+<form class="item" action="/tu/{{ proposal }}" method="POST">
+    <h2>Decisions</h2>
+    <input type="submit" class="button" name="decision" value="Yes" />
+    <input type="submit" class="button" name="decision" value="No" />
+    <input type="submit" class="button" name="decision" value="Abstain" />
 </form>
+{# vim: set ts=4 sw=4 expandtab: #}

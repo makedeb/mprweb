@@ -1,6 +1,6 @@
 {% extends "partials/layout.html" %}
 
-{% block pageContent %}
+{% block body %}
     {%
         with table_class = "current-votes",
         total_votes = current_votes_count,
@@ -32,4 +32,12 @@
     {% with title = "Last Votes by TU", votes = last_votes_by_tu %}
         {% include "partials/tu/last_votes.html" %}
     {% endwith %}
+
+    <div class="field">
+        <div class="item">
+            <a class="button" href="/addvote">{% trans %}Add Proposal{% endtrans %}</a>
+        </div>
+    </div>
+	
 {% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}

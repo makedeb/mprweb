@@ -1,7 +1,7 @@
 {% extends "partials/layout.html" %}
 
-{% block pageContent %}
-    <div class="box">
+{% block body %}
+    <div class="box field">
         {% include "partials/tu/proposal/details.html" %}
     </div>
     
@@ -11,7 +11,7 @@
         </div>
     {% endif %}
 
-    <div class="box">
+    <div class="box field">
         {% if error %}
             <span class="status">{{ error | tr }}</span>
         {% else %}
@@ -19,3 +19,4 @@
         {% endif %}
     </div>
 {% endblock %}
+{# vim: set ts=4 sw=4 expandtab #}

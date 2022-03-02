@@ -12,7 +12,7 @@ $header-color: darken($light-grey, 30%);
 	}
 }
 
-#search-results {
+#search-results, .search-results {
 	margin-bottom: 3em;
 	display: grid;
 	grid-template-columns: 1fr 1fr;
