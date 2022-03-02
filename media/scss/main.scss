@@ -138,8 +138,9 @@ footer {
 	background-color: transparent;
 }
 
-// Form styling.
-fieldset {
+// Field styling.
+// We have 'fieldset' for compatibility purposes with some stuff that's already been written.
+fieldset, .field {
 	padding-top: 1em;
         // For some reason this fixes some overflow issues on small viewports.
         min-width: auto;
