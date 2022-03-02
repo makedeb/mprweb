@@ -1,17 +1,22 @@
-{% extends "partials/layout.html" %}
-
-{% block pageContent %}
+ <!DOCTYPE html>
+<html>
+    {% include "partials/head.html" %}
+	{% include "partials/navbar.html" %}
+	{% include "partials/archdev-navbar.html" %}
+    
     <div class="box">
-        <h2>{{ "Edit comment for: %s" | tr | format(comment.PackageBase.Name) }}</h2>
-
         <form action="/pkgbase/{{ comment.PackageBase.Name }}/comments/{{ comment.ID }}"
               method="post">
+            <div class="item">
+                <h2>{{ "Edit comment for: %s" | tr | format(comment.PackageBase.Name) }}</h2>
+            </div>
+
             <fieldset>
                 <div>
                     <input type="hidden" name="next" value="{{ next }}" />
                 </div>
 
-                <p>
+                <p class="overhead-comment"><em>
                     {{
                         "Git commit identifiers referencing commits in "
                         "the MPR package repository and URLs are converted "
@@ -24,21 +29,19 @@
                             "</a>"
                         ) | safe
                     }}
-                </p>
+                </em></p>
 
-                <p>
-                    <textarea id="id_comment"
-                              name="comment"
-                              cols="80"
-                              rows="10">{{ comment.Comments }}</textarea>
-                </p>
+                <div class="item">
+                    <textarea id="id_comment" name="comment" cols="80" rows="10">{{ comment.Comments }}</textarea>
+                </div>
 
-                <p>
+                <div class="item">
                     <input type="submit" value="{{ 'Save' | tr }}" />
-                </p>
+                </div>
 
             </fieldset>
         </form>
 
     </div>
-{% endblock %}
+</html>
+{# vim: set ts=4 sw=4 expandtab: #}
