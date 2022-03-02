@@ -187,46 +187,6 @@ async def pkgbase_comments_post(
                             status_code=HTTPStatus.SEE_OTHER)
 
 
-@router.get("/pkgbase/{name}/comments/{id}/form")
-@requires_auth
-async def pkgbase_comment_form(request: Request, name: str, id: int,
-                               next: str = Query(default=None)):
-    """
-    Produce a comment form for comment {id}.
-
-    This route is used as a partial HTML endpoint when editing
-    package comments via Javascript. This endpoint used to be
-    part of the RPC as type=get-comment-form and has been
-    relocated here because the form returned cannot be used
-    externally and requires a POST request by the user.
-
-    :param request: FastAPI Request
-    :param name: PackageBase.Name
-    :param id: PackageComment.ID
-    :param next: Optional `next` value used for the comment form
-    :return: JSONResponse
-    """
-    pkgbase = get_pkg_or_base(name, PackageBase)
-    comment = pkgbase.comments.filter(PackageComment.ID == id).first()
-    if not comment:
-        return JSONResponse({}, status_code=HTTPStatus.NOT_FOUND)
-
-    if not request.user.is_elevated() and request.user != comment.User:
-        return JSONResponse({}, status_code=HTTPStatus.UNAUTHORIZED)
-
-    context = pkgbaseutil.make_context(request, pkgbase)
-    context["comment"] = comment
-
-    if not next:
-        next = f"/pkgbase/{name}"
-
-    context["next"] = next
-
-    form = templates.render_raw_template(
-        request, "partials/packages/comment_form.html", context)
-    return JSONResponse({"form": form})
-
-
 @router.get("/pkgbase/{name}/comments/{id}/edit")
 @requires_auth
 async def pkgbase_comment_edit(request: Request, name: str, id: int,
