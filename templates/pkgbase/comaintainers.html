@@ -1,40 +1,40 @@
-{% extends "partials/layout.html" %}
-
-{% block pageContent %}
-    {% if errors %}
-        <ul class="errorlist">
-            {% for error in errors %}
-                <li>{{ error | tr }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+<!DOCTYPE HTML>
+<html>
+	{% include "partials/head.html" %}
+	{% include "partials/navbar.html" %}
+	{% include "partials/archdev-navbar.html" %}
 
     <div class="box">
         <h2>{{ "Manage Co-maintainers" | tr }}:</h2>
-        <p>
-            {{
-                "Use this form to add co-maintainers for %s%s%s "
-                "(one user name per line):"
-                | tr | format("<strong>", pkgbase.Name, "</strong>")
-                | safe
-            }}
-        </p>
 
         <form action="/pkgbase/{{ pkgbase.Name }}/comaintainers" method="post">
             <fieldset>
-                <p>
-                    <label for="id_users">{{ "Users" | tr }}:</label>
+                {% if errors %}
+                    <ul class="errorlist">
+                    {% for error in errors %}
+                        <li><em>{{ error | tr }}</em></li>
+                    {% endfor %}
+                    </ul>
+                {% endif %}
+                <p class="overhead-comment"><em>
+                    {{
+                    "Use this form to add co-maintainers for %s%s%s "
+                    "(one user name per line):"
+                    | tr | format("<strong>", pkgbase.Name, "</strong>")
+                    | safe
+                    }}
+                </em></p>
+                <div class="item">
+                    <label for="id_users"><h2>{{ "Users" | tr }}:</h2></label>
                     <textarea id="id_users" name="users"
                               rows="5" cols="50">{{ "\n".join(comaintainers) }}</textarea>
-                </p>
+                </div>
 
-                <p>
-                    <button class="button" type="submit">
-                        {{ "Save" | tr }}
-                    </button>
-                </p>
+                <div class="item">
+                    <input class="button" type="submit" value="{{ "Save" | tr }}">
+                </div>
             </fieldset>
         </form>
 
     </div>
-{% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}
