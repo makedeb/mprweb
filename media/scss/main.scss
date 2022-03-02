@@ -61,6 +61,14 @@ sup {
 	vertical-align: top;
 }
 
+ul {
+	list-style: inside;
+}
+
+p, ul, li {
+	line-height: 1.6em;
+}
+
 blockquote {
 	border-left: 0.3em;
 	border-style: solid;
