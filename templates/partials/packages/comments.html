@@ -13,7 +13,7 @@
 {% endif %}
 
 {% if pinned_comments.count() %}
-    <div class="comments package-comments">
+    <div class="box comments package-comments">
         <div class="comments-header">
             <h3>
                 <span class="text">{{ "Pinned Comments" | tr }}</span>
@@ -21,13 +21,14 @@
             </h3>
         </div>
         {% for comment in pinned_comments.all() %}
+            <hr class="comment-hr">
             {% include "partials/packages/comment.html" %}
         {% endfor %}
     </div>
 {% endif %}
 
 {% if comments.count() %}
-    <div class="comments package-comments">
+    <div class="box comments package-comments">
         <div class="comments-header">
             <h3>
                 <span class="text">{{ "Latest Comments" | tr }}</span>
@@ -35,7 +36,11 @@
             </h3>
         </div>
         {% for comment in comments.all() %}
+        {% if comment.PinnedTS == 0 %}
+            <hr class="comment-hr">
             {% include "partials/packages/comment.html" %}
+            {% endif %}
         {% endfor %}
     </div>
 {% endif %}
+{# vim: set ts=4 sw=4 expandtab: #}

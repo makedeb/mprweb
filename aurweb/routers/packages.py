@@ -9,7 +9,9 @@ import aurweb.filters  # noqa: F401
 from aurweb import config, db, defaults, logging, models, util
 from aurweb.auth import creds, requires_auth
 from aurweb.exceptions import InvariantError
+from aurweb.models.dependency_type import DEPENDS_ID, MAKEDEPENDS_ID, CHECKDEPENDS_ID, OPTDEPENDS_ID
 from aurweb.models.relation_type import CONFLICTS_ID, PROVIDES_ID, REPLACES_ID
+from aurweb.models.package_comment import PackageComment
 from aurweb.packages import util as pkgutil
 from aurweb.packages.search import PackageSearch
 from aurweb.packages.util import get_pkg_or_base
@@ -148,10 +150,21 @@ async def package(request: Request, name: str) -> Response:
 
     # Package dependencies.
     max_depends = config.getint("options", "max_depends")
-    context["dependencies"] = pkg.package_dependencies.order_by(
+    dependencies = pkg.package_dependencies.order_by(
         models.PackageDependency.DepTypeID.asc(),
         models.PackageDependency.DepName.asc()
     ).limit(max_depends).all()
+
+    context["depends"] = []
+    context["optdepends"] = []
+    context["makedepends"] = []
+    context["checkdepends"] = []
+
+    for dep in dependencies:
+        if dep.DepTypeID == DEPENDS_ID: context["depends"] += [dep]
+        elif dep.DepTypeID == OPTDEPENDS_ID: context["optdepends"] += [dep]
+        elif dep.DepTypeID == MAKEDEPENDS_ID: context["makedepends"] += [dep]
+        elif dep.DepTypeID == CHECKDEPENDS_ID: context["checkdepends"] += [dep]
 
     # Package requirements (other packages depend on this one).
     context["required_by"] = pkgutil.pkg_required(
@@ -161,17 +174,17 @@ async def package(request: Request, name: str) -> Response:
 
     conflicts = pkg.package_relations.filter(
         models.PackageRelation.RelTypeID == CONFLICTS_ID
-    ).order_by(models.PackageRelation.RelName.asc())
+    ).order_by(models.PackageRelation.RelName.asc()).all()
     context["conflicts"] = conflicts
 
     provides = pkg.package_relations.filter(
         models.PackageRelation.RelTypeID == PROVIDES_ID
-    ).order_by(models.PackageRelation.RelName.asc())
+    ).order_by(models.PackageRelation.RelName.asc()).all()
     context["provides"] = provides
 
     replaces = pkg.package_relations.filter(
         models.PackageRelation.RelTypeID == REPLACES_ID
-    ).order_by(models.PackageRelation.RelName.asc())
+    ).order_by(models.PackageRelation.RelName.asc()).all()
     context["replaces"] = replaces
 
     return render_template(request, "packages/show.html", context)

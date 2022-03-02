@@ -1,14 +1,10 @@
 {% for pkg in packages %}
 <div class="search-item">
-    <h1>{{ pkg.Name }} {{ pkg.Version }}</h1>
+    <h1><a href="/packages/{{ pkg.Name }}">{{ pkg.Name }}</a> {{ pkg.Version }}</h1>
     {% if pkg.Description %}
     <p class="description">{{ pkg.Description }}</p>
     {% endif %}
     <hr>
-    <div class="item-section">
-        <p class="title">Votes: </p>
-        <p class="value">{{ pkg.NumVotes }}</p>
-    </div>
     <div class="item-section">
         <p class="title">Maintainer: </p>
         {% if pkg.Maintainer %}
@@ -16,6 +12,16 @@
         {% else %}
         <p class="value">None</p>
         {% endif %}
+    </div>
+
+    <div class="item-section">
+        <p class="title">Votes: </p>
+        <p class="value">{{ pkg.NumVotes }}</p>
+    </div>
+
+    <div class="item-section">
+        <p class="title">Popularity: </p>
+        <p class="value">{{ pkg.Popularity | number_format(6 if pkg.Popularity <= 0.2 else 2) }}</p>
     </div>
 </div>
 {% endfor %}

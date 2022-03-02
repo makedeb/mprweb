@@ -6,12 +6,14 @@ Routes:
     new comment  - /pkgbase/{name}/comments
     edit comment - /pkgbase/{name}/comments/{id}
 #}
-{% set action = "/pkgbase/%s/comments" | format(comment.PackageBase.Name) %}
+
 {% if comment %}
     {% set action = "/pkgbase/%s/comments/%d" | format(comment.PackageBase.Name, comment.ID) %}
+{% else %}
+    {% set action = "/pkgbase/%s/comments" | format(pkgbase.Name) %}
 {% endif %}
 
-<form class="comment-form" action="{{ action }}" method="post">
+<form class="comment-form {% if not comment %}add-comment{% endif %}" action="{{ action }}" method="post">
     <fieldset>
         <input type="hidden" name="next" value="{{ next }}" />
         <p>
@@ -42,3 +44,4 @@ Routes:
         </p>
     </fieldset>
 </form>
+{# vim: set ts=4 sw=4 expandtab: #}
