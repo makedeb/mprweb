@@ -1,0 +1,27 @@
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div id="pkgdetails">
+        <!-- Section toggle for package pages. -->
+        <script src="/static/js/package-sections.js"></script>
+        
+        <h2>{{ pkgbase.Name }} {{ pkg.Version }}</h2>
+        <hr>
+        <p class="comment">{{ pkg.Description }}</p>
+
+        <div class="pages">
+            <p>Viewing <code>/{{ file }}</code>.</p>
+            <p><a href="/pkgbase/{{ pkgbase.Name }}/git/#git-tree">Click here</a> to go back to the Git tree for <a href="/pkgbase/{{ pkgbase.Name }}">{{ pkgbase.Name}}</a>.</p>
+
+            {# We know the syntax for PKGBUILDs and .SRCINFO, so fill in the class here if so. #}
+            {% if file == "PKGBUILD" %}
+                <pre><code class="language-sh language-bash">{{ file_data }}</code></pre>
+            {% elif file == ".SRCINFO" %}
+                {# SRCINFO files don't appear to have good syntax highlighting support. So, let's choose one that's similar to the syntax of a SRCINFO file and go from there. #}
+                <pre><code class="language-ini">{{ file_data }}</code></pre>
+            {% else %}
+                <pre><code>{{ file_data }}</code></pre>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}

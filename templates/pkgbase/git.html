@@ -1,0 +1,94 @@
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div id="pkgdetails" class="field">
+        <!-- Section toggle for package pages. -->
+        <script src="/static/js/package-sections.js"></script>
+        
+        <h2>{{ pkgbase.Name }} {{ pkg.Version }}</h2>
+        <hr>
+        <p class="comment">{{ pkg.Description }}</p>
+
+        <div class="sections">
+            <h2 class="text active git-information">Git Information</h2>
+            <h2 class="text git-tree">Git Tree</h2>
+            <h2 class="text commit-log">Commit Log</h2>
+        </div>
+        
+        <div class="pages">
+            <div class="git-information">
+                <div class="section">
+                    <p class="key">Package Base:</p>
+                    <p class="value"><a href="/pkgbase/{{ pkgbase.Name }}">{{ pkgbase.Name }}</a></p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Latest Commit:</p>
+                    <p class="value">{{ commit.short_id }}</p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Commits in the Past Week:</p>
+                    <p class="value">{{ past_week_commits }}</p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Commits in the Past Month:</p>
+                    <p class="value">{{ past_month_commits }}</p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Commits in the Past Year:</p>
+                    <p class="value">{{ past_year_commits }}</p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Total Commits:</p>
+                    <p class="value">{{ commits | length }}</p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Committers:</p>
+
+                    {% for committer in committers %}
+                    <p class="value">{{ committer }} ({{ committers[committer] }})</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="git-tree">
+                {% for file in tree %}
+                    <p><a href="/pkgbase/{{ pkgbase.Name }}/git/tree/{{ file }}">{{ file }}</a></p>
+                {% endfor %}
+            </div>
+
+            <div class="commit-log search-results">
+                {% for commit in commits %}
+                    <div class="search-item">
+                        <p class="key">{{ commit.message.rstrip("\n") }}</p>
+                        <hr>
+
+                        <div class="item-section">
+                            <p class="title">Commit Hash:</p>
+                            <p class="value"><a href="/pkgbase/{{ pkgbase.Name }}/git/commit/{{ commit.id }}">{{ commit.short_id }}</a></p>
+                        </div>
+
+                        <div class="item-section">
+                            <p class="title">Author:</p>
+                            <p class="value">{{ commit.author.name }}</p>
+                        </div>
+
+                        <div class="item-section">
+                            <p class="title">Created:</p>
+                            <p class="value">
+                                {% set created = commit.commit_time | dt | as_timezone(timezone) %}
+                                {{ created.strftime("%Y-%m-%d") }}
+                            </p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}

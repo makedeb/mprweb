@@ -108,6 +108,7 @@ services:
     volumes:
       - ./data/git_data:/aurweb/aur.git
       - ./data:/aurweb/data
+      - ./docker:/docker
       - mariadb_run:/var/run/mysqld
 
   smartgit:

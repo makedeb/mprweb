@@ -7,6 +7,10 @@
 		color: darken($light-grey, 30%);
 	}
 
+	h3 {
+		padding-top: 1em;
+	}
+
 	.sections {
 		max-width: 45em;
 		margin: 0 auto;
@@ -14,6 +18,8 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: end;
+		overflow: scroll;
+		scrollbar-width: none;
 
 		h2 {
 			font-size: 1.2em;
@@ -23,6 +29,7 @@
 			padding-bottom: 0.2em;
 			margin-bottom: 1em;
 			border-bottom: 0.15em solid $light-grey;
+			white-space: nowrap;
 
 			&.active {
 				border-bottom-color: darken($light-grey, 20%);
@@ -35,11 +42,13 @@
 	}
 
 	.pages {
+		margin-top: 1.5em;
+
 		.hidden {
 			display: none !important;
 		}
 
-		.package-details {
+		.package-details, .git-information {
 			display: flex;
 			flex-wrap: wrap;
 			max-width: 40em;
@@ -76,7 +85,7 @@
 			}
 		}
 
-		.package-actions {
+		.package-actions, .git-tree, .commit-log {
 			line-height: 1.6em;
 			max-width: 20em;
 			margin: 0 auto;
@@ -130,6 +139,10 @@
 			margin: 0 auto;
 			margin-bottom: 1em;
 			line-height: 1.6em;
+		}
+
+		.commit-log {
+			max-width: 35em;
 		}
 	}
 }

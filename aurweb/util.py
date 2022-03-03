@@ -3,6 +3,7 @@ import math
 import re
 import secrets
 import string
+import time
 
 from datetime import datetime
 from distutils.util import strtobool as _strtobool
@@ -194,3 +195,10 @@ async def error_or_result(next: Callable, *args, **kwargs) \
         status_code = HTTPStatus.INTERNAL_SERVER_ERROR
         return JSONResponse({"error": str(exc)}, status_code=status_code)
     return response
+
+def get_current_time() -> int:
+    """
+    Returns the current time as a Unix timestamp
+    """
+    current_time = str(time.time()).split(".")[0]
+    return int(current_time)

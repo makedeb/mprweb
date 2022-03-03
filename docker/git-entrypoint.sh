@@ -25,6 +25,7 @@ chmod 755 /app
 cat >> $AUTH_SCRIPT << EOF
 #!/usr/bin/env bash
 export AUR_CONFIG="$AUR_CONFIG"
+export PYTHONPATH='/aurweb'
 exec /usr/bin/aurweb-git-auth "\$@"
 EOF
 chmod 755 $AUTH_SCRIPT

@@ -1,3 +1,5 @@
+import pygit2
+
 from http import HTTPStatus
 
 from fastapi import APIRouter, Form, HTTPException, Query, Request, Response
@@ -7,7 +9,7 @@ from sqlalchemy import and_
 from aurweb import config, db, l10n, logging, templates, time, util
 from aurweb.auth import creds, requires_auth
 from aurweb.exceptions import InvariantError, ValidationError
-from aurweb.models import PackageBase
+from aurweb.models import PackageBase, Package
 from aurweb.models.package_comment import PackageComment
 from aurweb.models.package_keyword import PackageKeyword
 from aurweb.models.package_notification import PackageNotification
@@ -21,7 +23,8 @@ from aurweb.pkgbase import util as pkgbaseutil
 from aurweb.pkgbase import validate
 from aurweb.scripts import notify, popupdate
 from aurweb.scripts.rendercomment import update_comment_render_fastapi
-from aurweb.templates import make_variable_context, render_template
+from aurweb.templates import make_variable_context, make_context, render_template
+from aurweb.util import get_current_time
 
 logger = logging.get_logger(__name__)
 router = APIRouter()
@@ -815,3 +818,148 @@ async def pkgbase_merge_post(request: Request, name: str,
 
     # Redirect to the newly merged into package.
     return RedirectResponse(next, status_code=HTTPStatus.SEE_OTHER)
+
+# Git routes.
+@router.get("/pkgbase/{name}/git")
+async def git_info(request: Request, name: str):
+    pkg = get_pkg_or_base(name, Package)
+    pkgbase = pkg.PackageBase
+    context = pkgbaseutil.make_context(request, pkgbase)
+
+    # Get the needed git information.
+    repo = pygit2.Repository("/aurweb/aur.git/")
+    is_branch = repo.revparse_single(name) is not None # TODO: Return an error if we couldn't find the branch.
+    branch = repo.revparse_single(name)
+    commit = repo.revparse_single(branch.hex)
+
+    # Get the number of commits in the last week, month, and year.
+    time = get_current_time()
+    day_seconds = 86400 # Number of seconds in a year.
+    one_week_back = time - (day_seconds * 7)
+    one_month_back = time - (day_seconds * 31)
+    one_year_back = time - (day_seconds * 365)
+
+    past_week_commits = 0
+    past_month_commits = 0
+    past_year_commits = 0
+    commits = []
+    committers = {}
+
+    for i in repo.walk(branch.hex):
+        commits += [i]
+
+        if i.author.name not in committers:
+            committers[i.author.name] = 1
+        else:
+            committers[i.author.name] += 1
+
+        if i.commit_time >= one_week_back:
+            past_week_commits += 1
+
+        if i.commit_time >= one_month_back:
+            past_month_commits += 1
+
+        if i.commit_time >= one_year_back:
+            past_year_commits += 1
+
+    # Sort the committers list by number of commits.
+    committers = dict(sorted(committers.items(), key=lambda item: item[0]))
+
+    # Get the tree for the latest commit.
+    tree = [file.name for file in branch.tree]
+
+    context["pkg"] = pkg
+    context["pkgbase"] = pkgbase
+    context["commit"] = commit
+    context["files"] = [file.name for file in commit.tree]
+    context["past_week_commits"] = past_week_commits
+    context["past_month_commits"] = past_month_commits
+    context["past_year_commits"] = past_year_commits
+    context["commits"] = commits
+    context["committers"] = committers
+    context["tree"] = tree
+
+    return render_template(request, "pkgbase/git.html", context)
+
+
+@router.get("/pkgbase/{name}/git/tree/{file}")
+async def git_info(request: Request, name: str, file: str):
+    pkg = get_pkg_or_base(name, Package)
+    pkgbase = pkg.PackageBase
+    context = pkgbaseutil.make_context(request, pkgbase)
+
+    # Get the needed git information.
+    repo = pygit2.Repository("/aurweb/aur.git/")
+    is_branch = repo.revparse_single(name) is not None # TODO: Return an error if we couldn't find the branch.
+    branch = repo.revparse_single(name)
+    
+    # Return a 404 if the branch doesn't exist.
+    if not is_branch:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
+
+    # Get the requested file.
+    requested_file = None
+
+    for tree_file in branch.tree:
+        if tree_file.name == file:
+            requested_file = tree_file
+            break
+
+    # If we couldn't find the file, return an error.
+    if requested_file is None:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
+
+    file_data = requested_file
+
+    context["pkg"] = pkg
+    context["pkgbase"] = pkgbase
+    context["file"] = file
+    context["file_data"] = file_data.data.decode()
+
+    return render_template(request, "pkgbase/git/tree.html", context)
+
+
+@router.get("/pkgbase/{name}/git/commit/{commit_hash}")
+async def git_info(request: Request, name: str, commit_hash: str):
+    pkg = get_pkg_or_base(name, Package)
+    pkgbase = pkg.PackageBase
+    context = pkgbaseutil.make_context(request, pkgbase)
+
+    # Get the needed git information.
+    repo = pygit2.Repository("/aurweb/aur.git/")
+    is_branch = repo.revparse_single(name) is not None # TODO: Return an error if we couldn't find the branch.
+    branch = repo.revparse_single(name)
+
+    # Return a 404 if the branch doesn't exist.
+    if not is_branch:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
+    
+    # If the user requested 'latest' as the commit, redirect to the last commit.
+    if commit_hash == "latest":
+        return RedirectResponse(f"/pkgbase/{pkgbase.Name}/git/commit/{branch.id.hex}", status_code=int(HTTPStatus.TEMPORARY_REDIRECT))
+
+    # Scan the branch for the requested commit.
+    requested_commit = None
+
+    for commit in repo.walk(branch.id):
+        if commit.id.hex == commit_hash:
+            requested_commit = commit
+
+    # If we couldn't find the requested commit, return an error.
+    if requested_commit is None:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
+    
+    # Get the diff between the parent commit and the requested one.
+    try:
+        diff = repo.diff(requested_commit.parents[0].id.hex, requested_commit.id.hex).patch
+    # If this is the first commit, there will be no parent commit.
+    except IndexError:
+        diff = "No diff found."
+
+    context["pkg"] = pkg
+    context["pkgbase"] = pkgbase
+    context["requested_commit"] = requested_commit
+    context["commit_hash"] = requested_commit.id.hex
+    context["diff"] = diff
+
+    return render_template(request, "pkgbase/git/commit.html", context)

@@ -85,9 +85,8 @@
             </div>
         </div>
         <div class="hidden package-actions">
-            <p><a href="/cgit/aur.git/tree/PKGBUILD?h={{ pkgbase.Name }}">{{ "View PKGBUILD" | tr}}</a></p>
-            <p><a href="/cgit/aur.git/log/?h={{ pkgbase.Name }}">{{ "View Changes" | tr }}</a></p>
-            <p><a href="/cgit/aur.git/snapshot/{{ pkgbase.Name }}.tar.gz">{{ "Download snapshot" | tr }}</a></p>
+            <p><a href="/pkgbase/{{ pkgbase.Name }}/git/tree/PKGBUILD">{{ "View PKGBUILD" | tr}}</a></p>
+            <p><a href="/pkgbase/{{ pkgbase.Name }}/git/commit/latest">{{ "View Changes" | tr }}</a></p>
             <p><a href="https://wiki.archlinux.org/title/Special:Search?search={{ pkgbase.Name }}">{{ "Search ArchWiki" | tr }}</a></p>
 
             {% if not out_of_date %}
@@ -154,3 +153,4 @@
         </div>
     </div>
 </div>
+{# vim: set ts=4 sw=4 expandtab: #}

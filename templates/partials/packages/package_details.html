@@ -45,13 +45,14 @@
                 <div class="section">
                     {% set license_length = licenses.all() | length %}
                     <p class="key">Licenses:</p>
-                    <p class="value">
-                        {% if license_length == 0 %}
-                            None
-                        {% else %}
-                            {{ licenses.all() | join(" | ") | default("None") }}
-                        {% endif %}
-                    </p>
+                    
+                    {% if license_length == 0 %}
+                        <p class="value">None</p>
+                    {% else %}
+                        {% for license in licenses.all() %}
+                            <p class="value">{{ license.License.Name }}</p>
+                        {% endfor %}
+                    {% endif %}
                 </div>
 
                 <div class="section">
@@ -137,9 +138,8 @@
             </div>
 
             <div class="hidden package-actions">
-                <p><a href="/cgit/aur.git/tree/PKGBUILD?h={{ pkgbase.Name }}">{{ "View PKGBUILD" | tr}}</a></p>
-                <p><a href="/cgit/aur.git/log/?h={{ pkgbase.Name }}">{{ "View Changes" | tr }}</a></p>
-                <p><a href="/cgit/aur.git/snapshot/{{ pkgbase.Name }}.tar.gz">{{ "Download snapshot" | tr }}</a></p>
+                <p><a href="/pkgbase/{{ pkgbase.Name }}/git/tree/PKGBUILD">{{ "View PKGBUILD" | tr}}</a></p>
+                <p><a href="/pkgbase/{{ pkgbase.Name }}/git/commit/latest">{{ "View Changes" | tr }}</a></p>
                 <p><a href="https://wiki.archlinux.org/title/Special:Search?search={{ pkgbase.Name }}">{{ "Search ArchWiki" | tr }}</a></p>
 
                 {% if not out_of_date %}
