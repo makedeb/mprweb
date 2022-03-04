@@ -15,7 +15,7 @@ async function findPackages(e) {
 		return;
 	}
 
-	var response = await makeRequest("/rpc/?v=5&type=search&arg=".concat(data));
+	var response = await makeRequest(window.location.origin + "/rpc/?v=5&type=search&arg=".concat(data));
 	var results = response["results"].slice(0,10);
 	var pkgnames = [];
 	
