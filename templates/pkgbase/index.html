@@ -1,9 +1,5 @@
-<!DOCTYPE html>
-<html>
-    {% include "partials/head.html" %}
-	{% include "partials/navbar.html" %}
-	{% include "partials/archdev-navbar.html" %}
-
+{% extends "partials/layout.html" %}
+{% block body %}
     {% include "pkgbase/package_details.html" %}
 
     <!-- On-the-fly comment editing functions -->
@@ -14,7 +10,5 @@
     <div class="comments">
         {% include "partials/packages/comments.html" %}
     </div>
-
-    {% include "partials/footer.html" %}
-</html>
-    {# vim: set ts=4 sw=4 expandtab: #}
+{% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}

@@ -1,8 +1,3 @@
-<!DOCTYPE html>
-<html>
-	{% include "partials/head.html" %}
-	{% include "partials/navbar.html" %}
-	{% include "partials/archdev-navbar.html" %}
 	
 	<div class="box">
 		{% if not request.user.is_authenticated() %}
@@ -95,3 +90,4 @@
 	</div>
 	{% include "partials/footer.html" %}
 </html>
+{# vim: set sw=4 expandtab #}

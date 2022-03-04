@@ -1,9 +1,5 @@
-<!DOCTYPE html>
-<html>
-	{% include "partials/head.html" %}
-	{% include "partials/navbar.html" %}
-	{% include "partials/archdev-navbar.html" %}
-
+{% extends "partials/layout.html" %}
+{% block body %}
     <div id="dev-login" class="box">
         <h2>MPR {% trans %}Login{% endtrans %}</h2>
 
@@ -66,7 +62,5 @@
             {% endif %}
         {% endif %}
     </div>
-
-    {% include "partials/footer.html" %}
-</html>
-{# vim: set ts=4 sw=4 expandtab: #}
+{% endblock %}
+{# vim: set sw=4 expandtab: #}

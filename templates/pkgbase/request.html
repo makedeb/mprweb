@@ -1,9 +1,6 @@
- <!DOCTYPE html>
-<html>
-	{% include "partials/head.html" %}
-	{% include "partials/navbar.html" %}
-	{% include "partials/archdev-navbar.html" %}
-    
+{% extends "partials/layout.html" %}
+{% block body %}
+
     <div class="box field">
         {% if errors %}
             <ul class="errorlist">
@@ -97,7 +94,5 @@
             </form>
         </div>
     </div>
-
-    {% include "partials/footer.html" %}
-</html>
-{# vim: set ts=4 sw=4 expandtab: #}
+{% endblock %}
+{# vim: set sw=4 expandtab: #}

@@ -1,14 +1,9 @@
-<!DOCTYPE html>
-<html>
-	{% include "partials/head.html" %}
-	{% include "partials/navbar.html" %}
-	{% include "partials/archdev-navbar.html" %}
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div class="box">
+        <h2>{% trans %}Accounts{% endtrans %} - {{ user.Username }}</h2>
 
-	<div class="box">
-		<h2>{% trans %}Accounts{% endtrans %} - {{ user.Username }}</h2>
-
-	{% if complete %}
-
+        {% if complete %}
             {{
                 "The account, %s%s%s, has been successfully modified."
                 | tr
@@ -21,28 +16,28 @@
                 {% include "partials/error.html" %}
             {% else %}
                 <p>
-                {{ "Click %shere%s if you want to permanently delete this account."
-                | tr
-                | format('<a href="%s/delete">' | format(user | account_url),
-                         "</a>")
-                | safe
-                }}
-		</p>
-		<p>
-                {{ "Click %shere%s for user details."
-                | tr
-                | format('<a href="%s">' | format(user | account_url),
-                         "</a>")
-                | safe
-                }}
-		</p>
-		<p>
-                {{ "Click %shere%s to list the comments made by this account."
-                | tr
-                | format('<a href="%s/comments">' | format(user | account_url),
-                         "</a>")
-                | safe
-                }}
+                    {{ "Click %shere%s if you want to permanently delete this account."
+                    | tr
+                    | format('<a href="%s/delete">' | format(user | account_url),
+                             "</a>")
+                    | safe
+                    }}
+	        </p>
+	        <p>
+                    {{ "Click %shere%s for user details."
+                    | tr
+                    | format('<a href="%s">' | format(user | account_url),
+                             "</a>")
+                    | safe
+                    }}
+	        </p>
+	        <p>
+                    {{ "Click %shere%s to list the comments made by this account."
+                    | tr
+                    | format('<a href="%s/comments">' | format(user | account_url),
+                             "</a>")
+                    | safe
+                    }}
                 </p>
             {% endif %}
 
@@ -50,6 +45,5 @@
             {% include "partials/account_form.html" %}
         {% endif %}
     </div>
-
-    {% include "partials/footer.html" %}
-</html>
+{% endblock %}
+{# vim: set sw=4 expandtab: #}

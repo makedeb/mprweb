@@ -1,9 +1,5 @@
-<!DOCTYPE HTML>
-<html>
-	{% include "partials/head.html" %}
-	{% include "partials/navbar.html" %}
-	{% include "partials/archdev-navbar.html" %}
-
+{% extends "partials/layout.html" %}
+{% block body %}
     <div class="box">
         <h2>{{ "Manage Co-maintainers" | tr }}:</h2>
 
@@ -35,6 +31,6 @@
                 </div>
             </fieldset>
         </form>
-
     </div>
+{% endblock %}
 {# vim: set ts=4 sw=4 expandtab: #}

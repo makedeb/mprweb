@@ -1,20 +1,17 @@
-<!DOCTYPE html>
-<html>
-	{% include "partials/head.html" %}
-	{% include "partials/navbar.html" %}
-	{% include "partials/archdev-navbar.html" %}
-	<div class="box">
-		<h2>{{ "Comments" | tr }} - <a href="/account/{{username}}">{{ username }}</a></h2>
-		<hr>
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div class="box">
+	<h2>{{ "Comments" | tr }} - <a href="/account/{{username}}">{{ username }}</a></h2>
+	<hr>
 
-		<div class="comments">
-			<!-- On-the-fly comment editing functions -->
-			<script type="text/javascript" src="/static/js/comment-edit.js"></script>
+	<div class="comments">
+	    <!-- On-the-fly comment editing functions -->
+	    <script type="text/javascript" src="/static/js/comment-edit.js"></script>
 			
-			{% for comment in comments %}
-			{% include "partials/account/comment.html" %}
-			{% endfor %}
-		</div>
+	    {% for comment in comments %}
+		{% include "partials/account/comment.html" %}
+	    {% endfor %}
 	</div>
-	{% include "partials/footer.html" %}
-</html>
+    </div>
+{% endblock %}
+{# vim: set sw=4 expandtab: #}

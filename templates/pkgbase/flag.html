@@ -1,9 +1,5 @@
- <!DOCTYPE html>
-<html>
-	{% include "partials/head.html" %}
-	{% include "partials/navbar.html" %}
-	{% include "partials/archdev-navbar.html" %}
-    
+{% extends "partials/layout.html" %}
+{% block body %}
     <div class="box">
         <form action="/pkgbase/{{ pkgbase.Name }}/flag" method="post">
             <fieldset>
@@ -70,6 +66,5 @@
             </fieldset>
         </form>
     </div>
-</html>
-
+{% endblock %}
 {# vim: set ts=4 sw=4 expandtab: #}

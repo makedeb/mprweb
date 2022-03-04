@@ -1,10 +1,6 @@
-<!DOCTYPE html>
-<html>
-	{% include "partials/head.html" %}
-	{% include "partials/navbar.html" %}
-	{% include "partials/archdev-navbar.html" %}
-
-<div class="box">
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div class="box">
         <h2>{% trans %}Password Reset{% endtrans %}</h2>
 
         <p>
@@ -70,7 +66,5 @@
             {% endif %}
         </p>
     </div>
-
-    {% include "partials/footer.html" %}
-</html>
-{# vim: set ts=4 sw=4 expandtab: #}
+{% endblock %}
+{# vim: set sw=4 expandtab: #}

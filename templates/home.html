@@ -1,43 +1,37 @@
-<!DOCTYPE html>
-<html>
-	{% include "partials/head.html" %}
-	<body>
-		{% include "partials/navbar.html" %}
-		{% include "partials/archdev-navbar.html" %}
-
-		<div class="intro">
-			<div class="big-intro">
-				<h2>The makedeb Package Repository</h2>
-				<p>The community-maintained repository for the makedeb packaging tool.</p>
-				<p><a href="/packages">View available packages</a>, <a href="https://docs.makedeb.org/mpr/using-the-mpr/installing-packages/">install a package</a>, or <a href="https://docs.makedeb.org/mpr/using-the-mpr/uploading-pkgbuilds/">upload your own</a>.</p>
-			</div>
-			<div class="packages">
-				<div class="newest-packages">
-					<h2>Newest Packages</h2>
-					{% for item in package_updates %}
-					<div class="package-item">
-						<a href="/packages/{{ item.Name }}">
-							<p>{{ item.Name }} {{ item.Version }}</p>
-							{% if item.Description != None %}<p class="description">{{ item.Description }}</p>{% endif %}
-						</a>
-					</div>
-					{% endfor %}
-				</div>
-				<div class="popular-packages">
-					<h2>Popular Packages</h2>
-					{% for item in popular_packages %}
-					<div class="package-item">
-						<a href="/packages/{{ item.Name }}">
-							<p>{{ item.Name }} {{ item.Version }}</p>
-							{% if item.Description != None %}<p class="description">{{ item.Description }}</p>{% endif %}
-						</a>
-					</div>
-					{% endfor %}
-				</div>
-			</div>
-		</div>
-
-		{% include "partials/footer.html" %}
-	</body>
-</html>
-
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div class="intro">
+	<div class="big-intro">
+	    <h2>The makedeb Package Repository</h2>
+	    <p>The community-maintained repository for the makedeb packaging tool.</p>
+	    <p><a href="/packages">View available packages</a>, <a href="https://docs.makedeb.org/mpr/using-the-mpr/installing-packages/">install a package</a>, or <a href="https://docs.makedeb.org/mpr/using-the-mpr/uploading-pkgbuilds/">upload your own</a>.</p>
+	</div>
+	<div class="packages">
+	    <div class="newest-packages">
+		<h2>Newest Packages</h2>
+		
+                {% for item in package_updates %}
+		    <div class="package-item">
+			<a href="/packages/{{ item.Name }}">
+			    <p>{{ item.Name }} {{ item.Version }}</p>
+			    {% if item.Description != None %}<p class="description">{{ item.Description }}</p>{% endif %}
+			</a>
+		    </div>
+		{% endfor %}
+	    </div>
+	    <div class="popular-packages">
+		<h2>Popular Packages</h2>
+		
+                {% for item in popular_packages %}
+		    <div class="package-item">
+			<a href="/packages/{{ item.Name }}">
+			    <p>{{ item.Name }} {{ item.Version }}</p>
+			    {% if item.Description != None %}<p class="description">{{ item.Description }}</p>{% endif %}
+			</a>
+		    </div>
+		{% endfor %}
+	    </div>
+	</div>
+    </div>
+{% endblock %}
+{# vim: set sw=4 expandtab: #}
