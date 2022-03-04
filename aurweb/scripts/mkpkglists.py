@@ -178,28 +178,29 @@ def _main():
     bench = Benchmark()
     logger.info("Started re-creating archives, wait a while...")
 
-    query = db.query(Package).join(
-        PackageBase,
-        PackageBase.ID == Package.PackageBaseID
-    ).join(
-        User,
-        PackageBase.MaintainerUID == User.ID,
-        isouter=True
-    ).filter(PackageBase.PackagerUID.isnot(None)).with_entities(
-        Package.ID,
-        Package.Name,
-        PackageBase.ID.label("PackageBaseID"),
-        PackageBase.Name.label("PackageBase"),
-        Package.Version,
-        Package.Description,
-        Package.URL,
-        PackageBase.NumVotes,
-        PackageBase.Popularity,
-        PackageBase.OutOfDateTS.label("OutOfDate"),
-        User.Username.label("Maintainer"),
-        PackageBase.SubmittedTS.label("FirstSubmitted"),
-        PackageBase.ModifiedTS.label("LastModified")
-    ).distinct().order_by("Name")
+    query = (
+        db.query(Package)
+        .join(PackageBase, PackageBase.ID == Package.PackageBaseID)
+        .join(User, PackageBase.MaintainerUID == User.ID, isouter=True)
+        .filter(PackageBase.PackagerUID.isnot(None))
+        .with_entities(
+            Package.ID,
+            Package.Name,
+            PackageBase.ID.label("PackageBaseID"),
+            PackageBase.Name.label("PackageBase"),
+            Package.Version,
+            Package.Description,
+            Package.URL,
+            PackageBase.NumVotes,
+            PackageBase.Popularity,
+            PackageBase.OutOfDateTS.label("OutOfDate"),
+            User.Username.label("Maintainer"),
+            PackageBase.SubmittedTS.label("FirstSubmitted"),
+            PackageBase.ModifiedTS.label("LastModified"),
+        )
+        .distinct()
+        .order_by("Name")
+    )
 
     # Produce packages-meta-v1.json.gz
     output = list()
