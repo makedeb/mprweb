@@ -10,32 +10,37 @@
 
 		{# All users see Packages #}
 		<a href="/packages"><p>{% trans %}Packages{% endtrans %}</p></a>
-
+        
+        {# All logged in users see the following routes. #}
 		{% if request.user.is_authenticated() %}
 
-		{# All users can see Requests #}
-		<a href="/requests"><p>{% trans %}Requests{% endtrans %}</p></a>
+	    	{# All users can see Requests #}
+		    <a href="/requests"><p>{% trans %}Requests{% endtrans %}</p></a>
 
-		{# Only CRED_ACCOUNT_SEARCH privileged users see Accounts #}
-		{% if request.user.has_credential(creds.ACCOUNT_SEARCH) %}
-		<a href="/accounts"><p>{% trans %}Accounts{% endtrans %}</p></a>
-		{% endif %}
+		    {# Only CRED_ACCOUNT_SEARCH privileged users see Accounts #}
+		    {% if request.user.has_credential(creds.ACCOUNT_SEARCH) %}
+		    <a href="/accounts"><p>{% trans %}Accounts{% endtrans %}</p></a>
+		    {% endif %}
 
-		{# All users see My Account #}
-		<a href="/account/{{ request.user.Username }}/edit"><p>{% trans %}My Account{% endtrans %}</p></a>
+		    {# All users see My Account #}
+		    <a href="/account/{{ request.user.Username }}/edit"><p>{% trans %}My Account{% endtrans %}</p></a>
 
-		{# Only CRED_TU_LIST_VOTES privileged users see Trusted User #}
-		{% if request.user.has_credential(creds.TU_LIST_VOTES) %}
-		<a href="/tu"><p>{% trans %}Trusted User{% endtrans %}</p></a>
-		{% endif %}
+            {# Package statistics for the current user. #}
+            <a href="/pkgstats"><p>{% trans %}My Packages{% endtrans %}</p></a>
 
-		{# All logged in users see Logout #}
-		<form action="/logout" method="post" class="link">
-			<input type="hidden" name="next" value="{{ next }}" />
-			<button type="submit">
-				{% trans %}Logout{% endtrans %}
-			</button>
-		</form>
+		    {# Only CRED_TU_LIST_VOTES privileged users see Trusted User #}
+		    {% if request.user.has_credential(creds.TU_LIST_VOTES) %}
+		    <a href="/tu"><p>{% trans %}Trusted User{% endtrans %}</p></a>
+		    {% endif %}
+
+		    {# All logged in users see Logout #}
+		    <form action="/logout" method="post" class="link">
+			    <input type="hidden" name="next" value="{{ next }}" />
+			    <button type="submit">
+				    {% trans %}Logout{% endtrans %}
+			    </button>
+		    </form>
+
 		{% else %}
 		{# All guest users see Register #}
 		<a href="/register"><p>{% trans %}Register{% endtrans %}</p></a>
@@ -53,3 +58,4 @@
 		</div>
 	</form>
 </div>
+{# vim: set sw=4 expandtab: #}
