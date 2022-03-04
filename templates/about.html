@@ -1,0 +1,30 @@
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div class="box field">
+        <div class="item">
+            <h1>About</h1>
+            <hr>
+        </div>
+
+        <div class="item">
+            <h2>SSH Keys</h2>
+            <hr>
+
+            <div class="p-block">
+                <p class="title">Ed25519:</p>
+                <p><code>{{ ssh_key_ed25519 }}</code></p>
+            </div>
+
+            <div class="p-block">
+                <p class="title">ECDSA:</p>
+                <p><code>{{ ssh_key_ecdsa }}</code></p>
+            </div>
+
+            <div class="p-block">
+                <p class="title">RSA:</p>
+                <p><code>{{ ssh_key_rsa }}</code></p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}

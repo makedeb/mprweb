@@ -83,6 +83,16 @@ async def index(request: Request):
     return render_template(request, "home.html", context)
 
 
+@router.get("/about", response_class=HTMLResponse)
+async def index(request: Request):
+    """ Instance information. """
+    context = make_context(request, "About")
+    context["ssh_key_ed25519"] = aurweb.config.get("fingerprints", "Ed25519")
+    context["ssh_key_ecdsa"] = aurweb.config.get("fingerprints", "ECDSA")
+    context["ssh_key_rsa"] = aurweb.config.get("fingerprints", "RSA")
+    return render_template(request, "about.html", context)
+
+
 @router.get("/metrics")
 async def metrics(request: Request):
     registry = CollectorRegistry()

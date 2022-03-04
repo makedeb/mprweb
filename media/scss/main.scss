@@ -89,6 +89,7 @@ blockquote {
 code {
 	background-color: lighten($light-grey, 5%);
 	padding: 0.2em;
+	margin: 0.2em;
 	border-radius: 0.3em;
 	font-family: "Ubuntu Mono", monospace;
 }
@@ -133,7 +134,7 @@ footer {
 	}
 
 	p {
-		line-height: 1.3em;
+		line-height: 1.6em;
 	}
 }
 
@@ -149,14 +150,18 @@ fieldset, .field {
 	padding-top: 1em;
         // For some reason this fixes some overflow issues on small viewports.
         min-width: auto;
+	
+	h1 {
+		font-size: 1.8em;
+	}
+                        
+        h2 {
+		font-size: 1.4em;
+                padding: 0;
+        }
 
         .item {
                 padding-bottom: 0.8rem;
-                        
-                h2 {
-			font-size: 1.4em;
-                        padding: 0;
-                }
                         
                 label {
                         pointer-events: none;
@@ -193,6 +198,16 @@ fieldset, .field {
 
 			&:hover {
 				cursor: default;
+			}
+		}
+
+		.p-block {
+			p {
+				display: inline;
+
+				&.title {
+					color: darken($light-grey, 30%);
+				}
 			}
 		}
         }
