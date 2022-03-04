@@ -9,11 +9,9 @@ bash $dir/run-sharness.sh
 # Pass --silence to avoid reporting coverage. We will do that below.
 bash $dir/run-pytests.sh --no-coverage
 
-# Run flake8 and isort checks.
-for dir in aurweb test migrations; do
-    black --check "${dir}/"
-    flake8 --count "${dir}/"
-    isort --check-only "${dir}/"
-done
+# Run black, flake8, and isort checks.
+black --check ./
+flake8 --count ./
+isort --check-only ./
 
 # vim: set sw=4 expandtab:

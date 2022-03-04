@@ -80,7 +80,10 @@ async def index(request: Request):
     context["package_updates"] = updated_packages(10, cache_expire)
 
     # Get the 10 most popular packages.
-    # If for any reason a popular package isn't owned by anyone, we don't want to recommend it on the front page, as there might be a concerning reason why it was orphaned.
+    #
+    # If for any reason a popular package isn't owned by anyone, we don't want to
+    # recommend it on the front page, as there might be a concerning reason why it was
+    # orphaned.
     search = PackageSearch()
     search.sort_by("p")
 
@@ -153,7 +156,8 @@ async def pkgstats(request: Request):
     context["package_requests"] = (
         request.user.package_requests.filter(models.PackageRequest.RequestTS >= start)
         .order_by(
-            # Order primarily by the Status column being PENDING_ID, and secondarily by RequestTS; both in descending order.
+            # Order primarily by the Status column being PENDING_ID, and secondarily by
+            # RequestTS; both in descending order.
             case([(models.PackageRequest.Status == PENDING_ID, 1)], else_=0).desc(),
             models.PackageRequest.RequestTS.desc(),
         )
