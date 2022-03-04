@@ -3,7 +3,6 @@ import os
 import re
 import shutil
 import subprocess
-
 from typing import List
 
 from aurweb import logging, util
@@ -19,6 +18,7 @@ class AlpmDatabase:
     This class can be used to add or remove packages from a
     test repository.
     """
+
     repo = "test"
 
     def __init__(self, database_root: str):
@@ -37,13 +37,14 @@ class AlpmDatabase:
         os.makedirs(pkgdir)
         return pkgdir
 
-    def add(self, pkgname: str, pkgver: str, arch: str,
-            provides: List[str] = []) -> None:
+    def add(
+        self, pkgname: str, pkgver: str, arch: str, provides: List[str] = []
+    ) -> None:
         context = {
             "pkgname": pkgname,
             "pkgver": pkgver,
             "arch": arch,
-            "provides": provides
+            "provides": provides,
         }
         template = base_template("testing/alpm_package.j2")
         pkgdir = self._get_pkgdir(pkgname, pkgver, self.repo)
@@ -78,8 +79,9 @@ class AlpmDatabase:
         self.clean()
         cmdline = ["bash", "-c", "bsdtar -czvf ../test.db *"]
         proc = subprocess.run(cmdline, cwd=self.repopath)
-        assert proc.returncode == 0, \
-            f"Bad return code while creating alpm database: {proc.returncode}"
+        assert (
+            proc.returncode == 0
+        ), f"Bad return code while creating alpm database: {proc.returncode}"
 
         # Print out the md5 hash value of the new test.db.
         test_db = os.path.join(self.remote, "test.db")

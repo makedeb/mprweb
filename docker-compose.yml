@@ -250,6 +250,7 @@ services:
     volumes:
       - mariadb_test_run:/var/run/mysqld
       - ./data:/data
+      - ./docker:/docker
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations
       - ./test:/aurweb/test
@@ -276,6 +277,7 @@ services:
         condition: service_healthy
     volumes:
       - mariadb_test_run:/var/run/mysqld
+      - ./docker:/docker
       - ./data:/data
       - ./aurweb:/aurweb/aurweb
       - ./migrations:/aurweb/migrations

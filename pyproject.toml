@@ -2,17 +2,5 @@
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
-[tool.poetry.scripts]
-aurweb-git-auth = "aurweb.git.auth:main"
-aurweb-git-serve = "aurweb.git.serve:main"
-aurweb-git-update = "aurweb.git.update:main"
-aurweb-aurblup = "aurweb.scripts.aurblup:main"
-aurweb-mkpkglists = "aurweb.scripts.mkpkglists:main"
-aurweb-notify = "aurweb.scripts.notify:main"
-aurweb-pkgmaint = "aurweb.scripts.pkgmaint:main"
-aurweb-popupdate = "aurweb.scripts.popupdate:main"
-aurweb-rendercomment = "aurweb.scripts.rendercomment:main"
-aurweb-tuvotereminder = "aurweb.scripts.tuvotereminder:main"
-aurweb-usermaint = "aurweb.scripts.usermaint:main"
-aurweb-config = "aurweb.scripts.config:main"
-aurweb-adduser = "aurweb.scripts.adduser:main"
+[tool.isort]
+profile = "black"

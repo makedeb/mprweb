@@ -7,12 +7,23 @@ from aurweb.models.ssh_pub_key import get_fingerprint
 from aurweb.util import strtobool
 
 
-def simple(U: str = str(), E: str = str(), H: bool = False,
-           BE: str = str(), R: str = str(), HP: str = str(),
-           I: str = str(), K: str = str(), J: bool = False,
-           CN: bool = False, UN: bool = False, ON: bool = False,
-           S: bool = False, user: models.User = None,
-           **kwargs) -> None:
+def simple(
+    U: str = str(),
+    E: str = str(),
+    H: bool = False,
+    BE: str = str(),
+    R: str = str(),
+    HP: str = str(),
+    I: str = str(),  # noqa: E741
+    K: str = str(),
+    J: bool = False,
+    CN: bool = False,
+    UN: bool = False,
+    ON: bool = False,
+    S: bool = False,
+    user: models.User = None,
+    **kwargs,
+) -> None:
     now = time.utcnow()
     with db.begin():
         user.Username = U or user.Username
@@ -30,31 +41,33 @@ def simple(U: str = str(), E: str = str(), H: bool = False,
         user.OwnershipNotify = strtobool(ON)
 
 
-def language(L: str = str(),
-             request: Request = None,
-             user: models.User = None,
-             context: Dict[str, Any] = {},
-             **kwargs) -> None:
+def language(
+    L: str = str(),
+    request: Request = None,
+    user: models.User = None,
+    context: Dict[str, Any] = {},
+    **kwargs,
+) -> None:
     if L and L != user.LangPreference:
         with db.begin():
             user.LangPreference = L
         context["language"] = L
 
 
-def timezone(TZ: str = str(),
-             request: Request = None,
-             user: models.User = None,
-             context: Dict[str, Any] = {},
-             **kwargs) -> None:
+def timezone(
+    TZ: str = str(),
+    request: Request = None,
+    user: models.User = None,
+    context: Dict[str, Any] = {},
+    **kwargs,
+) -> None:
     if TZ and TZ != user.Timezone:
         with db.begin():
             user.Timezone = TZ
         context["language"] = TZ
 
 
-def ssh_pubkey(PK: str = str(),
-               user: models.User = None,
-               **kwargs) -> None:
+def ssh_pubkey(PK: str = str(), user: models.User = None, **kwargs) -> None:
     # If a PK is given, compare it against the target user's PK.
     if PK:
         # Get the second token in the public key, which is the actual key.
@@ -67,8 +80,12 @@ def ssh_pubkey(PK: str = str(),
         if not user.ssh_pub_key:
             # No public key exists, create one.
             with db.begin():
-                db.create(models.SSHPubKey, UserID=user.ID,
-                          PubKey=pubkey, Fingerprint=fingerprint)
+                db.create(
+                    models.SSHPubKey,
+                    UserID=user.ID,
+                    PubKey=pubkey,
+                    Fingerprint=fingerprint,
+                )
         elif user.ssh_pub_key.PubKey != pubkey:
             # A public key already exists, update it.
             with db.begin():
@@ -80,19 +97,19 @@ def ssh_pubkey(PK: str = str(),
             db.delete(user.ssh_pub_key)
 
 
-def account_type(T: int = None,
-                 user: models.User = None,
-                 **kwargs) -> None:
+def account_type(T: int = None, user: models.User = None, **kwargs) -> None:
     if T is not None and (T := int(T)) != user.AccountTypeID:
         with db.begin():
             user.AccountTypeID = T
 
 
-def password(P: str = str(),
-             request: Request = None,
-             user: models.User = None,
-             context: Dict[str, Any] = {},
-             **kwargs) -> None:
+def password(
+    P: str = str(),
+    request: Request = None,
+    user: models.User = None,
+    context: Dict[str, Any] = {},
+    **kwargs,
+) -> None:
     if P and not user.valid_password(P):
         # Remove the fields we consumed for passwords.
         context["P"] = context["C"] = str()

@@ -1,6 +1,5 @@
 import copy
 import math
-
 from datetime import datetime
 from typing import Any, Dict
 from urllib.parse import quote_plus, urlencode
@@ -8,19 +7,16 @@ from zoneinfo import ZoneInfo
 
 import fastapi
 import paginate
-
 from jinja2 import pass_context
 
 import aurweb.models
-
 from aurweb import config, l10n
 from aurweb.templates import register_filter, register_function
 
 
 @register_filter("pager_nav")
 @pass_context
-def pager_nav(context: Dict[str, Any],
-              page: int, total: int, prefix: str) -> str:
+def pager_nav(context: Dict[str, Any], page: int, total: int, prefix: str) -> str:
     page = int(page)  # Make sure this is an int.
 
     pp = context.get("PP", 50)
@@ -43,10 +39,9 @@ def pager_nav(context: Dict[str, Any],
         return f"{prefix}?{qs}"
 
     # Use the paginate module to produce our linkage.
-    pager = paginate.Page([], page=page + 1,
-                          items_per_page=pp,
-                          item_count=total,
-                          url_maker=create_url)
+    pager = paginate.Page(
+        [], page=page + 1, items_per_page=pp, item_count=total, url_maker=create_url
+    )
 
     return pager.pager(
         link_attr={"class": "page"},
@@ -54,7 +49,8 @@ def pager_nav(context: Dict[str, Any],
         separator="&nbsp",
         format="$link_first ~5~ $link_last",
         symbol_first="«",
-        symbol_last="»")
+        symbol_last="»",
+    )
 
 
 @register_function("config_getint")
@@ -70,16 +66,15 @@ def do_round(f: float) -> int:
 @register_filter("tr")
 @pass_context
 def tr(context: Dict[str, Any], value: str):
-    """ A translation filter; example: {{ "Hello" | tr("de") }}. """
+    """A translation filter; example: {{ "Hello" | tr("de") }}."""
     _ = l10n.get_translator_for_request(context.get("request"))
     return _(value)
 
 
 @register_filter("tn")
 @pass_context
-def tn(context: Dict[str, Any], count: int,
-       singular: str, plural: str) -> str:
-    """ A singular and plural translation filter.
+def tn(context: Dict[str, Any], count: int, singular: str, plural: str) -> str:
+    """A singular and plural translation filter.
 
     Example:
         {{ some_integer | tn("singular %d", "plural %d") }}
@@ -106,7 +101,7 @@ def as_timezone(dt: datetime, timezone: str):
 
 @register_filter("extend_query")
 def extend_query(query: Dict[str, Any], *additions) -> Dict[str, Any]:
-    """ Add additional key value pairs to query. """
+    """Add additional key value pairs to query."""
     q = copy.copy(query)
     for k, v in list(additions):
         q[k] = v
@@ -121,19 +116,19 @@ def to_qs(query: Dict[str, Any]) -> str:
 @register_filter("get_vote")
 def get_vote(voteinfo, request: fastapi.Request):
     from aurweb.models import TUVote
+
     return voteinfo.tu_votes.filter(TUVote.User == request.user).first()
 
 
 @register_filter("number_format")
 def number_format(value: float, places: int):
-    """ A converter function similar to PHP's number_format. """
+    """A converter function similar to PHP's number_format."""
     return f"{value:.{places}f}"
 
 
 @register_filter("account_url")
 @pass_context
-def account_url(context: Dict[str, Any],
-                user: "aurweb.models.user.User") -> str:
+def account_url(context: Dict[str, Any], user: "aurweb.models.user.User") -> str:
     base = aurweb.config.get("options", "aur_location")
     return f"{base}/account/{user.Username}"
 

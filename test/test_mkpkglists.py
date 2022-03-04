@@ -1,12 +1,18 @@
 import json
-
 from typing import List, Union
 from unittest import mock
 
 import pytest
 
 from aurweb import config, db, util
-from aurweb.models import License, Package, PackageBase, PackageDependency, PackageLicense, User
+from aurweb.models import (
+    License,
+    Package,
+    PackageBase,
+    PackageDependency,
+    PackageLicense,
+    User,
+)
 from aurweb.models.account_type import USER_ID
 from aurweb.models.dependency_type import DEPENDS_ID
 from aurweb.testing import noop
@@ -63,10 +69,13 @@ def setup(db_test):
 @pytest.fixture
 def user() -> User:
     with db.begin():
-        user = db.create(User, Username="test",
-                         Email="test@example.org",
-                         Passwd="testPassword",
-                         AccountTypeID=USER_ID)
+        user = db.create(
+            User,
+            Username="test",
+            Email="test@example.org",
+            Passwd="testPassword",
+            AccountTypeID=USER_ID,
+        )
     yield user
 
 
@@ -77,16 +86,18 @@ def packages(user: User) -> List[Package]:
         lic = db.create(License, Name="GPL")
         for i in range(5):
             # Create the package.
-            pkgbase = db.create(PackageBase, Name=f"pkgbase_{i}",
-                                Packager=user)
-            pkg = db.create(Package, PackageBase=pkgbase,
-                            Name=f"pkg_{i}")
+            pkgbase = db.create(PackageBase, Name=f"pkgbase_{i}", Packager=user)
+            pkg = db.create(Package, PackageBase=pkgbase, Name=f"pkg_{i}")
 
             # Create some related records.
             db.create(PackageLicense, Package=pkg, License=lic)
-            db.create(PackageDependency, DepTypeID=DEPENDS_ID,
-                      Package=pkg, DepName=f"dep_{i}",
-                      DepCondition=">=1.0")
+            db.create(
+                PackageDependency,
+                DepTypeID=DEPENDS_ID,
+                Package=pkg,
+                DepName=f"dep_{i}",
+                DepCondition=">=1.0",
+            )
 
             # Add the package to our output list.
             output.append(pkg)
@@ -100,6 +111,7 @@ def test_mkpkglists_empty(makedirs: mock.MagicMock):
     gzips = MockGzipOpen()
     with mock.patch("gzip.open", side_effect=gzips.open):
         from aurweb.scripts import mkpkglists
+
         mkpkglists.main()
 
     archives = config.get_section("mkpkglists")
@@ -136,6 +148,7 @@ def test_mkpkglists_extended_empty(makedirs: mock.MagicMock):
     gzips = MockGzipOpen()
     with mock.patch("gzip.open", side_effect=gzips.open):
         from aurweb.scripts import mkpkglists
+
         mkpkglists.main()
 
     archives = config.get_section("mkpkglists")
@@ -172,11 +185,13 @@ def test_mkpkglists_extended_empty(makedirs: mock.MagicMock):
 
 @mock.patch("sys.argv", ["mkpkglists", "--extended"])
 @mock.patch("os.makedirs", side_effect=noop)
-def test_mkpkglists_extended(makedirs: mock.MagicMock, user: User,
-                             packages: List[Package]):
+def test_mkpkglists_extended(
+    makedirs: mock.MagicMock, user: User, packages: List[Package]
+):
     gzips = MockGzipOpen()
     with mock.patch("gzip.open", side_effect=gzips.open):
         from aurweb.scripts import mkpkglists
+
         mkpkglists.main()
 
     archives = config.get_section("mkpkglists")

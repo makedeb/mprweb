@@ -4,7 +4,6 @@ import re
 import secrets
 import string
 import time
-
 from datetime import datetime
 from distutils.util import strtobool as _strtobool
 from http import HTTPStatus
@@ -13,12 +12,10 @@ from urllib.parse import urlparse
 
 import fastapi
 import pygit2
-
 from email_validator import EmailNotValidError, EmailUndeliverableError, validate_email
 from fastapi.responses import JSONResponse
 
 import aurweb.config
-
 from aurweb import defaults, logging
 
 logger = logging.get_logger(__name__)
@@ -26,15 +23,15 @@ logger = logging.get_logger(__name__)
 
 def make_random_string(length: int) -> str:
     alphanumerics = string.ascii_lowercase + string.digits
-    return ''.join([secrets.choice(alphanumerics) for i in range(length)])
+    return "".join([secrets.choice(alphanumerics) for i in range(length)])
 
 
 def make_nonce(length: int = 8):
-    """ Generate a single random nonce. Here, token_hex generates a hex
+    """Generate a single random nonce. Here, token_hex generates a hex
     string of 2 hex characters per byte, where the length give is
     nbytes. This means that to get our proper string length, we need to
     cut it in half and truncate off any remaining (in the case that
-    length was uneven). """
+    length was uneven)."""
     return secrets.token_hex(math.ceil(length / 2))[:length]
 
 
@@ -47,7 +44,7 @@ def valid_username(username):
     # Check that username contains: one or more alphanumeric
     # characters, an optional separator of '.', '-' or '_', followed
     # by alphanumeric characters.
-    return re.match(r'^[a-zA-Z0-9]+[.\-_]?[a-zA-Z0-9]+$', username)
+    return re.match(r"^[a-zA-Z0-9]+[.\-_]?[a-zA-Z0-9]+$", username)
 
 
 def valid_email(email):
@@ -106,7 +103,7 @@ def valid_ssh_pubkey(pk):
 
 
 def jsonify(obj):
-    """ Perform a conversion on obj if it's needed. """
+    """Perform a conversion on obj if it's needed."""
     if isinstance(obj, datetime):
         obj = int(obj.timestamp())
     return obj
@@ -175,8 +172,7 @@ def git_search(repo: pygit2.Repository, commit_hash: str) -> int:
     return prefixlen
 
 
-async def error_or_result(next: Callable, *args, **kwargs) \
-        -> fastapi.Response:
+async def error_or_result(next: Callable, *args, **kwargs) -> fastapi.Response:
     """
     Try to return a response from `next`.
 
@@ -195,6 +191,7 @@ async def error_or_result(next: Callable, *args, **kwargs) \
         status_code = HTTPStatus.INTERNAL_SERVER_ERROR
         return JSONResponse({"error": str(exc)}, status_code=status_code)
     return response
+
 
 def get_current_time() -> int:
     """

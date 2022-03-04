@@ -5,12 +5,14 @@
 	{% include "partials/archdev-navbar.html" %}
 	
 	<div class="box">
-		<h2>{% trans %}Accounts{% endtrans %} - {{ user.Username }}</h2>
-		<hr>
 		{% if not request.user.is_authenticated() %}
-			{% trans %}You must log in to view user information.{% endtrans %}
+                    <h2>{% trans %}Accounts{% endtrans %}</h2>
+		    <hr>
+		    {% trans %}You must log in to view user information.{% endtrans %}
 		{% else %}
-		<div class="arch-bio-entry">
+		    <h2>{% trans %}Accounts{% endtrans %} - {{ user.Username }}</h2>
+		    <hr>
+                    <div class="arch-bio-entry">
 			<div class="item">
 				<p class="caption">{% trans %}Username{% endtrans %}:</p>
 				<p class="data">{{ user.Username }}</p>

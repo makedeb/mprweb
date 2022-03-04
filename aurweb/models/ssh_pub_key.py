@@ -1,6 +1,5 @@
 import os
 import tempfile
-
 from subprocess import PIPE, Popen
 
 from sqlalchemy.orm import backref, relationship
@@ -15,8 +14,10 @@ class SSHPubKey(Base):
     __mapper_args__ = {"primary_key": [__table__.c.Fingerprint]}
 
     User = relationship(
-        "User", backref=backref("ssh_pub_key", uselist=False),
-        foreign_keys=[__table__.c.UserID])
+        "User",
+        backref=backref("ssh_pub_key", uselist=False),
+        foreign_keys=[__table__.c.UserID],
+    )
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

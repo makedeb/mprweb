@@ -1,56 +1,56 @@
 import gettext
-
 from collections import OrderedDict
 
 from fastapi import Request
 
 import aurweb.config
 
-SUPPORTED_LANGUAGES = OrderedDict({
-    "ar": "العربية",
-    "ast": "Asturianu",
-    "ca": "Català",
-    "cs": "Český",
-    "da": "Dansk",
-    "de": "Deutsch",
-    "el": "Ελληνικά",
-    "en": "English",
-    "es": "Español",
-    "es_419": "Español (Latinoamérica)",
-    "fi": "Suomi",
-    "fr": "Français",
-    "he": "עברית",
-    "hr": "Hrvatski",
-    "hu": "Magyar",
-    "it": "Italiano",
-    "ja": "日本語",
-    "nb": "Norsk",
-    "nl": "Nederlands",
-    "pl": "Polski",
-    "pt_BR": "Português (Brasil)",
-    "pt_PT": "Português (Portugal)",
-    "ro": "Română",
-    "ru": "Русский",
-    "sk": "Slovenčina",
-    "sr": "Srpski",
-    "tr": "Türkçe",
-    "uk": "Українська",
-    "zh_CN": "简体中文",
-    "zh_TW": "正體中文"
-})
+SUPPORTED_LANGUAGES = OrderedDict(
+    {
+        "ar": "العربية",
+        "ast": "Asturianu",
+        "ca": "Català",
+        "cs": "Český",
+        "da": "Dansk",
+        "de": "Deutsch",
+        "el": "Ελληνικά",
+        "en": "English",
+        "es": "Español",
+        "es_419": "Español (Latinoamérica)",
+        "fi": "Suomi",
+        "fr": "Français",
+        "he": "עברית",
+        "hr": "Hrvatski",
+        "hu": "Magyar",
+        "it": "Italiano",
+        "ja": "日本語",
+        "nb": "Norsk",
+        "nl": "Nederlands",
+        "pl": "Polski",
+        "pt_BR": "Português (Brasil)",
+        "pt_PT": "Português (Portugal)",
+        "ro": "Română",
+        "ru": "Русский",
+        "sk": "Slovenčina",
+        "sr": "Srpski",
+        "tr": "Türkçe",
+        "uk": "Українська",
+        "zh_CN": "简体中文",
+        "zh_TW": "正體中文",
+    }
+)
 
 
 class Translator:
     def __init__(self):
-        self._localedir = aurweb.config.get('options', 'localedir')
+        self._localedir = aurweb.config.get("options", "localedir")
         self._translator = {}
 
     def get_translator(self, lang: str):
         if lang not in self._translator:
-            self._translator[lang] = gettext.translation("aurweb",
-                                                         self._localedir,
-                                                         languages=[lang],
-                                                         fallback=True)
+            self._translator[lang] = gettext.translation(
+                "aurweb", self._localedir, languages=[lang], fallback=True
+            )
         return self._translator.get(lang)
 
     def translate(self, s: str, lang: str):

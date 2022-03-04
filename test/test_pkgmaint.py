@@ -16,8 +16,13 @@ def setup(db_test):
 @pytest.fixture
 def user() -> User:
     with db.begin():
-        user = db.create(User, Username="test", Email="test@example.org",
-                         Passwd="testPassword", AccountTypeID=USER_ID)
+        user = db.create(
+            User,
+            Username="test",
+            Email="test@example.org",
+            Passwd="testPassword",
+            AccountTypeID=USER_ID,
+        )
     yield user
 
 
@@ -28,11 +33,12 @@ def packages(user: User) -> List[Package]:
     now = time.utcnow()
     with db.begin():
         for i in range(5):
-            pkgbase = db.create(PackageBase, Name=f"pkg_{i}",
-                                SubmittedTS=now,
-                                ModifiedTS=now)
-            pkg = db.create(Package, PackageBase=pkgbase,
-                            Name=f"pkg_{i}", Version=f"{i}.0")
+            pkgbase = db.create(
+                PackageBase, Name=f"pkg_{i}", SubmittedTS=now, ModifiedTS=now
+            )
+            pkg = db.create(
+                Package, PackageBase=pkgbase, Name=f"pkg_{i}", Version=f"{i}.0"
+            )
             output.append(pkg)
     yield output
 
@@ -50,7 +56,7 @@ def test_pkgmaint(packages: List[Package]):
     # Modify the first package so it's out of date and gets deleted.
     with db.begin():
         # Reduce SubmittedTS by a day + 10 seconds.
-        packages[0].PackageBase.SubmittedTS -= (86400 + 10)
+        packages[0].PackageBase.SubmittedTS -= 86400 + 10
 
     # Run pkgmaint.
     pkgmaint.main()

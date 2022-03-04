@@ -6,7 +6,6 @@ import re
 import sys
 import traceback
 import typing
-
 from urllib.parse import quote_plus
 
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -24,7 +23,6 @@ import aurweb.config
 import aurweb.filters  # noqa: F401
 import aurweb.logging
 import aurweb.pkgbase.util as pkgbaseutil
-
 from aurweb import logging, prometheus, util
 from aurweb.auth import BasicAuthBackend
 from aurweb.db import get_engine, query
@@ -59,23 +57,23 @@ async def app_startup():
     # provided by the user. Docker uses .env's TEST_RECURSION_LIMIT
     # when running test suites.
     # TODO: Find a proper fix to this issue.
-    recursion_limit = int(os.environ.get(
-        "TEST_RECURSION_LIMIT", sys.getrecursionlimit() + 1000))
+    recursion_limit = int(
+        os.environ.get("TEST_RECURSION_LIMIT", sys.getrecursionlimit() + 1000)
+    )
     sys.setrecursionlimit(recursion_limit)
 
     backend = aurweb.config.get("database", "backend")
     if backend not in aurweb.db.DRIVERS:
         raise ValueError(
             f"The configured database backend ({backend}) is unsupported. "
-            f"Supported backends: {str(aurweb.db.DRIVERS.keys())}")
+            f"Supported backends: {str(aurweb.db.DRIVERS.keys())}"
+        )
 
     session_secret = aurweb.config.get("fastapi", "session_secret")
     if not session_secret:
         raise Exception("[fastapi] session_secret must not be empty")
 
-    app.mount("/static/",
-            StaticFiles(directory="media/"),
-            name="static_media")
+    app.mount("/static/", StaticFiles(directory="media/"), name="static_media")
 
     # Add application middlewares.
     app.add_middleware(AuthenticationMiddleware, backend=BasicAuthBackend())
@@ -84,6 +82,7 @@ async def app_startup():
     # Add application routes.
     def add_router(module):
         app.include_router(module.router)
+
     util.apply_all(APP_ROUTES, add_router)
 
     # Initialize the database engine and ORM.
@@ -91,8 +90,8 @@ async def app_startup():
 
 
 def child_exit(server, worker):  # pragma: no cover
-    """ This function is required for gunicorn customization
-    of prometheus multiprocessing. """
+    """This function is required for gunicorn customization
+    of prometheus multiprocessing."""
     multiprocess.mark_process_dead(worker.pid)
 
 
@@ -123,7 +122,7 @@ async def internal_server_error(request: Request, exc: Exception) -> Response:
     pipe = redis.pipeline()
     key = f"tb:{tb_hash}"
     pipe.get(key)
-    retval, = pipe.execute()
+    (retval,) = pipe.execute()
     if not retval:
         # Expire in one hour; this is just done to make sure we
         # don't infinitely store these values, but reduce the number
@@ -136,7 +135,8 @@ async def internal_server_error(request: Request, exc: Exception) -> Response:
 
         # Send out notification about it.
         notif = notify.ServerErrorNotification(
-            tb_id, context.get("version"), context.get("utcnow"))
+            tb_id, context.get("version"), context.get("utcnow")
+        )
         notif.send()
 
         retval = tb
@@ -147,14 +147,17 @@ async def internal_server_error(request: Request, exc: Exception) -> Response:
     logger.error(f"FATAL[{tb_id}]: An unexpected exception has occurred.")
     logger.error(retval)
 
-    return render_template(request, "errors/500.html", context,
-                           status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR)
+    return render_template(
+        request,
+        "errors/500.html",
+        context,
+        status_code=http.HTTPStatus.INTERNAL_SERVER_ERROR,
+    )
 
 
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException) \
-        -> Response:
-    """ Handle an HTTPException thrown in a route. """
+async def http_exception_handler(request: Request, exc: HTTPException) -> Response:
+    """Handle an HTTPException thrown in a route."""
     phrase = http.HTTPStatus(exc.status_code).phrase
     context = make_context(request, phrase)
     context["exc"] = exc
@@ -172,16 +175,16 @@ async def http_exception_handler(request: Request, exc: HTTPException) \
                 pass
 
     try:
-        return render_template(request, f"errors/{exc.status_code}.html",
-                               context, exc.status_code)
+        return render_template(
+            request, f"errors/{exc.status_code}.html", context, exc.status_code
+        )
     except TemplateNotFound:
-        return render_template(request, "errors/detail.html",
-                               context, exc.status_code)
+        return render_template(request, "errors/detail.html", context, exc.status_code)
 
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next: typing.Callable):
-    """ This middleware adds the CSP, XCTO, XFO and RP security
+    """This middleware adds the CSP, XCTO, XFO and RP security
     headers to the HTTP response associated with request.
 
     CSP: Content-Security-Policy
@@ -195,20 +198,24 @@ async def add_security_headers(request: Request, call_next: typing.Callable):
         return await internal_server_error(request, exc)
 
     # Add CSP header.
-    nonce = request.user.nonce
+    request.user.nonce
     csp = "default-src 'self';"
     script_hosts = ["https://cdnjs.cloudflare.com"]
-    css_hosts = ["https://fonts.googleapis.com", "https://meyerweb.com", "https://cdnjs.cloudflare.com"]
+    css_hosts = [
+        "https://fonts.googleapis.com",
+        "https://meyerweb.com",
+        "https://cdnjs.cloudflare.com",
+    ]
     font_hosts = ["https://fonts.gstatic.com"]
 
     # Scripts.
-    csp += f"script-src 'self' 'unsafe-inline' " + ' '.join(script_hosts) + ";"
+    csp += "script-src 'self' 'unsafe-inline' " + " ".join(script_hosts) + ";"
 
     # It's fine if css is inlined.
-    csp += "style-src 'self' 'unsafe-inline' " + ' '.join(css_hosts) + ";"
+    csp += "style-src 'self' 'unsafe-inline' " + " ".join(css_hosts) + ";"
 
     # Fonts.
-    csp += "font-src 'self' " + '.'.join(font_hosts) + ";"
+    csp += "font-src 'self' " + ".".join(font_hosts) + ";"
     response.headers["Content-Security-Policy"] = csp
 
     # Add XTCO header.
@@ -228,17 +235,25 @@ async def add_security_headers(request: Request, call_next: typing.Callable):
 
 @app.middleware("http")
 async def check_terms_of_service(request: Request, call_next: typing.Callable):
-    """ This middleware function redirects authenticated users if they
-    have any outstanding Terms to agree to. """
+    """This middleware function redirects authenticated users if they
+    have any outstanding Terms to agree to."""
     if request.user.is_authenticated() and request.url.path != "/tos":
-        unaccepted = query(Term).join(AcceptedTerm).filter(
-            or_(AcceptedTerm.UsersID != request.user.ID,
-                and_(AcceptedTerm.UsersID == request.user.ID,
-                     AcceptedTerm.TermsID == Term.ID,
-                     AcceptedTerm.Revision < Term.Revision)))
+        unaccepted = (
+            query(Term)
+            .join(AcceptedTerm)
+            .filter(
+                or_(
+                    AcceptedTerm.UsersID != request.user.ID,
+                    and_(
+                        AcceptedTerm.UsersID == request.user.ID,
+                        AcceptedTerm.TermsID == Term.ID,
+                        AcceptedTerm.Revision < Term.Revision,
+                    ),
+                )
+            )
+        )
         if query(Term).count() > unaccepted.count():
-            return RedirectResponse(
-                "/tos", status_code=int(http.HTTPStatus.SEE_OTHER))
+            return RedirectResponse("/tos", status_code=int(http.HTTPStatus.SEE_OTHER))
 
     return await util.error_or_result(call_next, request)
 
@@ -253,9 +268,9 @@ async def id_redirect_middleware(request: Request, call_next: typing.Callable):
         for k, v in request.query_params.items():
             if k != "id":
                 qs.append(f"{k}={quote_plus(str(v))}")
-        qs = str() if not qs else '?' + '&'.join(qs)
+        qs = str() if not qs else "?" + "&".join(qs)
 
-        path = request.url.path.rstrip('/')
+        path = request.url.path.rstrip("/")
         return RedirectResponse(f"{path}/{id}{qs}")
 
     return await util.error_or_result(call_next, request)

@@ -2,7 +2,7 @@
 
 
 class FakeSMTP:
-    """ A fake version of smtplib.SMTP used for testing. """
+    """A fake version of smtplib.SMTP used for testing."""
 
     starttls_enabled = False
     use_ssl = False
@@ -38,5 +38,6 @@ class FakeSMTP:
 
 
 class FakeSMTP_SSL(FakeSMTP):
-    """ A fake version of smtplib.SMTP_SSL used for testing. """
+    """A fake version of smtplib.SMTP_SSL used for testing."""
+
     use_ssl = True
