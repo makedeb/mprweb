@@ -10,7 +10,7 @@ DB_HOST='localhost'
 TEST_RECURSION_LIMIT='10000'
 CURRENT_DIR="$(pwd)"
 LOG_CONFIG='logging.test.conf'
-PYTHONPATH='/aurweb:/aurweb/app'
+PYTHONPATH="${PWD}:${PWD}/app"
 export AUR_CONFIG DB_HOST TEST_RECURSION_LIMIT CURRENT_DIR LOG_CONFIG PYTHONPATH
 
 ./docker/scripts/install-deps.sh
