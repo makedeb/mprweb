@@ -14,6 +14,7 @@ import aurweb.config
 import aurweb.models.package_request
 
 from aurweb import cookies, db, models, time, util
+from aurweb.auth import requires_auth
 from aurweb.cache import db_count_cache
 from aurweb.models.account_type import TRUSTED_USER_AND_DEV_ID, TRUSTED_USER_ID
 from aurweb.models.package_base import PackageBase
@@ -21,6 +22,7 @@ from aurweb.models.package_request import PENDING_ID
 from aurweb.packages.util import query_notified, query_voted, updated_packages
 from aurweb.templates import make_context, render_template
 from aurweb.packages.search import PackageSearch
+from aurweb.util import get_current_time
 
 router = APIRouter()
 
@@ -84,12 +86,14 @@ async def index(request: Request):
 
 
 @router.get("/about", response_class=HTMLResponse)
-async def index(request: Request):
+async def about(request: Request):
     """ Instance information. """
     context = make_context(request, "About")
+
     context["ssh_key_ed25519"] = aurweb.config.get("fingerprints", "Ed25519")
     context["ssh_key_ecdsa"] = aurweb.config.get("fingerprints", "ECDSA")
     context["ssh_key_rsa"] = aurweb.config.get("fingerprints", "RSA")
+
     return render_template(request, "about.html", context)
 
 
@@ -105,7 +109,82 @@ async def metrics(request: Request):
     }
     return Response(data, headers=headers)
 
+@router.get("/pkgstats")
+@requires_auth
+async def pkgstats(request: Request):
+    """ Package Statistics for the current user. """
+    context = make_context(request, "Package Statistics")
+    context["request"] = request
+
+    # Packages maintained by the user that have been flagged.
+    search = PackageSearch(request.user)
+    maintained = PackageSearch(request.user).search_by("m", request.user.Username).results()
+
+    context["flagged_packages"] = maintained.filter(
+        models.PackageBase.OutOfDateTS.isnot(None)
+    ).order_by(
+        models.PackageBase.ModifiedTS.desc(), models.Package.Name.asc()
+    ).with_entities(
+        models.Package.ID,
+        models.Package.Name,
+        models.Package.PackageBaseID,
+        models.Package.Version,
+        models.Package.Description,
+        models.PackageBase.Popularity,
+        models.PackageBase.NumVotes,
+        models.PackageBase.OutOfDateTS,
+        models.User.Username.label("Maintainer"),
+        models.PackageVote.PackageBaseID.label("Voted"),
+        models.PackageNotification.PackageBaseID.label("Notify")
+    ).limit(10).all()
+
+    # Package requests created by request.user.
+    archive_time = aurweb.config.getint("options", "request_archive_time")
+    start = get_current_time() - archive_time
+
+    context["package_requests"] = request.user.package_requests.filter(
+        models.PackageRequest.RequestTS >= start
+    ).order_by(
+        # Order primarily by the Status column being PENDING_ID, and secondarily by RequestTS; both in descending order.
+        case([(models.PackageRequest.Status == PENDING_ID, 1)],
+             else_=0).desc(),
+        models.PackageRequest.RequestTS.desc()
+    ).limit(10).all()
+
+    # Packages that the request user maintains or comaintains.
+    context["packages"] = maintained.with_entities(
+        models.Package.ID,
+        models.Package.Name,
+        models.Package.PackageBaseID,
+        models.Package.Version,
+        models.Package.Description,
+        models.PackageBase.Popularity,
+        models.PackageBase.NumVotes,
+        models.PackageBase.OutOfDateTS,
+        models.User.Username.label("Maintainer"),
+        models.PackageVote.PackageBaseID.label("Voted"),
+        models.PackageNotification.PackageBaseID.label("Notify")
+    ).limit(10).all()
+
+    # Any packages that the request user comaintains.
+    context["comaintained"] = PackageSearch(request.user).search_by("c", request.user.Username).sort_by("p", "a").results().with_entities(
+        models.Package.ID,
+        models.Package.Name,
+        models.Package.PackageBaseID,
+        models.Package.Version,
+        models.Package.Description,
+        models.PackageBase.Popularity,
+        models.PackageBase.NumVotes,
+        models.PackageBase.OutOfDateTS,
+        models.User.Username.label("Maintainer"),
+        models.PackageVote.PackageBaseID.label("Voted"),
+        models.PackageNotification.PackageBaseID.label("Notify")
+    ).limit(10).all()
+
+    return render_template(request, "pkgstats.html", context)
+
 
 @router.get("/raisefivethree", response_class=HTMLResponse)
 async def raise_service_unavailable(request: Request):
     raise HTTPException(status_code=HTTPStatus.SERVICE_UNAVAILABLE)
+    return render_template(request, "about.html", context)

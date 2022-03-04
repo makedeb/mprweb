@@ -890,13 +890,15 @@ async def git_info(request: Request, name: str, file: str):
 
     # Get the needed git information.
     repo = pygit2.Repository("/aurweb/aur.git/")
-    is_branch = repo.revparse_single(name) is not None # TODO: Return an error if we couldn't find the branch.
-    branch = repo.revparse_single(name)
-    
-    # Return a 404 if the branch doesn't exist.
-    if not is_branch:
+
+    # Return an error if we couldn't find the branch.
+    try:
+        repo.revparse_single(name) is not None
+    except KeyError:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
 
+    branch = repo.revparse_single(name)
+    
     # Get the requested file.
     requested_file = None
 
@@ -927,13 +929,15 @@ async def git_info(request: Request, name: str, commit_hash: str):
 
     # Get the needed git information.
     repo = pygit2.Repository("/aurweb/aur.git/")
-    is_branch = repo.revparse_single(name) is not None # TODO: Return an error if we couldn't find the branch.
+
+    # Return an error if we couldn't find the branch.
+    try:
+        repo.revparse_single(name) is not None
+    except KeyError:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
+
     branch = repo.revparse_single(name)
 
-    # Return a 404 if the branch doesn't exist.
-    if not is_branch:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-    
     # If the user requested 'latest' as the commit, redirect to the last commit.
     if commit_hash == "latest":
         return RedirectResponse(f"/pkgbase/{pkgbase.Name}/git/commit/{branch.id.hex}", status_code=int(HTTPStatus.TEMPORARY_REDIRECT))
