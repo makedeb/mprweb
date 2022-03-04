@@ -159,6 +159,7 @@ def updated_packages(limit: int = 0, cache_ttl: int = 600) -> List[models.Packag
             {
                 "Name": pkg.Name,
                 "Version": pkg.Version,
+                "Description": pkg.Description,
                 "PackageBase": {"ModifiedTS": pkg.PackageBase.ModifiedTS},
             }
         )

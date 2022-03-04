@@ -6,7 +6,7 @@ header {
 	height: 100%;
 	background-color: $header-bg-color;
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: min-content 1fr;
 
 	@media (max-width: $header-max-width) {
 		grid-template-columns: 1fr;
@@ -35,11 +35,12 @@ header {
 		font-size: 1.75em;
 		text-decoration: none;
 		color: $black;
+		white-space: nowrap;
 	}
 
 	// Links.
 	.links {
-		justify-self: end;
+		justify-content: end;
 		align-self: center;
 		align-items: center;
 		display: flex;
