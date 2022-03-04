@@ -1,42 +1,38 @@
 {% extends "partials/layout.html" %}
 
-{% block pageContent %}
-    <div class="box">
+{% block body %}
+    <div class="box field">
         <h2>{{ "Close Request" | tr }}: {{ pkgreq.PackageBaseName }}</h2>
+	
+	    <div class="item">
+        	<p>
+            	{{	
+                	"Use this form to close the request for package base %s%s%s."
+                    | tr | format("<strong>", pkgreq.PackageBaseName, "</strong>")
+                    | safe
+                }}
+            </p>
 
-        <p>
-            {{
-                "Use this form to close the request for package base %s%s%s."
-                | tr | format("<strong>", pkgreq.PackageBaseName, "</strong>")
-                | safe
-            }}
-        </p>
-
-        <p>
-            <em>{{ "Note" | tr }}:</em>
-            {{
-                "The comments field can be left empty. However, it is highly "
-                "recommended to add a comment when rejecting a request."
-                | tr
-            }}
-        </p>
-
+	        <p class="comment">
+                <em>{{ "Note" | tr }}:</em>
+                {{
+                    "The comments field can be left empty. However, it is highly "
+                    "recommended to add a comment when rejecting a request."
+                    | tr
+                }}
+            </p>
+        </div>
+        
         <form action="/requests/{{ pkgreq.ID }}/close" method="post">
             <fieldset>
-                <p>
-                    <label for="id_comments">{{ "Comments" | tr }}:</label>
-                    <textarea id="id_comments" name="comments"
-                              rows="5" cols="50"></textarea>
-                </p>
-
-                <p>
-                    <button class="button" type="submit">
-                        {{ "Close Request" | tr }}
-                    </button>
-                </p>
-
+                <div class="item">
+                    <label for="id_comments"><h2>{{ "Comments" | tr }}:</h2></label>
+                    <textarea id="id_comments" name="comments" rows="5" cols="50"></textarea>
+                    <input class="button" type="submit" value="{{ "Close Request" | tr }}" />
+                </div>
             </fieldset>
         </form>
 
     </div>
 {% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}

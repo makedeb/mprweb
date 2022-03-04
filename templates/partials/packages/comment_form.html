@@ -6,12 +6,14 @@ Routes:
     new comment  - /pkgbase/{name}/comments
     edit comment - /pkgbase/{name}/comments/{id}
 #}
-{% set action = "/pkgbase/%s/comments" | format(pkgbase.Name) %}
+
 {% if comment %}
-    {% set action = "/pkgbase/%s/comments/%d" | format(pkgbase.Name, comment.ID) %}
+    {% set action = "/pkgbase/%s/comments/%d" | format(comment.PackageBase.Name, comment.ID) %}
+{% else %}
+    {% set action = "/pkgbase/%s/comments" | format(pkgbase.Name) %}
 {% endif %}
 
-<form action="{{ action }}" method="post">
+<form class="comment-form {% if not comment %}add-comment{% endif %}" action="{{ action }}" method="post">
     <fieldset>
         <input type="hidden" name="next" value="{{ next }}" />
         <p>
@@ -22,18 +24,15 @@ Routes:
                      "</a>")
             | safe }}
         </p>
-        <p>
         <textarea id="id_comment"
                   name="comment"
-                  cols="80"
                   rows="10"
         >{% if comment %}{{ comment.Comments or '' }}{% endif %}</textarea>
-        </p>
-        <p>
+        <p class="save-actions">
             <button type="submit" class="button">
                 {{ ("Save" if comment else "Add Comment") | tr }}
             </button>
-            {% if comment and not request.user.notified(pkgbase) %}
+            {% if comment and not request.user.notified(comment.PackageBase) %}
                 <span class="comment-enable-notifications">
                     <input type="checkbox" name="enable_notifications"
                            id="id_enable_notifications" />
@@ -45,3 +44,4 @@ Routes:
         </p>
     </fieldset>
 </form>
+{# vim: set ts=4 sw=4 expandtab: #}

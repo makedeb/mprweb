@@ -1,6 +1,5 @@
 import copy
 import typing
-
 from http import HTTPStatus
 
 from fastapi import APIRouter, Form, Request
@@ -8,8 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy import and_, or_
 
 import aurweb.config
-
-from aurweb import cookies, db, l10n, logging, models, util
+from aurweb import cookies, db, defaults, l10n, logging, models, util
 from aurweb.auth import account_type_required, requires_auth, requires_guest
 from aurweb.captcha import get_captcha_salts
 from aurweb.exceptions import ValidationError
@@ -35,20 +33,24 @@ async def passreset(request: Request):
 
 @router.post("/passreset", response_class=HTMLResponse)
 @requires_guest
-async def passreset_post(request: Request,
-                         user: str = Form(...),
-                         resetkey: str = Form(default=None),
-                         password: str = Form(default=None),
-                         confirm: str = Form(default=None)):
+async def passreset_post(
+    request: Request,
+    user: str = Form(...),
+    resetkey: str = Form(default=None),
+    password: str = Form(default=None),
+    confirm: str = Form(default=None),
+):
     context = await make_variable_context(request, "Password Reset")
 
     # The user parameter being required, we can match against
-    user = db.query(models.User, or_(models.User.Username == user,
-                                     models.User.Email == user)).first()
+    user = db.query(
+        models.User, or_(models.User.Username == user, models.User.Email == user)
+    ).first()
     if not user:
         context["errors"] = ["Invalid e-mail."]
-        return render_template(request, "passreset.html", context,
-                               status_code=HTTPStatus.NOT_FOUND)
+        return render_template(
+            request, "passreset.html", context, status_code=HTTPStatus.NOT_FOUND
+        )
 
     db.refresh(user)
     if resetkey:
@@ -56,29 +58,34 @@ async def passreset_post(request: Request,
 
         if not user.ResetKey or resetkey != user.ResetKey:
             context["errors"] = ["Invalid e-mail."]
-            return render_template(request, "passreset.html", context,
-                                   status_code=HTTPStatus.NOT_FOUND)
+            return render_template(
+                request, "passreset.html", context, status_code=HTTPStatus.NOT_FOUND
+            )
 
         if not user or not password:
             context["errors"] = ["Missing a required field."]
-            return render_template(request, "passreset.html", context,
-                                   status_code=HTTPStatus.BAD_REQUEST)
+            return render_template(
+                request, "passreset.html", context, status_code=HTTPStatus.BAD_REQUEST
+            )
 
         if password != confirm:
             # If the provided password does not match the provided confirm.
             context["errors"] = ["Password fields do not match."]
-            return render_template(request, "passreset.html", context,
-                                   status_code=HTTPStatus.BAD_REQUEST)
+            return render_template(
+                request, "passreset.html", context, status_code=HTTPStatus.BAD_REQUEST
+            )
 
         if len(password) < models.User.minimum_passwd_length():
             # Translate the error here, which simplifies error output
             # in the jinja2 template.
             _ = get_translator_for_request(request)
-            context["errors"] = [_(
-                "Your password must be at least %s characters.") % (
-                str(models.User.minimum_passwd_length()))]
-            return render_template(request, "passreset.html", context,
-                                   status_code=HTTPStatus.BAD_REQUEST)
+            context["errors"] = [
+                _("Your password must be at least %s characters.")
+                % (str(models.User.minimum_passwd_length()))
+            ]
+            return render_template(
+                request, "passreset.html", context, status_code=HTTPStatus.BAD_REQUEST
+            )
 
         # We got to this point; everything matched up. Update the password
         # and remove the ResetKey.
@@ -89,8 +96,9 @@ async def passreset_post(request: Request,
             user.update_password(password)
 
         # Render ?step=complete.
-        return RedirectResponse(url="/passreset?step=complete",
-                                status_code=HTTPStatus.SEE_OTHER)
+        return RedirectResponse(
+            url="/passreset?step=complete", status_code=HTTPStatus.SEE_OTHER
+        )
 
     # If we got here, we continue with issuing a resetkey for the user.
     resetkey = generate_resetkey()
@@ -100,12 +108,13 @@ async def passreset_post(request: Request,
     ResetKeyNotification(user.ID).send()
 
     # Render ?step=confirm.
-    return RedirectResponse(url="/passreset?step=confirm",
-                            status_code=HTTPStatus.SEE_OTHER)
+    return RedirectResponse(
+        url="/passreset?step=confirm", status_code=HTTPStatus.SEE_OTHER
+    )
 
 
 def process_account_form(request: Request, user: models.User, args: dict):
-    """ Process an account form. All fields are optional and only checks
+    """Process an account form. All fields are optional and only checks
     requirements in the case they are present.
 
     ```
@@ -142,7 +151,7 @@ def process_account_form(request: Request, user: models.User, args: dict):
         validate.username_in_use,
         validate.email_in_use,
         validate.invalid_account_type,
-        validate.invalid_captcha
+        validate.invalid_captcha,
     ]
 
     try:
@@ -154,11 +163,10 @@ def process_account_form(request: Request, user: models.User, args: dict):
     return (True, [])
 
 
-def make_account_form_context(context: dict,
-                              request: Request,
-                              user: models.User,
-                              args: dict):
-    """ Modify a FastAPI context and add attributes for the account form.
+def make_account_form_context(
+    context: dict, request: Request, user: models.User, args: dict
+):
+    """Modify a FastAPI context and add attributes for the account form.
 
     :param context: FastAPI context
     :param request: FastAPI request
@@ -169,15 +177,17 @@ def make_account_form_context(context: dict,
     # Do not modify the original context.
     context = copy.copy(context)
 
-    context["account_types"] = list(filter(
-        lambda e: request.user.AccountTypeID >= e[0],
-        [
-            (at.USER_ID, f"Normal {at.USER}"),
-            (at.TRUSTED_USER_ID, at.TRUSTED_USER),
-            (at.DEVELOPER_ID, at.DEVELOPER),
-            (at.TRUSTED_USER_AND_DEV_ID, at.TRUSTED_USER_AND_DEV)
-        ]
-    ))
+    context["account_types"] = list(
+        filter(
+            lambda e: request.user.AccountTypeID >= e[0],
+            [
+                (at.USER_ID, f"Normal {at.USER}"),
+                (at.TRUSTED_USER_ID, at.TRUSTED_USER),
+                (at.DEVELOPER_ID, at.DEVELOPER),
+                (at.TRUSTED_USER_AND_DEV_ID, at.TRUSTED_USER_AND_DEV),
+            ],
+        )
+    )
 
     if request.user.is_authenticated():
         context["username"] = args.get("U", user.Username)
@@ -225,24 +235,24 @@ def make_account_form_context(context: dict,
 
 @router.get("/register", response_class=HTMLResponse)
 @requires_guest
-async def account_register(request: Request,
-                           U: str = Form(default=str()),    # Username
-                           E: str = Form(default=str()),    # Email
-                           H: str = Form(default=False),    # Hide Email
-                           BE: str = Form(default=None),    # Backup Email
-                           R: str = Form(default=None),     # Real Name
-                           HP: str = Form(default=None),    # Homepage
-                           I: str = Form(default=None),     # IRC Nick
-                           K: str = Form(default=None),     # PGP Key FP
-                           L: str = Form(default=aurweb.config.get(
-                               "options", "default_lang")),
-                           TZ: str = Form(default=aurweb.config.get(
-                               "options", "default_timezone")),
-                           PK: str = Form(default=None),
-                           CN: bool = Form(default=False),  # Comment Notify
-                           CU: bool = Form(default=False),  # Update Notify
-                           CO: bool = Form(default=False),  # Owner Notify
-                           captcha: str = Form(default=str())):
+async def account_register(
+    request: Request,
+    U: str = Form(default=str()),  # Username
+    E: str = Form(default=str()),  # Email
+    H: str = Form(default=False),  # Hide Email
+    BE: str = Form(default=None),  # Backup Email
+    R: str = Form(default=None),  # Real Name
+    HP: str = Form(default=None),  # Homepage
+    I: str = Form(default=None),  # IRC Nick # noqa: E741
+    K: str = Form(default=None),  # PGP Key FP
+    L: str = Form(default=aurweb.config.get("options", "default_lang")),
+    TZ: str = Form(default=aurweb.config.get("options", "default_timezone")),
+    PK: str = Form(default=None),
+    CN: bool = Form(default=False),  # Comment Notify
+    CU: bool = Form(default=False),  # Update Notify
+    CO: bool = Form(default=False),  # Owner Notify
+    captcha: str = Form(default=str()),
+):
     context = await make_variable_context(request, "Register")
     context["captcha_salt"] = get_captcha_salts()[0]
     context = make_account_form_context(context, request, None, dict())
@@ -251,25 +261,25 @@ async def account_register(request: Request,
 
 @router.post("/register", response_class=HTMLResponse)
 @requires_guest
-async def account_register_post(request: Request,
-                                U: str = Form(default=str()),  # Username
-                                E: str = Form(default=str()),  # Email
-                                H: str = Form(default=False),   # Hide Email
-                                BE: str = Form(default=None),   # Backup Email
-                                R: str = Form(default=''),    # Real Name
-                                HP: str = Form(default=None),   # Homepage
-                                I: str = Form(default=None),    # IRC Nick
-                                K: str = Form(default=None),    # PGP Key
-                                L: str = Form(default=aurweb.config.get(
-                                    "options", "default_lang")),
-                                TZ: str = Form(default=aurweb.config.get(
-                                    "options", "default_timezone")),
-                                PK: str = Form(default=None),   # SSH PubKey
-                                CN: bool = Form(default=False),
-                                UN: bool = Form(default=False),
-                                ON: bool = Form(default=False),
-                                captcha: str = Form(default=None),
-                                captcha_salt: str = Form(...)):
+async def account_register_post(
+    request: Request,
+    U: str = Form(default=str()),  # Username
+    E: str = Form(default=str()),  # Email
+    H: str = Form(default=False),  # Hide Email
+    BE: str = Form(default=None),  # Backup Email
+    R: str = Form(default=""),  # Real Name
+    HP: str = Form(default=None),  # Homepage
+    I: str = Form(default=None),  # IRC Nick # noqa: E741
+    K: str = Form(default=None),  # PGP Key
+    L: str = Form(default=aurweb.config.get("options", "default_lang")),
+    TZ: str = Form(default=aurweb.config.get("options", "default_timezone")),
+    PK: str = Form(default=None),  # SSH PubKey
+    CN: bool = Form(default=False),
+    UN: bool = Form(default=False),
+    ON: bool = Form(default=False),
+    captcha: str = Form(default=None),
+    captcha_salt: str = Form(...),
+):
     context = await make_variable_context(request, "Register")
     args = dict(await request.form())
 
@@ -279,30 +289,45 @@ async def account_register_post(request: Request,
         # If the field values given do not meet the requirements,
         # return HTTP 400 with an error.
         context["errors"] = errors
-        return render_template(request, "register.html", context,
-                               status_code=HTTPStatus.BAD_REQUEST)
+        return render_template(
+            request, "register.html", context, status_code=HTTPStatus.BAD_REQUEST
+        )
 
     if not captcha:
         context["errors"] = ["The CAPTCHA is missing."]
-        return render_template(request, "register.html", context,
-                               status_code=HTTPStatus.BAD_REQUEST)
+        return render_template(
+            request, "register.html", context, status_code=HTTPStatus.BAD_REQUEST
+        )
 
     # Create a user with no password with a resetkey, then send
     # an email off about it.
     resetkey = generate_resetkey()
 
     # By default, we grab the User account type to associate with.
-    atype = db.query(models.AccountType,
-                     models.AccountType.AccountType == "User").first()
+    atype = db.query(
+        models.AccountType, models.AccountType.AccountType == "User"
+    ).first()
 
     # Create a user given all parameters available.
     with db.begin():
-        user = db.create(models.User, Username=U,
-                         Email=E, HideEmail=H, BackupEmail=BE,
-                         RealName=R, Homepage=HP, IRCNick=I, PGPKey=K,
-                         LangPreference=L, Timezone=TZ, CommentNotify=CN,
-                         UpdateNotify=UN, OwnershipNotify=ON,
-                         ResetKey=resetkey, AccountType=atype)
+        user = db.create(
+            models.User,
+            Username=U,
+            Email=E,
+            HideEmail=H,
+            BackupEmail=BE,
+            RealName=R,
+            Homepage=HP,
+            IRCNick=I,
+            PGPKey=K,
+            LangPreference=L,
+            Timezone=TZ,
+            CommentNotify=CN,
+            UpdateNotify=UN,
+            OwnershipNotify=ON,
+            ResetKey=resetkey,
+            AccountType=atype,
+        )
 
     # If a PK was given and either one does not exist or the given
     # PK mismatches the existing user's SSHPubKey.PubKey.
@@ -315,9 +340,9 @@ async def account_register_post(request: Request,
             pubkey = parts[0] + " " + parts[1]
         fingerprint = get_fingerprint(pubkey)
         with db.begin():
-            user.ssh_pub_key = models.SSHPubKey(UserID=user.ID,
-                                                PubKey=pubkey,
-                                                Fingerprint=fingerprint)
+            user.ssh_pub_key = models.SSHPubKey(
+                UserID=user.ID, PubKey=pubkey, Fingerprint=fingerprint
+            )
 
     # Send a reset key notification to the new user.
     WelcomeNotification(user.ID).send()
@@ -327,8 +352,9 @@ async def account_register_post(request: Request,
     return render_template(request, "register.html", context)
 
 
-def cannot_edit(request: Request, user: models.User) \
-        -> typing.Optional[RedirectResponse]:
+def cannot_edit(
+    request: Request, user: models.User
+) -> typing.Optional[RedirectResponse]:
     """
     Decide if `request.user` cannot edit `user`.
 
@@ -365,31 +391,30 @@ async def account_edit(request: Request, username: str):
 
 @router.post("/account/{username}/edit", response_class=HTMLResponse)
 @requires_auth
-async def account_edit_post(request: Request,
-                            username: str,
-                            U: str = Form(default=str()),  # Username
-                            J: bool = Form(default=False),
-                            E: str = Form(default=str()),  # Email
-                            H: str = Form(default=False),    # Hide Email
-                            BE: str = Form(default=None),    # Backup Email
-                            R: str = Form(default=None),     # Real Name
-                            HP: str = Form(default=None),    # Homepage
-                            I: str = Form(default=None),     # IRC Nick
-                            K: str = Form(default=None),     # PGP Key
-                            L: str = Form(aurweb.config.get(
-                                "options", "default_lang")),
-                            TZ: str = Form(aurweb.config.get(
-                                "options", "default_timezone")),
-                            P: str = Form(default=str()),    # New Password
-                            C: str = Form(default=None),     # Password Confirm
-                            PK: str = Form(default=None),    # PubKey
-                            CN: bool = Form(default=False),  # Comment Notify
-                            UN: bool = Form(default=False),  # Update Notify
-                            ON: bool = Form(default=False),  # Owner Notify
-                            T: int = Form(default=None),
-                            passwd: str = Form(default=str())):
-    user = db.query(models.User).filter(
-        models.User.Username == username).first()
+async def account_edit_post(
+    request: Request,
+    username: str,
+    U: str = Form(default=str()),  # Username
+    J: bool = Form(default=False),
+    E: str = Form(default=str()),  # Email
+    H: str = Form(default=False),  # Hide Email
+    BE: str = Form(default=None),  # Backup Email
+    R: str = Form(default=None),  # Real Name
+    HP: str = Form(default=None),  # Homepage
+    I: str = Form(default=None),  # IRC Nick # noqa: E741
+    K: str = Form(default=None),  # PGP Key
+    L: str = Form(aurweb.config.get("options", "default_lang")),
+    TZ: str = Form(aurweb.config.get("options", "default_timezone")),
+    P: str = Form(default=str()),  # New Password
+    C: str = Form(default=None),  # Password Confirm
+    PK: str = Form(default=None),  # PubKey
+    CN: bool = Form(default=False),  # Comment Notify
+    UN: bool = Form(default=False),  # Update Notify
+    ON: bool = Form(default=False),  # Owner Notify
+    T: int = Form(default=None),
+    passwd: str = Form(default=str()),
+):
+    user = db.query(models.User).filter(models.User.Username == username).first()
     response = cannot_edit(request, user)
     if response:
         return response
@@ -403,13 +428,15 @@ async def account_edit_post(request: Request,
 
     if not passwd:
         context["errors"] = ["Invalid password."]
-        return render_template(request, "account/edit.html", context,
-                               status_code=HTTPStatus.BAD_REQUEST)
+        return render_template(
+            request, "account/edit.html", context, status_code=HTTPStatus.BAD_REQUEST
+        )
 
     if not ok:
         context["errors"] = errors
-        return render_template(request, "account/edit.html", context,
-                               status_code=HTTPStatus.BAD_REQUEST)
+        return render_template(
+            request, "account/edit.html", context, status_code=HTTPStatus.BAD_REQUEST
+        )
 
     updates = [
         update.simple,
@@ -417,7 +444,7 @@ async def account_edit_post(request: Request,
         update.timezone,
         update.ssh_pubkey,
         update.account_type,
-        update.password
+        update.password,
     ]
 
     for f in updates:
@@ -428,18 +455,17 @@ async def account_edit_post(request: Request,
 
     # Update cookies with requests, in case they were changed.
     response = render_template(request, "account/edit.html", context)
-    return cookies.update_response_cookies(request, response,
-                                           aurtz=TZ, aurlang=L)
+    return cookies.update_response_cookies(request, response, aurtz=TZ, aurlang=L)
 
 
 @router.get("/account/{username}")
 async def account(request: Request, username: str):
     _ = l10n.get_translator_for_request(request)
-    context = await make_variable_context(
-        request, _("Account") + " " + username)
+    context = await make_variable_context(request, _("Account") + " " + username)
     if not request.user.is_authenticated():
-        return render_template(request, "account/show.html", context,
-                               status_code=HTTPStatus.UNAUTHORIZED)
+        return render_template(
+            request, "account/show.html", context, status_code=HTTPStatus.UNAUTHORIZED
+        )
 
     # Get related User record, if possible.
     user = get_user_by_name(username)
@@ -447,11 +473,10 @@ async def account(request: Request, username: str):
 
     # Format PGPKey for display with a space between each 4 characters.
     k = user.PGPKey or str()
-    context["pgp_key"] = " ".join([k[i:i + 4] for i in range(0, len(k), 4)])
+    context["pgp_key"] = " ".join([k[i : i + 4] for i in range(0, len(k), 4)])
 
     login_ts = None
-    session = db.query(models.Session).filter(
-        models.Session.UsersID == user.ID).first()
+    session = db.query(models.Session).filter(models.Session.UsersID == user.ID).first()
     if session:
         login_ts = user.session.LastUpdateTS
     context["login_ts"] = login_ts
@@ -467,44 +492,34 @@ async def account_comments(request: Request, username: str):
     context = make_context(request, "Accounts")
     context["username"] = username
     context["comments"] = user.package_comments.order_by(
-        models.PackageComment.CommentTS.desc())
+        models.PackageComment.CommentTS.desc()
+    )
     return render_template(request, "account/comments.html", context)
 
 
 @router.get("/accounts")
 @requires_auth
-@account_type_required({at.TRUSTED_USER,
-                        at.DEVELOPER,
-                        at.TRUSTED_USER_AND_DEV})
-async def accounts(request: Request):
-    context = make_context(request, "Accounts")
-    return render_template(request, "account/search.html", context)
+@account_type_required({at.TRUSTED_USER, at.DEVELOPER, at.TRUSTED_USER_AND_DEV})
+async def accounts_post(request: Request):
 
-
-@router.post("/accounts")
-@requires_auth
-@account_type_required({at.TRUSTED_USER,
-                        at.DEVELOPER,
-                        at.TRUSTED_USER_AND_DEV})
-async def accounts_post(request: Request,
-                        O: int = Form(default=0),  # Offset
-                        SB: str = Form(default=str()),  # Sort By
-                        U: str = Form(default=str()),  # Username
-                        T: str = Form(default=str()),  # Account Type
-                        S: bool = Form(default=False),  # Suspended
-                        E: str = Form(default=str()),  # Email
-                        R: str = Form(default=str()),  # Real Name
-                        I: str = Form(default=str()),  # IRC Nick
-                        K: str = Form(default=str())):  # PGP Key
     context = await make_variable_context(request, "Accounts")
-    context["pp"] = pp = 50  # Hits per page.
 
-    offset = max(O, 0)  # Minimize offset at 0.
-    context["offset"] = offset  # Offset.
+    offset, per_page = util.sanitize_params(
+        request.query_params.get("O", defaults.O),
+        request.query_params.get("PP", defaults.PP),
+    )
 
-    context["params"] = dict(await request.form())
-    if "O" in context["params"]:
-        context["params"].pop("O")
+    offset = max(offset, 0)  # Minimize offset at 0.
+
+    context["PP"] = per_page
+    context["O"] = offset
+    context["U"] = U = request.query_params.get("U")
+    context["T"] = T = request.query_params.get("T")
+    context["S"] = S = request.query_params.get("S")
+    context["E"] = E = request.query_params.get("E")
+    context["R"] = R = request.query_params.get("R")
+    context["I"] = I = request.query_params.get("I")  # noqa: E741
+    context["SB"] = SB = request.query_params.get("SB")
 
     # Setup order by criteria based on SB.
     order_by_columns = {
@@ -520,7 +535,7 @@ async def accounts_post(request: Request,
         "u": at.USER_ID,
         "t": at.TRUSTED_USER_ID,
         "d": at.DEVELOPER_ID,
-        "td": at.TRUSTED_USER_AND_DEV_ID
+        "td": at.TRUSTED_USER_AND_DEV_ID,
     }
     account_type_id = account_types.get(T, None)
 
@@ -531,15 +546,16 @@ async def accounts_post(request: Request,
     # Populate this list with any additional statements to
     # be ANDed together.
     statements = [
-        v for k, v in [
+        v
+        for k, v in [
             (account_type_id is not None, models.AccountType.ID == account_type_id),
             (bool(U), models.User.Username.like(f"%{U}%")),
             (bool(S), models.User.Suspended == S),
             (bool(E), models.User.Email.like(f"%{E}%")),
             (bool(R), models.User.RealName.like(f"%{R}%")),
             (bool(I), models.User.IRCNick.like(f"%{I}%")),
-            (bool(K), models.User.PGPKey.like(f"%{K}%")),
-        ] if k
+        ]
+        if k
     ]
 
     # Filter the query by coe-mbining all statements added above into
@@ -551,15 +567,13 @@ async def accounts_post(request: Request,
     context["total_users"] = query.count()
 
     # Finally, order and truncate our users for the current page.
-    users = query.order_by(*order_by).limit(pp).offset(offset).all()
+    users = query.order_by(*order_by).limit(per_page).offset(offset).all()
     context["users"] = util.apply_all(users, db.refresh)
 
-    return render_template(request, "account/index.html", context)
+    return render_template(request, "account/search.html", context)
 
 
-def render_terms_of_service(request: Request,
-                            context: dict,
-                            terms: typing.Iterable):
+def render_terms_of_service(request: Request, context: dict, terms: typing.Iterable):
     if not terms:
         return RedirectResponse("/", status_code=HTTPStatus.SEE_OTHER)
     context["unaccepted_terms"] = terms
@@ -571,14 +585,21 @@ def render_terms_of_service(request: Request,
 async def terms_of_service(request: Request):
     # Query the database for terms that were previously accepted,
     # but now have a bumped Revision that needs to be accepted.
-    diffs = db.query(models.Term).join(models.AcceptedTerm).filter(
-        models.AcceptedTerm.Revision < models.Term.Revision).all()
+    diffs = (
+        db.query(models.Term)
+        .join(models.AcceptedTerm)
+        .filter(models.AcceptedTerm.Revision < models.Term.Revision)
+        .all()
+    )
 
     # Query the database for any terms that have not yet been accepted.
-    unaccepted = db.query(models.Term).filter(
-        ~models.Term.ID.in_(db.query(models.AcceptedTerm.TermsID))).all()
+    unaccepted = (
+        db.query(models.Term)
+        .filter(~models.Term.ID.in_(db.query(models.AcceptedTerm.TermsID)))
+        .all()
+    )
 
-    for record in (diffs + unaccepted):
+    for record in diffs + unaccepted:
         db.refresh(record)
 
     # Translate the 'Terms of Service' part of our page title.
@@ -592,16 +613,22 @@ async def terms_of_service(request: Request):
 
 @router.post("/tos")
 @requires_auth
-async def terms_of_service_post(request: Request,
-                                accept: bool = Form(default=False)):
+async def terms_of_service_post(request: Request, accept: bool = Form(default=False)):
     # Query the database for terms that were previously accepted,
     # but now have a bumped Revision that needs to be accepted.
-    diffs = db.query(models.Term).join(models.AcceptedTerm).filter(
-        models.AcceptedTerm.Revision < models.Term.Revision).all()
+    diffs = (
+        db.query(models.Term)
+        .join(models.AcceptedTerm)
+        .filter(models.AcceptedTerm.Revision < models.Term.Revision)
+        .all()
+    )
 
     # Query the database for any terms that have not yet been accepted.
-    unaccepted = db.query(models.Term).filter(
-        ~models.Term.ID.in_(db.query(models.AcceptedTerm.TermsID))).all()
+    unaccepted = (
+        db.query(models.Term)
+        .filter(~models.Term.ID.in_(db.query(models.AcceptedTerm.TermsID)))
+        .all()
+    )
 
     if not accept:
         # Translate the 'Terms of Service' part of our page title.
@@ -613,7 +640,8 @@ async def terms_of_service_post(request: Request,
         # them instead of reiterating the process in terms_of_service.
         accept_needed = sorted(unaccepted + diffs)
         return render_terms_of_service(
-            request, context, util.apply_all(accept_needed, db.refresh))
+            request, context, util.apply_all(accept_needed, db.refresh)
+        )
 
     with db.begin():
         # For each term we found, query for the matching accepted term
@@ -621,13 +649,18 @@ async def terms_of_service_post(request: Request,
         for term in diffs:
             db.refresh(term)
             accepted_term = request.user.accepted_terms.filter(
-                models.AcceptedTerm.TermsID == term.ID).first()
+                models.AcceptedTerm.TermsID == term.ID
+            ).first()
             accepted_term.Revision = term.Revision
 
         # For each term that was never accepted, accept it!
         for term in unaccepted:
             db.refresh(term)
-            db.create(models.AcceptedTerm, User=request.user,
-                      Term=term, Revision=term.Revision)
+            db.create(
+                models.AcceptedTerm,
+                User=request.user,
+                Term=term,
+                Revision=term.Revision,
+            )
 
     return RedirectResponse("/", status_code=HTTPStatus.SEE_OTHER)

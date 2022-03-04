@@ -1,0 +1,148 @@
+@import "variables";
+
+#pkgdetails {
+	padding: 0 1em;
+
+	.comment {
+		color: darken($light-grey, 30%);
+	}
+
+	h3 {
+		padding-top: 1em;
+	}
+
+	.sections {
+		max-width: 45em;
+		margin: 0 auto;
+		margin-top: 3em;
+		display: flex;
+		justify-content: space-between;
+		align-items: end;
+		overflow: scroll;
+		scrollbar-width: none;
+
+		h2 {
+			font-size: 1.2em;
+			text-align: center;
+			width: 100%;
+			padding: 0 0.5em;
+			padding-bottom: 0.2em;
+			margin-bottom: 1em;
+			border-bottom: 0.15em solid $light-grey;
+			white-space: nowrap;
+
+			&.active {
+				border-bottom-color: darken($light-grey, 20%);
+			}
+
+			&:hover {
+				cursor: pointer;
+			}
+		}
+	}
+
+	.pages {
+		margin-top: 1.5em;
+
+		.hidden {
+			display: none !important;
+		}
+
+		.package-details, .git-information {
+			display: flex;
+			flex-wrap: wrap;
+			max-width: 40em;
+			margin: 1em auto;
+
+			.section {
+				width: 50%;
+				line-height: 1.4em;
+				text-align: center;
+				padding-bottom: 1em;
+
+				@media (max-width: 40em) {
+					width: 100%;
+				}
+			
+				.key, .value {
+					width: fit-content;
+					margin: 0 auto;
+				}
+
+				.key {
+					color: darken($light-grey, 30%);
+				}
+
+				.value.copy {
+					color: $orange;
+					transition-property: color;
+
+					&:hover {
+						color: $orange-hover;
+						cursor: pointer;
+					}
+				}
+			}
+		}
+
+		.package-actions, .git-tree, .commit-log {
+			line-height: 1.6em;
+			max-width: 20em;
+			margin: 0 auto;
+			padding-bottom: 1em;
+			
+			p, form {
+				text-align: center;
+			}
+
+			form input {
+				font-size: 1em;
+				color: $orange;
+				background: transparent;
+				border: none;
+				padding: 0;
+				transition-property: color;
+
+				&:hover {
+					color: $orange-hover;
+					cursor: pointer;
+				}
+			}
+		}
+
+		.dependency-information {
+			padding-bottom: 1em;
+			max-width: 20em;
+			margin: 0 auto;
+
+			.section {
+				.key {
+					font-size: 1.4em;
+					padding-top: 0.5em;
+					padding-bottom: 0.2em;
+				}
+
+				.value {
+					line-height: 1.3em;
+				}
+			}
+
+			.required-section {
+				.value {
+					display: inline;
+				}
+			}
+		}
+
+		.packages {
+			max-width: 10em;
+			margin: 0 auto;
+			margin-bottom: 1em;
+			line-height: 1.6em;
+		}
+
+		.commit-log {
+			max-width: 35em;
+		}
+	}
+}

@@ -1,7 +1,6 @@
 {% extends "partials/layout.html" %}
-
-{% block pageContent %}
-    <div class="box">
+{% block body %}
+    <div class="box field">
         <h2>
             {{ "Votes" | tr }} for
             <a href="/pkgbase/{{ pkgbase.Name }}">
@@ -25,3 +24,4 @@
         </div>
     </div>
 {% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}

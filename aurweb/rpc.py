@@ -1,5 +1,4 @@
 import os
-
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, NewType, Union
 
@@ -7,7 +6,6 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy import and_, literal, orm
 
 import aurweb.config as config
-
 from aurweb import db, defaults, models
 from aurweb.exceptions import RPCError
 from aurweb.filters import number_format
@@ -23,8 +21,7 @@ TYPE_MAPPING = {
     "replaces": "Replaces",
 }
 
-DataGenerator = NewType("DataGenerator",
-                        Callable[[models.Package], Dict[str, Any]])
+DataGenerator = NewType("DataGenerator", Callable[[models.Package], Dict[str, Any]])
 
 
 def documentation():
@@ -40,7 +37,7 @@ def documentation():
 
 
 class RPC:
-    """ RPC API handler class.
+    """RPC API handler class.
 
     There are various pieces to RPC's process, and encapsulating them
     inside of a class means that external users do not abuse the
@@ -66,17 +63,25 @@ class RPC:
 
     # A set of RPC types supported by this API.
     EXPOSED_TYPES = {
-        "info", "multiinfo",
-        "search", "msearch",
-        "suggest", "suggest-pkgbase"
+        "info",
+        "multiinfo",
+        "search",
+        "msearch",
+        "suggest",
+        "suggest-pkgbase",
     }
 
     # A mapping of type aliases.
     TYPE_ALIASES = {"info": "multiinfo"}
 
     EXPOSED_BYS = {
-        "name-desc", "name", "maintainer",
-        "depends", "makedepends", "optdepends", "checkdepends"
+        "name-desc",
+        "name",
+        "maintainer",
+        "depends",
+        "makedepends",
+        "optdepends",
+        "checkdepends",
     }
 
     # A mapping of by aliases.
@@ -92,7 +97,7 @@ class RPC:
             "results": [],
             "resultcount": 0,
             "type": "error",
-            "error": message
+            "error": message,
         }
 
     def _verify_inputs(self, by: str = [], args: List[str] = []) -> None:
@@ -116,7 +121,7 @@ class RPC:
             raise RPCError("No request type/data specified.")
 
     def _get_json_data(self, package: models.Package) -> Dict[str, Any]:
-        """ Produce dictionary data of one Package that can be JSON-serialized.
+        """Produce dictionary data of one Package that can be JSON-serialized.
 
         :param package: Package instance
         :returns: JSON-serializable dictionary
@@ -143,7 +148,7 @@ class RPC:
             "Popularity": pop,
             "OutOfDate": package.OutOfDateTS,
             "FirstSubmitted": package.SubmittedTS,
-            "LastModified": package.ModifiedTS
+            "LastModified": package.ModifiedTS,
         }
 
     def _get_info_json_data(self, package: models.Package) -> Dict[str, Any]:
@@ -151,10 +156,7 @@ class RPC:
 
         # All info results have _at least_ an empty list of
         # License and Keywords.
-        data.update({
-            "License": [],
-            "Keywords": []
-        })
+        data.update({"License": [], "Keywords": []})
 
         # If we actually got extra_info records, update data with
         # them for this particular package.
@@ -163,9 +165,9 @@ class RPC:
 
         return data
 
-    def _assemble_json_data(self, packages: List[models.Package],
-                            data_generator: DataGenerator) \
-            -> List[Dict[str, Any]]:
+    def _assemble_json_data(
+        self, packages: List[models.Package], data_generator: DataGenerator
+    ) -> List[Dict[str, Any]]:
         """
         Assemble JSON data out of a list of packages.
 
@@ -175,7 +177,7 @@ class RPC:
         return [data_generator(pkg) for pkg in packages]
 
     def _entities(self, query: orm.Query) -> orm.Query:
-        """ Select specific RPC columns on `query`. """
+        """Select specific RPC columns on `query`."""
         return query.with_entities(
             models.Package.ID,
             models.Package.Name,
@@ -192,16 +194,22 @@ class RPC:
             models.User.Username.label("Maintainer"),
         ).group_by(models.Package.ID)
 
-    def _handle_multiinfo_type(self, args: List[str] = [], **kwargs) \
-            -> List[Dict[str, Any]]:
+    def _handle_multiinfo_type(
+        self, args: List[str] = [], **kwargs
+    ) -> List[Dict[str, Any]]:
         self._enforce_args(args)
         args = set(args)
 
-        packages = db.query(models.Package).join(models.PackageBase).join(
-            models.User,
-            models.User.ID == models.PackageBase.MaintainerUID,
-            isouter=True
-        ).filter(models.Package.Name.in_(args))
+        packages = (
+            db.query(models.Package)
+            .join(models.PackageBase)
+            .join(
+                models.User,
+                models.User.ID == models.PackageBase.MaintainerUID,
+                isouter=True,
+            )
+            .filter(models.Package.Name.in_(args))
+        )
         packages = self._entities(packages)
 
         ids = {pkg.ID for pkg in packages}
@@ -212,65 +220,75 @@ class RPC:
 
         subqueries = [
             # PackageDependency
-            db.query(
-                models.PackageDependency
-            ).join(models.DependencyType).filter(
-                models.PackageDependency.PackageID.in_(ids)
-            ).with_entities(
+            db.query(models.PackageDependency)
+            .join(models.DependencyType)
+            .filter(models.PackageDependency.PackageID.in_(ids))
+            .with_entities(
                 models.PackageDependency.PackageID.label("ID"),
                 models.DependencyType.Name.label("Type"),
                 models.PackageDependency.DepName.label("Name"),
-                models.PackageDependency.DepCondition.label("Cond")
-            ).distinct().order_by("Name"),
-
+                models.PackageDependency.DepCondition.label("Cond"),
+            )
+            .distinct()
+            .order_by("Name"),
             # PackageRelation
-            db.query(
-                models.PackageRelation
-            ).join(models.RelationType).filter(
-                models.PackageRelation.PackageID.in_(ids)
-            ).with_entities(
+            db.query(models.PackageRelation)
+            .join(models.RelationType)
+            .filter(models.PackageRelation.PackageID.in_(ids))
+            .with_entities(
                 models.PackageRelation.PackageID.label("ID"),
                 models.RelationType.Name.label("Type"),
                 models.PackageRelation.RelName.label("Name"),
-                models.PackageRelation.RelCondition.label("Cond")
-            ).distinct().order_by("Name"),
-
+                models.PackageRelation.RelCondition.label("Cond"),
+            )
+            .distinct()
+            .order_by("Name"),
             # Groups
-            db.query(models.PackageGroup).join(
+            db.query(models.PackageGroup)
+            .join(
                 models.Group,
-                and_(models.PackageGroup.GroupID == models.Group.ID,
-                     models.PackageGroup.PackageID.in_(ids))
-            ).with_entities(
+                and_(
+                    models.PackageGroup.GroupID == models.Group.ID,
+                    models.PackageGroup.PackageID.in_(ids),
+                ),
+            )
+            .with_entities(
                 models.PackageGroup.PackageID.label("ID"),
                 literal("Groups").label("Type"),
                 models.Group.Name.label("Name"),
-                literal(str()).label("Cond")
-            ).distinct().order_by("Name"),
-
+                literal(str()).label("Cond"),
+            )
+            .distinct()
+            .order_by("Name"),
             # Licenses
-            db.query(models.PackageLicense).join(
-                models.License,
-                models.PackageLicense.LicenseID == models.License.ID
-            ).filter(
-                models.PackageLicense.PackageID.in_(ids)
-            ).with_entities(
+            db.query(models.PackageLicense)
+            .join(models.License, models.PackageLicense.LicenseID == models.License.ID)
+            .filter(models.PackageLicense.PackageID.in_(ids))
+            .with_entities(
                 models.PackageLicense.PackageID.label("ID"),
                 literal("License").label("Type"),
                 models.License.Name.label("Name"),
-                literal(str()).label("Cond")
-            ).distinct().order_by("Name"),
-
+                literal(str()).label("Cond"),
+            )
+            .distinct()
+            .order_by("Name"),
             # Keywords
-            db.query(models.PackageKeyword).join(
+            db.query(models.PackageKeyword)
+            .join(
                 models.Package,
-                and_(Package.PackageBaseID == PackageKeyword.PackageBaseID,
-                     Package.ID.in_(ids))
-            ).with_entities(
+                and_(
+                    Package.PackageBaseID == PackageKeyword.PackageBaseID,
+                    Package.ID.in_(ids),
+                ),
+            )
+            .with_entities(
                 models.Package.ID.label("ID"),
                 literal("Keywords").label("Type"),
                 models.PackageKeyword.Keyword.label("Name"),
-                literal(str()).label("Cond")
-            ).distinct().order_by("Name")
+                literal(str()).label("Cond"),
+            )
+            .distinct()
+            .order_by("Name"),
         ]
 
         # Union all subqueries together.
@@ -290,8 +308,9 @@ class RPC:
 
         return self._assemble_json_data(packages, self._get_info_json_data)
 
-    def _handle_search_type(self, by: str = defaults.RPC_SEARCH_BY,
-                            args: List[str] = []) -> List[Dict[str, Any]]:
+    def _handle_search_type(
+        self, by: str = defaults.RPC_SEARCH_BY, args: List[str] = []
+    ) -> List[Dict[str, Any]]:
         # If `by` isn't maintainer and we don't have any args, raise an error.
         # In maintainer's case, return all orphans if there are no args,
         # so we need args to pass through to the handler without errors.
@@ -309,49 +328,63 @@ class RPC:
         results = self._entities(search.results()).limit(max_results)
         return self._assemble_json_data(results, self._get_json_data)
 
-    def _handle_msearch_type(self, args: List[str] = [], **kwargs)\
-            -> List[Dict[str, Any]]:
+    def _handle_msearch_type(
+        self, args: List[str] = [], **kwargs
+    ) -> List[Dict[str, Any]]:
         return self._handle_search_type(by="m", args=args)
 
-    def _handle_suggest_type(self, args: List[str] = [], **kwargs)\
-            -> List[str]:
+    def _handle_suggest_type(self, args: List[str] = [], **kwargs) -> List[str]:
         if not args:
             return []
 
         arg = args[0]
-        packages = db.query(models.Package.Name).join(
-            models.PackageBase
-        ).filter(
-            and_(models.PackageBase.PackagerUID.isnot(None),
-                 models.Package.Name.like(f"%{arg}%"))
-        ).order_by(models.Package.Name.asc()).limit(20)
+        packages = (
+            db.query(models.Package.Name)
+            .join(models.PackageBase)
+            .filter(
+                and_(
+                    models.PackageBase.PackagerUID.isnot(None),
+                    models.Package.Name.like(f"%{arg}%"),
+                )
+            )
+            .order_by(models.Package.Name.asc())
+            .limit(20)
+        )
         return [pkg.Name for pkg in packages]
 
-    def _handle_suggest_pkgbase_type(self, args: List[str] = [], **kwargs)\
-            -> List[str]:
+    def _handle_suggest_pkgbase_type(self, args: List[str] = [], **kwargs) -> List[str]:
         if not args:
             return []
 
-        packages = db.query(models.PackageBase.Name).filter(
-            and_(models.PackageBase.PackagerUID.isnot(None),
-                 models.PackageBase.Name.like(f"%{args[0]}%"))
-        ).order_by(models.PackageBase.Name.asc()).limit(20)
+        packages = (
+            db.query(models.PackageBase.Name)
+            .filter(
+                and_(
+                    models.PackageBase.PackagerUID.isnot(None),
+                    models.PackageBase.Name.like(f"%{args[0]}%"),
+                )
+            )
+            .order_by(models.PackageBase.Name.asc())
+            .limit(20)
+        )
         return [pkg.Name for pkg in packages]
 
     def _is_suggestion(self) -> bool:
         return self.type.startswith("suggest")
 
-    def _handle_callback(self, by: str, args: List[str])\
-            -> Union[List[Dict[str, Any]], List[str]]:
+    def _handle_callback(
+        self, by: str, args: List[str]
+    ) -> Union[List[Dict[str, Any]], List[str]]:
         # Get a handle to our callback and trap an RPCError with
         # an empty list of results based on callback's execution.
         callback = getattr(self, f"_handle_{self.type.replace('-', '_')}_type")
         results = callback(by=by, args=args)
         return results
 
-    def handle(self, by: str = defaults.RPC_SEARCH_BY, args: List[str] = [])\
-            -> Union[List[Dict[str, Any]], Dict[str, Any]]:
-        """ Request entrypoint. A router should pass v, type and args
+    def handle(
+        self, by: str = defaults.RPC_SEARCH_BY, args: List[str] = []
+    ) -> Union[List[Dict[str, Any]], Dict[str, Any]]:
+        """Request entrypoint. A router should pass v, type and args
         to this function and expect an output dictionary to be returned.
 
         :param v: RPC version argument
@@ -382,8 +415,5 @@ class RPC:
             return results
 
         # Return JSON output.
-        data.update({
-            "resultcount": len(results),
-            "results": results
-        })
+        data.update({"resultcount": len(results), "results": results})
         return data

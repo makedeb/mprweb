@@ -1,63 +1,61 @@
-<div id="archdev-navbar">
-    <ul>
-        {% if request.user.is_authenticated() %}
-            {# Only authenticated users get Dashboard #}
-            <li><a href="/">{% trans %}Dashboard{% endtrans %}</a></li>
-        {% else %}
-            {# Only guest users get Home #}
-            <li><a href="/">MPR {% trans %}Home{% endtrans %}</a></li>
-        {% endif %}
+<div class="archdev-navbar">
+	<!-- Javascript for package autocompletion in searches --!>
+	<script type="text/javascript" src="/static/js/navbar-search.js"></script>
 
-        {# All users see Packages #}
-        <li><a href="/packages">{% trans %}Packages{% endtrans %}</a></li>
+	<div class="navbar-links">
+		{% if request.user.is_authenticated() %}
+		{# Only authenticated users get Dashboard #}
+		<a href="/"><p>{% trans %}Dashboard{% endtrans %}</p></a>
+		{% endif %}
 
-        {% if request.user.is_authenticated() %}
+		{# All users see Packages #}
+		<a href="/packages"><p>{% trans %}Packages{% endtrans %}</p></a>
+        
+        {# All logged in users see the following routes. #}
+		{% if request.user.is_authenticated() %}
 
-            {# All users can see Requests #}
-            <li>
-                <a href="/requests">
-                    {% trans %}Requests{% endtrans %}
-                </a>
-            </li>
+	    	{# All users can see Requests #}
+		    <a href="/requests"><p>{% trans %}Requests{% endtrans %}</p></a>
 
-            {# Only CRED_ACCOUNT_SEARCH privileged users see Accounts #}
-            {% if request.user.has_credential(creds.ACCOUNT_SEARCH) %}
-                <li>
-                    <a href="/accounts">
-                        {% trans %}Accounts{% endtrans %}
-                    </a>
-                </li>
-            {% endif %}
+		    {# Only CRED_ACCOUNT_SEARCH privileged users see Accounts #}
+		    {% if request.user.has_credential(creds.ACCOUNT_SEARCH) %}
+		    <a href="/accounts"><p>{% trans %}Accounts{% endtrans %}</p></a>
+		    {% endif %}
 
-            {# All users see My Account #}
-            <li>
-                <a href="/account/{{ request.user.Username }}/edit">
-                    {% trans %}My Account{% endtrans %}
-                </a>
-            </li>
+		    {# All users see My Account #}
+		    <a href="/account/{{ request.user.Username }}/edit"><p>{% trans %}My Account{% endtrans %}</p></a>
 
-            {# Only CRED_TU_LIST_VOTES privileged users see Trusted User #}
-            {% if request.user.has_credential(creds.TU_LIST_VOTES) %}
-                <li>
-                    <a href="/tu">{% trans %}Trusted User{% endtrans %}</a>
-                </li>
-            {% endif %}
+            {# Package statistics for the current user. #}
+            <a href="/pkgstats"><p>{% trans %}My Packages{% endtrans %}</p></a>
 
-            {# All logged in users see Logout #}
-            <li>
-                <form action="/logout" method="post" class="link">
-                    <input type="hidden" name="next" value="{{ next }}" />
-                    <button type="submit">
-                        {% trans %}Logout{% endtrans %}
-                    </button>
-                </form>
-            </li>
-        {% else %}
-            {# All guest users see Register #}
-            <li><a href="/register">{% trans %}Register{% endtrans %}</a></li>
+		    {# Only CRED_TU_LIST_VOTES privileged users see Trusted User #}
+		    {% if request.user.has_credential(creds.TU_LIST_VOTES) %}
+		    <a href="/tu"><p>{% trans %}Trusted User{% endtrans %}</p></a>
+		    {% endif %}
 
-            {# All guest users see Login #}
-            <li><a href="/login?next={{ next }}">{% trans %}Login{% endtrans %}</a></li>
-        {% endif %}
-    </ul>
+		    {# All logged in users see Logout #}
+		    <form action="/logout" method="post" class="link">
+			    <input type="hidden" name="next" value="{{ next }}" />
+			    <button type="submit">
+				    {% trans %}Logout{% endtrans %}
+			    </button>
+		    </form>
+
+		{% else %}
+		{# All guest users see Register #}
+		<a href="/register"><p>{% trans %}Register{% endtrans %}</p></a>
+
+		{# All guest users see Login #}
+		<a href="/login?next={{ next }}"><p>{% trans %}Login{% endtrans %}</p></a>
+		{% endif %}
+
+	</div>
+	{# Package search form #}
+	<form class="navbar-search" action="/packages" method="GET">
+		<input type="hidden" name="O" value="0">
+		<input class="search-box" name="K" type="input" placeholder="Search" autocomplete="off">
+		<div class="search-results">
+		</div>
+	</form>
 </div>
+{# vim: set sw=4 expandtab: #}

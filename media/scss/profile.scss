@@ -1,0 +1,33 @@
+// Used on '/account/{username}'.
+@import "variables";
+
+$profile-mobile-width: 470px;
+$header-color: darken($light-grey, 30%);
+
+// '/account/{username}/'.
+.arch-bio-entry {
+	.item {
+		display: flex;
+
+		@media (max-width: $profile-mobile-width) {
+			flex-direction: column;
+			padding-bottom: 0.5em;
+		}
+
+		.caption {
+			text-align: right;
+			width: 11em;
+			color: $header-color;
+			padding-right: 0.5em;
+
+			@media (max-width: $profile-mobile-width) {
+				width: auto;
+				text-align: left;
+			}
+		}
+
+		.caption, .data {
+			line-height: 1.6em;
+		}
+	}
+}

@@ -1,31 +1,20 @@
-{% extends "partials/layout.html" %}
+<!DOCTYPE html>
+<html>
+	{% include "partials/head.html" %}
+	{% include "partials/navbar.html" %}
+	{% include "partials/archdev-navbar.html" %}
+	<div class="box">
+		<h2>{{ "Comments" | tr }} - <a href="/account/{{username}}">{{ username }}</a></h2>
+		<hr>
 
-{% block pageContent %}
-    <div class="box">
-        <h2>{{ "Accounts" | tr }}</h2>
-
-        <div class="comments">
-            <div class="comments-header">
-                <h3>
-                    {{
-                        "Comments for %s%s%s" | tr
-                        | format('<a href="/account/%s">' | format(username),
-                                 username,
-                                 "</a>")
-                        | safe
-                    }}
-                </h3>
-            </div>
-
-            <!-- On-the-fly comment editing functions -->
-            <script type="text/javascript" src="/static/js/comment-edit.js"></script>
-
-            {% for comment in comments %}
-                {% include "partials/account/comment.html" %}
-            {% endfor %}
-
-        </div>
-
-    </div>
-
-{% endblock %}
+		<div class="comments">
+			<!-- On-the-fly comment editing functions -->
+			<script type="text/javascript" src="/static/js/comment-edit.js"></script>
+			
+			{% for comment in comments %}
+			{% include "partials/account/comment.html" %}
+			{% endfor %}
+		</div>
+	</div>
+	{% include "partials/footer.html" %}
+</html>

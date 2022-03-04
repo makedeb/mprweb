@@ -1,0 +1,235 @@
+// Our CSS.
+@import "syntax-highlighting";
+@import "variables";
+@import "header";
+@import "footer";
+@import "archdev-navbar";
+@import "homepage";
+@import "profile";
+@import "comments";
+@import "search-results";
+@import "packages";
+@import "tu";
+@import "pkgstats";
+
+// External CSS.
+@import url('https://meyerweb.com/eric/tools/css/reset/reset.css');
+
+// Fonts.
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+// Main CSS, shared across entire website.
+body {
+	font-family: "Ubuntu", sans-serif;
+}
+
+p {
+	word-break: break-word;
+	hyphens: auto;
+}
+
+a, a:visited {
+	color: $orange;
+	text-decoration: none;
+	transition-property: color;
+	transition-duration: 0.2s;
+}
+
+a:hover {
+	color: $orange-hover;
+}
+
+h2 {
+	font-size: 1.8em;
+}
+
+h3 {
+	font-size: 1.5em;
+}
+
+hr {
+	background-color: $light-grey;
+	height: 0.1em;
+	border: none;
+}
+
+em {
+	font-style: italic;
+}
+
+strong {
+	font-weight: bold;
+}
+
+sup {
+	font-size: 70%;
+	vertical-align: top;
+}
+
+ul {
+	list-style: inside;
+}
+
+p, ul, li {
+	line-height: 1.6em;
+}
+
+blockquote {
+	border-left: 0.3em;
+	border-style: solid;
+	border-color: $light-grey;
+	margin: 0.2em 0;
+
+	p {
+		padding-left: 0.5em;
+	}
+}
+
+// Styling for code blocks.
+code {
+	background-color: lighten($light-grey, 5%);
+	padding: 0.2em;
+	margin: 0.2em;
+	border-radius: 0.3em;
+	font-family: "Ubuntu Mono", monospace;
+}
+
+pre {
+	margin: 0.5em 0;
+	padding: 0.3em 0.5em;
+	background-color: lighten($light-grey, 5%);
+	overflow: auto;
+
+	code {
+		line-height: 1.4em;
+	}
+}
+
+// Makes the footer appear (at minimum) at the bottom of the viewport).
+body {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+footer {
+	margin-top: auto;
+}
+
+// Default styling for boxes.
+.box {
+	background-color: lighten($silver, 1%);
+	margin: 0 2em;
+	margin-bottom: 2em;
+	padding: 1em;
+	border-radius: 0.15em;
+
+	@media (max-width: 27em) {
+		margin: 0 1em;
+		margin-bottom: 1em;
+	}
+	
+	h2 {
+		padding-bottom: 0.5em;
+	}
+
+	p {
+		line-height: 1.6em;
+	}
+}
+
+// Remove styling for buttons containing SVGs.
+.svg-icon-button {
+	border: none;
+	background-color: transparent;
+}
+
+// Field styling.
+// We have 'fieldset' for compatibility purposes with some stuff that's already been written.
+fieldset, .field {
+	padding-top: 1em;
+        // For some reason this fixes some overflow issues on small viewports.
+        min-width: auto;
+	
+	h1 {
+		font-size: 1.8em;
+	}
+                        
+        h2 {
+		font-size: 1.4em;
+                padding: 0;
+        }
+
+        .item {
+                padding-bottom: 0.8rem;
+                        
+                label {
+                        pointer-events: none;
+                }
+
+                select, .button {
+                        display: block;
+                        background-color: lighten($light-grey, 8%);
+
+                        &:hover, &:focus {
+                                background-color: lighten($light-grey, 6%);
+                        }
+                }
+
+                input:not(.checkbox), select, textarea, .button {
+                	width: 100%;
+                        font-size: 1.2em;
+                        border-radius: 0.2rem;
+                        border-color: $light-grey;
+                        border-style: solid;
+			border-width: 0.15em;
+                        margin-top: 0.5em;
+                        padding: 0.2em;
+                        box-sizing: border-box;
+                }
+
+                textarea {
+                        resize: none;
+                }
+
+		.button {
+			text-align: center;
+			color: black;
+
+			&:hover {
+				cursor: default;
+			}
+		}
+
+		.p-block {
+			p {
+				display: inline;
+
+				&.title {
+					color: darken($light-grey, 30%);
+				}
+			}
+		}
+        }
+
+	.comment, .overhead-comment {
+                color: darken($light-grey, 30%);
+        }
+
+        .comment {
+                padding-top: 0.2em;
+        }
+
+        .overhead-comment {
+                padding-bottom: 0.6em;
+        }
+}
+
+// Error lists.
+.errorlist {
+	li {
+		color: red;
+		opacity: 0.7;
+	}
+}

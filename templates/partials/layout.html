@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xml:lang="{{ language }}" lang="{{ language }}">
-    {% include 'partials/head.html' %}
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="{{ language }}" lang="{{ language }}">
+    {% include "partials/head.html" %}
+	{% include "partials/navbar.html" %}
+	{% include "partials/archdev-navbar.html" %}
 
-    <body>
-        {% include 'partials/navbar.html' %}
-        {% extends 'partials/body.html' %}
+   <body>
+        {% block body %}{% endblock %}
     </body>
+
+    {% include "partials/footer.html" %}
 </html>
+{# vim: set ts=4 sw=4 expandtab: #}

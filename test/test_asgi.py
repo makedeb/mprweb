@@ -1,18 +1,15 @@
 import http
 import re
-
 from unittest import mock
 
 import fastapi
 import pytest
-
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 import aurweb.asgi
 import aurweb.config
 import aurweb.redis
-
 from aurweb.testing.email import Email
 from aurweb.testing.requests import Request
 
@@ -24,8 +21,8 @@ def setup(db_test, email_test):
 
 @pytest.mark.asyncio
 async def test_asgi_startup_session_secret_exception(monkeypatch):
-    """ Test that we get an IOError on app_startup when we cannot
-    connect to options.redis_address. """
+    """Test that we get an IOError on app_startup when we cannot
+    connect to options.redis_address."""
 
     redis_addr = aurweb.config.get("options", "redis_address")
 
@@ -46,8 +43,8 @@ async def test_asgi_http_exception_handler():
     response = await aurweb.asgi.http_exception_handler(Request(), exc)
     assert response.status_code == 422
     content = response.body.decode()
-    assert f"{exc.status_code} - {phrase}" in content
-    assert "EXCEPTION!" in content
+    print(content)
+    assert f"MPR - {phrase}" in content
 
 
 @pytest.mark.asyncio
@@ -67,8 +64,7 @@ async def test_asgi_app_unsupported_backends():
             await aurweb.asgi.app_startup()
 
 
-def test_internal_server_error(setup: None,
-                               caplog: pytest.LogCaptureFixture):
+def test_internal_server_error(setup: None, caplog: pytest.LogCaptureFixture):
     config_getboolean = aurweb.config.getboolean
 
     def mock_getboolean(section: str, key: str) -> bool:

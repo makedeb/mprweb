@@ -1,4 +1,12 @@
 #!/bin/bash
+sass_watcher() {
+    if [[ -z "${WATCH_SASS_FILES:+x}" ]]; then
+        return 0
+    fi
+
+    sass -w -s compressed media/scss/main.scss media/css/style.css &
+}
+
 # By default, set FASTAPI_WORKERS to 2. In production, this should
 # be configured by the deployer.
 if [ -z ${FASTAPI_WORKERS+x} ]; then
@@ -13,6 +21,10 @@ echo "FASTAPI_WORKERS: $FASTAPI_WORKERS"
 # Perform migrations.
 alembic upgrade head
 
+# Start SCSS watcher for changes.
+sass_watcher
+
+# Actually bring up the application.
 if [ "$1" == "uvicorn" ] || [ "$1" == "" ]; then
     exec uvicorn --reload \
         --log-config /docker/logging.conf \
@@ -40,3 +52,5 @@ else
     echo "Valid backends: 'uvicorn', 'gunicorn', 'hypercorn'."
     exit 1
 fi
+
+# vim: set ts=4 sw=4 expandtab:

@@ -1,0 +1,24 @@
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div id="pkgdetails" class="field">
+        <!-- Section toggle for package pages. -->
+        <script src="/static/js/package-sections.js"></script>
+        
+        <h2>{{ pkgbase.Name }} {{ pkg.Version }}</h2>
+        <hr>
+        <p class="comment">{{ pkg.Description }}</p>
+        
+        <div class="pages">
+            <p><a href="/pkgbase/{{ pkgbase.Name }}/git/#commit-log">Click here</a> to go back to the commit logs for <a href="/pkgbase/{{ pkgbase.Name }}">{{ pkgbase.Name}}</a>.</p>
+            <h3>Commit:</h3>
+            <hr>
+
+            <p>Hash: <code>{{ commit_hash }}</code></p>
+            <p>Message: <code>{{ requested_commit.message.rstrip("\n") }}</code></p>
+            <h3>Diff</h3>
+            <hr>
+            <pre><code class="language-diff">{{ diff }}</code></pre>
+        </div>
+    </div>
+{% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}

@@ -1,13 +1,17 @@
-{% extends "partials/layout.html" %}
+<!DOCTYPE html>
+<html>
+	{% include "partials/head.html" %}
+	{% include "partials/navbar.html" %}
+	{% include "partials/archdev-navbar.html" %}
 
-{% block pageContent %}
-    <div class="box">
-        <h2>{{ "Accounts" | tr }}</h2>
-
+    <div id="search-results">
         {% if not users %}
             {{ "No results matched your search criteria." | tr }}
         {% else %}
             {% include "partials/account/results.html" %}
         {% endif %}
     </div>
-{% endblock %}
+
+    {% include "partials/footer.html" %}
+</html>
+{# vim: set ts=4 sw=4 expandtab: #}

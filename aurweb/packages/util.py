@@ -3,7 +3,6 @@ from http import HTTPStatus
 from typing import Dict, List, Tuple, Union
 
 import orjson
-
 from fastapi import HTTPException
 from sqlalchemy import orm
 
@@ -43,10 +42,10 @@ def dep_optdepends_extra(dep: models.PackageDependency) -> str:
 
 @register_filter("dep_extra")
 def dep_extra(dep: models.PackageDependency) -> str:
-    """ Some dependency types have extra text added to their
+    """Some dependency types have extra text added to their
     display. This function provides that output. However, it
     **assumes** that the dep passed is bound to a valid one
-    of: depends, makedepends, checkdepends or optdepends. """
+    of: depends, makedepends, checkdepends or optdepends."""
     f = globals().get(f"dep_{dep.DependencyType.Name}_extra")
     return f(dep)
 
@@ -61,8 +60,9 @@ def dep_extra_desc(dep: models.PackageDependency) -> str:
 
 @register_filter("pkgname_link")
 def pkgname_link(pkgname: str) -> str:
-    official = db.query(OfficialProvider).filter(
-        OfficialProvider.Name == pkgname).exists()
+    official = (
+        db.query(OfficialProvider).filter(OfficialProvider.Name == pkgname).exists()
+    )
     if db.query(official).scalar():
         base = "/".join([OFFICIAL_BASE, "packages"])
         return f"{base}/?q={pkgname}"
@@ -79,17 +79,15 @@ def package_link(package: Union[Package, OfficialProvider]) -> str:
 
 @register_filter("provides_markup")
 def provides_markup(provides: Providers) -> str:
-    return ", ".join([
-        f'<a href="{package_link(pkg)}">{pkg.Name}</a>'
-        for pkg in provides
-    ])
+    return ", ".join(
+        [f'<a href="{package_link(pkg)}">{pkg.Name}</a>' for pkg in provides]
+    )
 
 
 def get_pkg_or_base(
-        name: str,
-        cls: Union[models.Package, models.PackageBase] = models.PackageBase) \
-        -> Union[models.Package, models.PackageBase]:
-    """ Get a PackageBase instance by its name or raise a 404 if
+    name: str, cls: Union[models.Package, models.PackageBase] = models.PackageBase
+) -> Union[models.Package, models.PackageBase]:
+    """Get a PackageBase instance by its name or raise a 404 if
     it can't be found in the database.
 
     :param name: {Package,PackageBase}.Name
@@ -98,8 +96,11 @@ def get_pkg_or_base(
     :raises HTTPException: With status code 404 if record doesn't exist
     :return: {Package,PackageBase} instance
     """
-    provider = db.query(models.OfficialProvider).filter(
-        models.OfficialProvider.Name == name).first()
+    provider = (
+        db.query(models.OfficialProvider)
+        .filter(models.OfficialProvider.Name == name)
+        .first()
+    )
     if provider:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
 
@@ -112,8 +113,7 @@ def get_pkg_or_base(
     return instance
 
 
-def get_pkgbase_comment(pkgbase: models.PackageBase, id: int) \
-        -> models.PackageComment:
+def get_pkgbase_comment(pkgbase: models.PackageBase, id: int) -> models.PackageComment:
     comment = pkgbase.comments.filter(models.PackageComment.ID == id).first()
     if not comment:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
@@ -125,9 +125,8 @@ def out_of_date(packages: orm.Query) -> orm.Query:
     return packages.filter(models.PackageBase.OutOfDateTS.isnot(None))
 
 
-def updated_packages(limit: int = 0,
-                     cache_ttl: int = 600) -> List[models.Package]:
-    """ Return a list of valid Package objects ordered by their
+def updated_packages(limit: int = 0, cache_ttl: int = 600) -> List[models.Package]:
+    """Return a list of valid Package objects ordered by their
     ModifiedTS column in descending order from cache, after setting
     the cache when no key yet exists.
 
@@ -141,10 +140,11 @@ def updated_packages(limit: int = 0,
         # If we already have a cache, deserialize it and return.
         return orjson.loads(packages)
 
-    query = db.query(models.Package).join(models.PackageBase).filter(
-        models.PackageBase.PackagerUID.isnot(None)
-    ).order_by(
-        models.PackageBase.ModifiedTS.desc()
+    query = (
+        db.query(models.Package)
+        .join(models.PackageBase)
+        .filter(models.PackageBase.PackagerUID.isnot(None))
+        .order_by(models.PackageBase.ModifiedTS.desc())
     )
 
     if limit:
@@ -155,13 +155,13 @@ def updated_packages(limit: int = 0,
         # For each Package returned by the query, append a dict
         # containing Package columns we're interested in.
         db.refresh(pkg)
-        packages.append({
-            "Name": pkg.Name,
-            "Version": pkg.Version,
-            "PackageBase": {
-                "ModifiedTS": pkg.PackageBase.ModifiedTS
+        packages.append(
+            {
+                "Name": pkg.Name,
+                "Version": pkg.Version,
+                "PackageBase": {"ModifiedTS": pkg.PackageBase.ModifiedTS},
             }
-        })
+        )
 
     # Store the JSON serialization of the package_updates key into Redis.
     redis.set("package_updates", orjson.dumps(packages))
@@ -171,9 +171,8 @@ def updated_packages(limit: int = 0,
     return packages
 
 
-def query_voted(query: List[models.Package],
-                user: models.User) -> Dict[int, bool]:
-    """ Produce a dictionary of package base ID keys to boolean values,
+def query_voted(query: List[models.Package], user: models.User) -> Dict[int, bool]:
+    """Produce a dictionary of package base ID keys to boolean values,
     which indicate whether or not the package base has a vote record
     related to user.
 
@@ -183,20 +182,18 @@ def query_voted(query: List[models.Package],
     """
     output = defaultdict(bool)
     query_set = {pkg.PackageBaseID for pkg in query}
-    voted = db.query(models.PackageVote).join(
-        models.PackageBase,
-        models.PackageBase.ID.in_(query_set)
-    ).filter(
-        models.PackageVote.UsersID == user.ID
+    voted = (
+        db.query(models.PackageVote)
+        .join(models.PackageBase, models.PackageBase.ID.in_(query_set))
+        .filter(models.PackageVote.UsersID == user.ID)
     )
     for vote in voted:
         output[vote.PackageBase.ID] = True
     return output
 
 
-def query_notified(query: List[models.Package],
-                   user: models.User) -> Dict[int, bool]:
-    """ Produce a dictionary of package base ID keys to boolean values,
+def query_notified(query: List[models.Package], user: models.User) -> Dict[int, bool]:
+    """Produce a dictionary of package base ID keys to boolean values,
     which indicate whether or not the package base has a notification
     record related to user.
 
@@ -206,19 +203,19 @@ def query_notified(query: List[models.Package],
     """
     output = defaultdict(bool)
     query_set = {pkg.PackageBaseID for pkg in query}
-    notified = db.query(models.PackageNotification).join(
-        models.PackageBase,
-        models.PackageBase.ID.in_(query_set)
-    ).filter(
-        models.PackageNotification.UserID == user.ID
+    notified = (
+        db.query(models.PackageNotification)
+        .join(models.PackageBase, models.PackageBase.ID.in_(query_set))
+        .filter(models.PackageNotification.UserID == user.ID)
     )
     for notif in notified:
         output[notif.PackageBase.ID] = True
     return output
 
 
-def pkg_required(pkgname: str, provides: List[str], limit: int) \
-        -> List[PackageDependency]:
+def pkg_required(
+    pkgname: str, provides: List[str], limit: int
+) -> List[PackageDependency]:
     """
     Get dependencies that match a string in `[pkgname] + provides`.
 
@@ -228,9 +225,13 @@ def pkg_required(pkgname: str, provides: List[str], limit: int) \
     :return: List of PackageDependency instances
     """
     targets = set([pkgname] + provides)
-    query = db.query(PackageDependency).join(Package).filter(
-        PackageDependency.DepName.in_(targets)
-    ).order_by(Package.Name.asc()).limit(limit)
+    query = (
+        db.query(PackageDependency)
+        .join(Package)
+        .filter(PackageDependency.DepName.in_(targets))
+        .order_by(Package.Name.asc())
+        .limit(limit)
+    )
     return query.all()
 
 

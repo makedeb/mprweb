@@ -1,24 +1,23 @@
 import hashlib
 import re
-
 from http import HTTPStatus
 from typing import List, Optional
 from urllib.parse import unquote
 
 import orjson
-
 from fastapi import APIRouter, Query, Request, Response
 from fastapi.responses import JSONResponse
 
 from aurweb import defaults
 from aurweb.ratelimit import check_ratelimit
-from aurweb.rpc import RPC, documentation
+from aurweb.rpc import RPC
+from aurweb.templates import make_context, render_template
 
 router = APIRouter()
 
 
 def parse_args(request: Request):
-    """ Handle legacy logic of 'arg' and 'arg[]' query parameter handling.
+    """Handle legacy logic of 'arg' and 'arg[]' query parameter handling.
 
     When 'arg' appears as the last argument given to the query string,
     that argument is used by itself as one single argument, regardless
@@ -38,9 +37,7 @@ def parse_args(request: Request):
     # Create a list of (key, value) pairs of the given 'arg' and 'arg[]'
     # query parameters from last to first.
     query = list(reversed(unquote(request.url.query).split("&")))
-    parts = [
-        e.split("=", 1) for e in query if e.startswith(("arg=", "arg[]="))
-    ]
+    parts = [e.split("=", 1) for e in query if e.startswith(("arg=", "arg[]="))]
 
     args = []
     if parts:
@@ -62,28 +59,33 @@ def parse_args(request: Request):
     return args
 
 
-JSONP_EXPR = re.compile(r'^[a-zA-Z0-9()_.]{1,128}$')
+JSONP_EXPR = re.compile(r"^[a-zA-Z0-9()_.]{1,128}$")
 
 
 @router.get("/rpc")
-async def rpc(request: Request,
-              v: Optional[int] = Query(default=None),
-              type: Optional[str] = Query(default=None),
-              by: Optional[str] = Query(default=defaults.RPC_SEARCH_BY),
-              arg: Optional[str] = Query(default=None),
-              args: Optional[List[str]] = Query(default=[], alias="arg[]"),
-              callback: Optional[str] = Query(default=None)):
+async def rpc(
+    request: Request,
+    v: Optional[int] = Query(default=None),
+    type: Optional[str] = Query(default=None),
+    by: Optional[str] = Query(default=defaults.RPC_SEARCH_BY),
+    arg: Optional[str] = Query(default=None),
+    args: Optional[List[str]] = Query(default=[], alias="arg[]"),
+    callback: Optional[str] = Query(default=None),
+):
 
     if not request.url.query:
-        return documentation()
+        context = make_context(request, "RPC")
+        return render_template(request, "rpc.html", context)
 
     # Create a handle to our RPC class.
     rpc = RPC(version=v, type=type)
 
     # If ratelimit was exceeded, return a 429 Too Many Requests.
     if check_ratelimit(request):
-        return JSONResponse(rpc.error("Rate limit reached"),
-                            status_code=int(HTTPStatus.TOO_MANY_REQUESTS))
+        return JSONResponse(
+            rpc.error("Rate limit reached"),
+            status_code=int(HTTPStatus.TOO_MANY_REQUESTS),
+        )
 
     # If `callback` was provided, produce a text/javascript response
     # valid for the jsonp callback. Otherwise, by default, return
@@ -111,15 +113,11 @@ async def rpc(request: Request,
 
     # The ETag header expects quotes to surround any identifier.
     # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag
-    headers = {
-        "Content-Type": content_type,
-        "ETag": f'"{etag}"'
-    }
+    headers = {"Content-Type": content_type, "ETag": f'"{etag}"'}
 
     if_none_match = request.headers.get("If-None-Match", str())
-    if if_none_match and if_none_match.strip("\t\n\r\" ") == etag:
-        return Response(headers=headers,
-                        status_code=int(HTTPStatus.NOT_MODIFIED))
+    if if_none_match and if_none_match.strip('\t\n\r" ') == etag:
+        return Response(headers=headers, status_code=int(HTTPStatus.NOT_MODIFIED))
 
     if callback:
         content = f"/**/{callback}({content.decode()})"

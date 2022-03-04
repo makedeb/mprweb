@@ -1,0 +1,299 @@
+{% if request.user.is_authenticated() %}
+    {% set link_class = "show_links" %}
+{% else %}
+    {% set link_class = "hide_links" %}
+{% endif %}
+
+<div id="pkgdetails">
+        <!-- Section toggle for package pages. -->
+        <script src="/static/js/package-sections.js"></script>
+
+        <!-- JS to copy links -->
+        <script src="/static/js/copy.js"></script>
+
+        <h2>{{ package.Name }} {{ package.Version }}</h2>
+        <hr>
+
+        {% if package.Description is not none %}
+            <p class="comment">{{ package.Description }}</p>
+        {% endif %}
+
+        <div class="sections">
+            <h2 class="text active package-details">Package Details</h2>
+            <h2 class="text package-actions">Package Actions</h2>
+            <h2 class="text dependency-information">Dependency Information</h2>
+        </div>
+        
+        <div class="pages">
+            <div class="package-details">
+                <div class="section">
+                    <p class="key">Package Base:</p>
+                    <p class="value"><a href="/pkgbase/{{ package.PackageBase.Name }}">{{ package.PackageBase.Name }}</a></p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Homepage:</p>
+                    <p class="value">
+                        {% if package.URL is not none %}
+                            <a href="{{ package.URL }}">{{ package.URL }}</a>
+                        {% else %}
+                            None
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="section">
+                    {% set license_length = licenses.all() | length %}
+                    <p class="key">Licenses:</p>
+                    
+                    {% if license_length == 0 %}
+                        <p class="value">None</p>
+                    {% else %}
+                        {% for license in licenses.all() %}
+                            <p class="value">{{ license.License.Name }}</p>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="section">
+                    <p class="key">Submitter:</p>
+                    <p class="value">
+                        {% if pkgbase.Submitter %}
+                            <a href="/account/{{ pkgbase.Submitter.Username }}">{{ pkgbase.Submitter.Username }}</a>
+                        {% else %}
+                            {{ pkgbase.Submitter.Username | default("None" | tr) }}
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Maintainer:</p>
+                    <p class="value">
+                        {% if package.PackageBase.Maintainer.Username is not none %}
+                            <a href="/account/{{ package.PackageBase.Maintainer.Username }}">{{ package.PackageBase.Maintainer.Username }}</a>
+                        {% else %}
+                            None
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Last Packager:</p>
+                    <p class="value">
+                        {% if package.PackageBase.Packager.Username is not none %}
+                            <a href="/account/{{ package.PackageBase.Packager.Username }}">{{ package.PackageBase.Packager.Username }}</a>
+                        {% else %}
+                            None
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Votes:</p>
+                    <p class="value">
+                        {% if request.user.has_credential(creds.PKGBASE_LIST_VOTERS) %}
+                            <a href="/pkgbase/{{ package.PackageBase.Name }}/voters">{{ pkgbase.NumVotes }}</a>
+                        {% else %}
+                            {{ package.PackageBase.NumVotes }}
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Popularity:</p>
+                    <p class="value">{{ package.PackageBase.Popularity | number_format(6 if package.PackageBase.Popularity <= 0.2 else 2) }}</p>
+                </div>
+
+                <div class="section">
+                    {% set submitted = package.PackageBase.SubmittedTS | dt | as_timezone(timezone) %}
+                    <p class="key">First Submitted:</p>
+                    <p class="value">{{ submitted.strftime("%Y-%m-%d %H:%M") }}</p>
+                </div>
+
+                <div class="section">
+                    {% set updated = package.PackageBase.ModifiedTS | dt | as_timezone(timezone) %}
+                    <p class="key">Last Updated:</p>
+                    <p class="value">{{ updated.strftime("%Y-%m-%d %H:%M") }}</p>
+                </div>
+
+                <div class="section">
+                    <p class="key">Sources:</p>
+                    {% if (sources | length) != 0 %}
+                        {% for src in sources %}
+                            {% set file, uri = (src | source_uri) %}
+                            <a href="{{ uri }}">{{ file }}</a>
+                        {% endfor %}
+                    {% else %}
+                        <p><em>None</em></p>
+                    {% endif %}
+                </div>
+
+                <div class="section">
+                    <p class="key">Git Clone URL <em>(click to copy)</em>:</p>
+                    <p class="value copy">{{ git_clone_uri_anon | format(pkgbase.Name) }}</p>
+                    {% if request.user.is_authenticated() %}
+                        <p class="value copy">{{ git_clone_uri_priv | format(pkgbase.Name) }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="hidden package-actions">
+                <p><a href="/pkgbase/{{ pkgbase.Name }}/git/tree/PKGBUILD">{{ "View PKGBUILD" | tr}}</a></p>
+                <p><a href="/pkgbase/{{ pkgbase.Name }}/git/commit/latest">{{ "View Changes" | tr }}</a></p>
+                <p><a href="https://wiki.archlinux.org/title/Special:Search?search={{ pkgbase.Name }}">{{ "Search ArchWiki" | tr }}</a></p>
+
+                {% if not out_of_date %}
+                    <p><a href="/pkgbase/{{ pkgbase.Name }}/flag">{{ "Flag package out-of-date" | tr }}</a></p>
+                {% else %}
+                    <p><a href="/pkgbase/{{ pkgbase.Name }}/flag-comment">
+                        {% set ood_ts = pkgbase.OutOfDateTS | dt | as_timezone(timezone) %}
+                        {{ "Flagged out of date (%s)" | tr | format(ood_ts.strftime("%Y-%m-%d")) }}
+                    </a></p>
+                    <form action="/pkgbase/{{ pkgbase.Name }}/unflag" method="post">
+                        <input type="submit" name="do_UnFlag" value="{{ "Unflag package" | tr }}" />
+                    </form>
+                {% endif %}
+
+                {% if not voted %}
+                    <form action="/pkgbase/{{ pkgbase.Name }}/vote" method="post">
+                        <input type="submit" name="do_Vote" value="{{ "Vote for this package" | tr }}" />
+                    </form>
+                {% else %}
+                    <form action="/pkgbase/{{ pkgbase.Name }}/unvote" method="post">
+                        <input type="submit" name="do_UnVote" value="{{ "Remove vote" | tr }}" />
+                    </form>
+                {% endif %}
+
+                {% if notified %}
+                    <form action="/pkgbase/{{ pkgbase.Name }}/unnotify" method="post">
+                        <input type="submit" name="do_UnNotify" value="{{ "Disable notifications" | tr }}" />
+                    </form>
+                {% else %}
+                    <form action="/pkgbase/{{ pkgbase.Name }}/notify" method="post">
+                        <input type="submit" name="do_Notify" value="{{ "Enable notifications" | tr }}" />
+                    </form>
+                {% endif %}
+
+                {% if request.user.has_credential(creds.PKGBASE_EDIT_COMAINTAINERS, approved=[pkgbase.Maintainer]) %}
+                    <p><a href="/pkgbase/{{ pkgbase.Name }}/comaintainers">{{ "Manage Co-Maintainers" | tr }}</a></p>
+                {% endif %}
+
+                {% if requests %}
+                    <p class="comment">{{ requests | tn("%d pending request", "%d pending requests") | format(requests) }}</p>
+                {% endif %}
+
+                <p><a href="/pkgbase/{{ pkgbase.Name }}/request">{{ "Submit Request" | tr }}</a</p>
+                
+                {% if request.user.has_credential(creds.PKGBASE_DELETE) %}
+                    <p><a href="/pkgbase/{{ pkgbase.Name }}/delete">{{ "Delete Package" | tr }}</a></p>
+                {% endif %}
+
+                {% if request.user.has_credential(creds.PKGBASE_MERGE) %}
+                    <p><a href="/pkgbase/{{ pkgbase.Name }}/merge">{{ "Merge Package" | tr }}</a></p>
+                {% endif %}
+
+                {% if not pkgbase.Maintainer %}
+                    <form action="/pkgbase/{{ pkgbase.Name }}/adopt" method="post">
+                        <input type="submit" value="{{ "Adopt Package" | tr }}" />
+                    </form>
+                {% elif request.user.has_credential(creds.PKGBASE_DISOWN, approved=[pkgbase.Maintainer]) %}
+                    <p><a href="/pkgbase/{{ pkgbase.Name }}/disown">{{ "Disown Package" | tr }}</a></p>
+                {% endif %}
+            </div>
+
+            <div class="hidden dependency-information">
+                <div class="section">
+                    <p class="key">Depends:</p>
+                    {% if (depends | length) != 0 %}
+                        {% for dep in depends %}
+                            <p class="value">{{ dep.DepName }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <p class="value"><em>None</em></p>
+                    {% endif %}
+                </div>
+
+                <div class="section">
+                    <p class="key">Optdepends:</p>  
+                    {% if (optdepends | length) != 0 %}  
+                        {% for dep in optdepends %}
+                            <p class="value">{{ dep.DepName }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <p class="value"><em>None</em></p>
+                    {% endif %}
+                </div>
+
+                <div class="section">
+                    <p class="key">Makedepends:</p>
+                    {% if (makedepends | length) != 0 %}  
+                        {% for dep in makedepends %}
+                            <p class="value">{{ dep.DepName }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <p class="value"><em>None</em></p>
+                    {% endif %}
+                </div>
+
+                <div class="section">
+                    <p class="key">Checkdepends:</p>  
+                    {% if (checkdepends | length) != 0 %}  
+                        {% for dep in checkdepends %}
+                            <p class="value">{{ dep.DepName }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <p class="value"><em>None</em></p>
+                    {% endif %}
+                </div>
+
+                <div class="section">
+                    <p class="key">Conflics:</p>  
+                    {% if (conflicts | length) != 0 %}  
+                        {% for rel in conflicts %}
+                            <p class="value">{{ rel.RelName }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <p class="value"><em>None</em></p>
+                    {% endif %}
+                </div>
+
+                <div class="section">
+                    <p class="key">Provides:</p>
+                    {% if (provides | length) != 0 %}  
+                        {% for rel in provides %}
+                            <p class="value">{{ rel.RelName }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <p class="value"><em>None</em></p>
+                    {% endif %}
+                </div>
+
+                <div class="section">
+                    <p class="key">Replaces:</p>  
+                    {% if (replaces | length) != 0 %}  
+                        {% for rel in replaces %}
+                            <p class="value">{{ rel.RelName }}</p>
+                        {% endfor %}
+                    {% else %}
+                        <p class="value"><em>None</em></p>
+                    {% endif %}
+                </div>
+
+                <div class="section required-section">
+                    <p class="key">Required by:</p>
+                    {% if (required_by | length) != 0 %}
+                        {% for dep in required_by %}
+                            <p class="value"><a href="{{ dep.Package | package_link }}">{{ dep.Package.Name }}</a></p>
+                            {% if dep.DepName != package.Name %}
+                                <p class="value">({{ "requires %s" | tr | format(dep.DepName) }})</p>
+                            {% endif %}
+                            <br>
+                        {% endfor %}
+                    {% else %}
+                        <p><em>None</em></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+</div>
+{# vim: set ts=4 sw=4 expandtab: #}

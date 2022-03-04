@@ -1,0 +1,86 @@
+@import "variables";
+
+$navbar-mobile-width: 720px;
+
+.archdev-navbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 2em;
+
+	@media (max-width: 580px) {
+		flex-direction: column;
+		align-items: start;
+	}
+
+	.navbar-links {
+		height: 100%;
+		width: 100%;
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: left;
+		align-items: center;
+		padding: 1em 0;
+		padding-left: 0.4em;
+
+		@media (max-width: $navbar-mobile-width) {
+			justify-content: center;
+			padding-left: 0;
+		}
+
+		a, form {
+			margin: 0 0.4em;
+		}
+
+		p, form button {
+			line-height: 1.4em;
+		}
+		
+		// We have to stylize our button so that it looks like a normal link.
+		form button {
+			background: none;
+			border: none;
+			font-size: 1em;
+			color: $orange;
+			transition-property: color;
+			transition-duration: 0.2s;
+
+			&:hover {
+				cursor: pointer;
+				color: $orange-hover;
+			}
+		}
+	}
+
+	.navbar-search {
+		.search-box, .search-results {
+			font-size: 1.05em;
+			width: 10em;
+			border: solid;
+			border-color: darken($light-grey, 10%);
+			border-width: 0.15em;
+			border-radius: 0.2em;
+			padding: 0.2em 0.3em;
+			margin-right: 0.4em;
+			transition-property: outline-width;
+			transition-duration: 0.2s;
+		}
+
+		.search-results {
+			background-color: lighten($light-grey, 10%);
+			display: none;
+			position: absolute;
+			border-top: none;
+			border-top-left-radius: 0;
+			border-top-right-radius: 0;
+
+			a {
+				line-height: 1.3em;
+			}
+		}
+
+		@media (max-width: $navbar-mobile-width) {
+			display: none;
+		}
+	}
+}

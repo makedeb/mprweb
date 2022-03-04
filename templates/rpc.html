@@ -1,0 +1,49 @@
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div class="box field">
+        <div class="item">
+            <h1>{{ "RPC Interface" }}</h2>
+            <hr>
+        </div>
+
+        <div class="item">
+            <h3>{{ "Package Search" | tr }}</h3>
+            <p>Package searches can be performed by issuing HTTP <code>GET</code> requests of the form <code>/rpc/?v=5&#x26;type=search&#x26;by=field&#x26;arg[]=keyword</code>, where <code>keywords</code> is the search argument and <code>field</code> is one of the following values:</p>
+        </div>
+
+        <div class="item">
+            <ul>
+                <li><code>name</code>: Search for packages that have a <code>pkgname</code> listing for <code>keyword</code>.</li>
+                <li><code>name-desc</code>: Search for packages that have a <code>pkgname</code> or <code>pkgdesc</code> listing for <code>keyword</code>.</li>
+                <li><code>maintainer</code>: Search for packages that have a maintainer listing for <code>keyword</code>.</li>
+                <li><code>depends</code>: Search for packages that have a <code>depends</code> listing for <code>keyword</code>.</li>
+                <li><code>makedepends</code>: Search for packages that have a <code>makedepends</code> listing for <code>keyword</code>.</li>
+                <li><code>optdepends</code>: Search for packages that have a <code>optdepends</code> listing for <code>keyword</code>.</li>
+                <li><code>checkdepends</code>: Search for packages that have a <code>checkdepends</code> listing for <code>keyword</code>.</li>
+            </ul>
+        </div>
+
+        <div class="item">
+            <h3>{{ "Package Details" | tr }}</h3>
+            <hr>
+        </div>
+
+        <div class="item">
+            <p>Package information can be obtained by issuing HTTP <code>GET</code> requests of the form <code>/rpc/?v=5&#x26;type=info&#x26;arg=[]=pkg1&#x26;arg=pkg2&#x26;...</code> where <code>pkg1</code>, <code>pkg2</code>... are the names of packages to retrieve package details for.</p>
+        </div>
+
+        <div class="item">
+            <h3>{{ "Examples" | tr }}</h3>
+            <hr>
+        </div>
+
+        <div class="item">
+            <p>Search: <code>/rpc/?v=5&#x26;type=search&#x26;arg=foobar</code></p>
+            <p>Search by maintainer: <code>/rpc/?v=5&#x26;type=search&#x26;by=maintainer&#x26;arg=john</code></p>
+            <p>Search packages that have <code>boost</code> as a <code>makedepends</code>listing: <code>/rpc/?v=5&#x26;type=search&#x26;by=makedepends&#x26;arg=boost</code></p>
+            <p>Get info of a package</p>: <code>/rpc/?v=5&#x26;type=info&#x26;arg[]=foobar</code></p>
+            <p>Get info of multiple packages</p>: <code>/rpc/?v=5&#x26;type=info&#x26;arg[]=foo&#x26;arg[]=bar</code></p>
+        </div>
+    </div>
+{% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}

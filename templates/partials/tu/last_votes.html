@@ -1,33 +1,25 @@
-<div class="box">
+<div class="field tu-section">
     <h2>{% trans %}{{ title }}{% endtrans %}</h2>
 
-    <table class="results last-votes">
-        <thead>
-            <th>{{ "User" | tr }}</th>
-            <th>{{ "Last vote" | tr }}</th>
-        </thead>
-
-        <tbody>
-            {% if not votes %}
-                <tr>
-                    <td align="center" colspan="0">
-                        {{ "No results found." | tr }}
-                    </td>
-                    <td></td>
-                </tr>
-            {% else %}
-                {% for vote in votes %}
-                    <tr>
-                        <td>{{ vote.User.Username }}</td>
-                        <td>
-                            <a href="/tu/{{ vote.VoteID }}">
-                                {{ vote.VoteID }}
-                            </a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            {% endif %}
-        </tbody>
-    </table>
-
+    {% if not votes %}
+        <h3>{{ "No results found." | tr }}</h3>
+    
+    {% else %}
+        <div class="search-results">
+            {% for vote in votes %}
+                <div class="search-item">
+                    <div class="item-section">
+                        <p class="title">{{ "User" | tr }}</p>
+                        <p class="value">{{ vote.User.Username }}</p>
+                    </div>
+                
+                    <div class="item-section">
+                        <p class="title">{{ "Last vote" | tr }}</p>
+                        <p class="value"><a href="/tu/{{ vote.VoteID }}">{{ vote.VoteID }}</a</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 </div>
+{# vim: set ts=4 sw=4 expandtab: #}

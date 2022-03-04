@@ -1,15 +1,15 @@
-<div id="archnavbar" class="anb-aur">
-    <div id="archnavbarlogo">
-        <h1>
-            <a href="/" title="Return to the main page">{% trans %}makedeb Package Repository{% endtrans %}</a>
-        </h1>
-    </div>
-    <div id="archnavbarmenu">
-        <ul id="archnavbarlist">
-	    <li id="anb-download"><a href="https://www.makedeb.org">{% trans %}Homepage{% endtrans %}</a></li>
-            <li id="anb-security"><a href="https://docs.makedeb.org/">{% trans %}Docs{% endtrans %}</a></li>
-            <li id="anb-download"><a href="https://matrix.to/#/#makedeb:hunterwittenborn.com">{% trans %}Support{% endtrans %}</a></li>
-            <li id="anb-aur"><a href="/" title="makedeb Package Repository">MPR</a></li>
-        </ul>
-    </div>
-</div>
+<header>
+	<a class="makedeb-brand" href="/">
+		<img class="makedeb-logo" src="/static/images/makedeb-logo.png" alt="makedeb logo">
+		<p class="makedeb-logo-text">makedeb</p>
+	</a>
+	
+	<div class="links">
+		<a href="https://www.{{ makedeb_url }}">Homepage</a>
+		<a href="https://docs.{{ makedeb_url }}">Docs</a>
+		<p>MPR</p>
+		<a href="https://www.{{ makedeb_url }}/news">News</a>
+	</div>
+</header>
+<hr class="header-hr">
+

@@ -1,0 +1,56 @@
+@import "variables";
+
+$header-color: darken($light-grey, 30%);
+
+.pkglist-stats, #pkglist-stats {
+	margin: 0 1em;
+}
+
+.pkglist-stats {
+	p {
+		font-size: 1.2em;
+	}
+}
+
+#search-results, .search-results {
+	margin-bottom: 3em;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: auto;
+
+	@media (max-width: 550px) {
+		grid-template-columns: 1fr;
+	}
+
+	.search-item {
+		background-color: lighten($silver, 1.5%);
+		border: solid;
+		border-color: $light-grey;
+		border-radius: 0.2em;
+		border-width: 0.15em;
+		padding: 0.5em;
+		margin: 0.5em;
+		
+		p {
+			line-height: 1.3em;
+		}
+
+		.description {
+			color: $header-color;
+		}
+
+		.item-section {
+			.title, .value {
+				display: inline;
+			}
+
+			.title {
+				color: $header-color;
+			}
+		}
+
+		.account-links p {
+			display: inline;
+		}
+	}
+}

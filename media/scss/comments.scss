@@ -1,0 +1,152 @@
+@import "variables";
+
+$comment-mobile-view: 47.5em;
+
+.comments {
+		hr:nth-child(2) {
+			display: none;
+		}
+
+	.comment-header {
+		margin: 0.5em 0;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+
+		@media (max-width: $comment-mobile-view) {
+			flex-direction: column;
+			align-items: start;
+		}
+
+		.comment-title {
+			display: flex;
+			flex-direction: column;
+			
+			.comment-intro {
+				font-size: 1.35em;
+				margin-bottom: 0.2em;
+			}
+
+			@media (max-width: $comment-mobile-view) {
+				.edited {
+					padding-top: 0.5em;
+				}
+			}
+		}
+
+		.comment-actions {
+			margin-left: auto;
+			display: flex;
+
+			@media (max-width: $comment-mobile-view) {
+				margin-left: 0;
+				padding-top: 0.5em;
+			}
+			
+			.svg-icon {
+				margin-right: 1em;
+				height: 1.5em;
+				width: auto;
+				color: darken($light-grey, 15%);
+				transition-property: color;
+				transition-duration: 0.2s;
+
+				@media (max-width: $comment-mobile-view) {
+					height: 1.7em;
+				}
+
+				&:hover {
+					color: $orange-hover;
+					cursor: pointer;
+				}
+			}
+
+			.svg-icon-button {
+				margin: 0;
+			}
+
+			fieldset {
+				padding-top: 0;
+			}
+		}
+	}
+
+	.article-content {
+		padding-top: 1em;
+
+		h5, h6 {
+			font-weight: bold;
+			padding-top: 0.5rem;
+			padding-bottom: 0.25rem;
+		}
+
+		h5 {
+			font-size: 1.3em;
+		}
+
+		h6 {
+			font-size: 1.2em;
+		}
+
+		p, code {
+			line-height: 1.6em;
+		}
+	}
+
+	.comment-form {
+		padding: 0.5em 0;
+		border-radius: 0.2em;
+
+		&:not(.add-comment) {
+			display: none;
+		}
+		
+		fieldset {
+			background-color: lighten($light-grey, 5%);
+		}
+
+		p {
+			padding: 0.5em;
+		}
+
+		textarea {
+			background-color: lighten($dark-grey, 5%);
+			color: white;
+			font-family: "Ubuntu Mono", serif;
+			width: 100%;
+			padding: 0.5em;
+			box-sizing: border-box;
+			border-style: none;
+			resize: none;
+			outline: none;
+			white-space: pre;
+		}
+
+		button {
+			border: none;
+			background-color: transparent;
+			font-size: 1em;
+			color: $orange;
+			transition-property: color;
+			transition-duration: 0.2s;
+
+			&:hover {
+				color: $orange-hover;
+				cursor: pointer;
+			}
+		}
+
+		.save-actions {
+			display: flex;
+		
+			@media (max-width: 400px) {
+				flex-direction: column;
+				align-items: start;
+			}
+		}
+	}
+
+	.comment-deleted {
+		opacity: 0.5;
+	}
+}

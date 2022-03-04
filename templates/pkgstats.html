@@ -1,0 +1,63 @@
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div class="field pkgstats">
+        <div class="item">
+            <h2>{{ "My Flagged Packages" | tr }}</h2>
+            <hr>
+
+            {% if not flagged_packages %}
+                <p class="comment">{{ "No packages found." | tr }}</p>
+            {% else %}
+                <div class="search-results">
+                    {% with packages = flagged_packages %}
+                        {% include "/partials/packages/search_results.html" %}
+                    {% endwith %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="item">
+            <h2>{{ "My Requests" | tr }}</h2>
+            <hr>
+
+            {% if not package_requests %}
+                <p class="comment">{{ "No requests found." | tr }}</p>
+            {% else %}
+                {% with results = package_requests %}
+                    {% include "requests/results.html" %}
+                {% endwith %}
+            {% endif %}
+        </div>
+
+        <div class="item">
+            <h2>{{ "My Packages" | tr }}</h2>
+            <hr>
+            <p><a href="/packages/?SeB=m&K={{ request.user.Username }}">{{ "Search for packages I maintain" | tr }}</a>.</p>
+
+            {% if not packages %}
+                <p class="comment">{{ "No packages found." | tr }}</p>
+            {% else %}
+                <div class="search-results">
+                    {% include "partials/packages/search_results.html" %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="item">
+            <h2>{{ "Co-Maintained Packages" | tr }}</h2>
+            <hr>
+            <p><a href="/packages/?SeB=c&K={{ request.user.Username }}">{{ "Search for packages I co-maintain" | tr }}</a>.</p>
+
+            {% if not comaintained %}
+                <p class="comment">{{ "No packages matched your search criteria." | tr }}</p>
+            {% else %}
+                {% with packages = comaintained %}
+                    <div class="search-results">
+                        {% include "partials/packages/search_results.html" %}
+                    </div>
+                {% endwith %}
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}

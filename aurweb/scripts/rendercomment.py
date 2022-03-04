@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import sys
-
 from xml.etree.ElementTree import Element
 
 import bleach
@@ -9,7 +8,6 @@ import markdown
 import pygit2
 
 import aurweb.config
-
 from aurweb import db, logging, util
 from aurweb.models import PackageComment
 
@@ -24,13 +22,15 @@ class LinkifyExtension(markdown.extensions.Extension):
 
     # Captures http(s) and ftp URLs until the first non URL-ish character.
     # Excludes trailing punctuation.
-    _urlre = (r'(\b(?:https?|ftp):\/\/[\w\/\#~:.?+=&%@!\-;,]+?'
-              r'(?=[.:?\-;,]*(?:[^\w\/\#~:.?+=&%@!\-;,]|$)))')
+    _urlre = (
+        r"(\b(?:https?|ftp):\/\/[\w\/\#~:.?+=&%@!\-;,]+?"
+        r"(?=[.:?\-;,]*(?:[^\w\/\#~:.?+=&%@!\-;,]|$)))"
+    )
 
     def extendMarkdown(self, md):
         processor = markdown.inlinepatterns.AutolinkInlineProcessor(self._urlre, md)
         # Register it right after the default <>-link processor (priority 120).
-        md.inlinePatterns.register(processor, 'linkify', 119)
+        md.inlinePatterns.register(processor, "linkify", 119)
 
 
 class FlysprayLinksInlineProcessor(markdown.inlinepatterns.InlineProcessor):
@@ -42,16 +42,16 @@ class FlysprayLinksInlineProcessor(markdown.inlinepatterns.InlineProcessor):
     """
 
     def handleMatch(self, m, data):
-        el = Element('a')
-        el.set('href', f'https://bugs.archlinux.org/task/{m.group(1)}')
+        el = Element("a")
+        el.set("href", f"https://bugs.archlinux.org/task/{m.group(1)}")
         el.text = markdown.util.AtomicString(m.group(0))
         return (el, m.start(0), m.end(0))
 
 
 class FlysprayLinksExtension(markdown.extensions.Extension):
     def extendMarkdown(self, md):
-        processor = FlysprayLinksInlineProcessor(r'\bFS#(\d+)\b', md)
-        md.inlinePatterns.register(processor, 'flyspray-links', 118)
+        processor = FlysprayLinksInlineProcessor(r"\bFS#(\d+)\b", md)
+        md.inlinePatterns.register(processor, "flyspray-links", 118)
 
 
 class GitCommitsInlineProcessor(markdown.inlinepatterns.InlineProcessor):
@@ -64,10 +64,10 @@ class GitCommitsInlineProcessor(markdown.inlinepatterns.InlineProcessor):
     """
 
     def __init__(self, md, head):
-        repo_path = aurweb.config.get('serve', 'repo-path')
+        repo_path = aurweb.config.get("serve", "repo-path")
         self._repo = pygit2.Repository(repo_path)
         self._head = head
-        super().__init__(r'\b([0-9a-f]{7,40})\b', md)
+        super().__init__(r"\b([0-9a-f]{7,40})\b", md)
 
     def handleMatch(self, m, data):
         oid = m.group(1)
@@ -75,10 +75,10 @@ class GitCommitsInlineProcessor(markdown.inlinepatterns.InlineProcessor):
             # Unkwown OID; preserve the orginal text.
             return (None, None, None)
 
-        el = Element('a')
+        el = Element("a")
         commit_uri = aurweb.config.get("options", "commit_uri")
         prefixlen = util.git_search(self._repo, oid)
-        el.set('href', commit_uri % (self._head, oid[:prefixlen]))
+        el.set("href", commit_uri % (self._head, oid[:prefixlen]))
         el.text = markdown.util.AtomicString(oid[:prefixlen])
         return (el, m.start(0), m.end(0))
 
@@ -93,7 +93,7 @@ class GitCommitsExtension(markdown.extensions.Extension):
     def extendMarkdown(self, md):
         try:
             processor = GitCommitsInlineProcessor(md, self._head)
-            md.inlinePatterns.register(processor, 'git-commits', 117)
+            md.inlinePatterns.register(processor, "git-commits", 117)
         except pygit2.GitError:
             logger.error(f"No git repository found for '{self._head}'.")
 
@@ -101,16 +101,16 @@ class GitCommitsExtension(markdown.extensions.Extension):
 class HeadingTreeprocessor(markdown.treeprocessors.Treeprocessor):
     def run(self, doc):
         for elem in doc:
-            if elem.tag == 'h1':
-                elem.tag = 'h5'
-            elif elem.tag in ['h2', 'h3', 'h4', 'h5']:
-                elem.tag = 'h6'
+            if elem.tag == "h1":
+                elem.tag = "h5"
+            elif elem.tag in ["h2", "h3", "h4", "h5"]:
+                elem.tag = "h6"
 
 
 class HeadingExtension(markdown.extensions.Extension):
     def extendMarkdown(self, md):
         # Priority doesn't matter since we don't conflict with other processors.
-        md.treeprocessors.register(HeadingTreeprocessor(md), 'heading', 30)
+        md.treeprocessors.register(HeadingTreeprocessor(md), "heading", 30)
 
 
 def save_rendered_comment(comment: PackageComment, html: str):
@@ -126,17 +126,31 @@ def update_comment_render(comment: PackageComment) -> None:
     text = comment.Comments
     pkgbasename = comment.PackageBase.Name
 
-    html = markdown.markdown(text, extensions=[
-        'fenced_code',
-        LinkifyExtension(),
-        FlysprayLinksExtension(),
-        GitCommitsExtension(pkgbasename),
-        HeadingExtension()
-    ])
+    html = markdown.markdown(
+        text,
+        extensions=[
+            "fenced_code",
+            LinkifyExtension(),
+            FlysprayLinksExtension(),
+            GitCommitsExtension(pkgbasename),
+            HeadingExtension(),
+        ],
+    )
 
-    allowed_tags = (bleach.sanitizer.ALLOWED_TAGS
-                    + ['p', 'pre', 'h4', 'h5', 'h6', 'br', 'hr'])
-    html = bleach.clean(html, tags=allowed_tags)
+    allowed_tags = bleach.sanitizer.ALLOWED_TAGS + [
+        "p",
+        "pre",
+        "h4",
+        "h5",
+        "h6",
+        "br",
+        "hr",
+    ]
+    bleach.sanitizer.ALLOWED_ATTRIBUTES["code"] = ["class"]
+
+    html = bleach.clean(
+        html, tags=allowed_tags, attributes=bleach.sanitizer.ALLOWED_ATTRIBUTES
+    )
     save_rendered_comment(comment, html)
     db.refresh(comment)
 
@@ -144,11 +158,9 @@ def update_comment_render(comment: PackageComment) -> None:
 def main():
     db.get_engine()
     comment_id = int(sys.argv[1])
-    comment = db.query(PackageComment).filter(
-        PackageComment.ID == comment_id
-    ).first()
+    comment = db.query(PackageComment).filter(PackageComment.ID == comment_id).first()
     update_comment_render(comment)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

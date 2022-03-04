@@ -5,10 +5,15 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Form, Request, Response
 
 import aurweb.filters  # noqa: F401
-
 from aurweb import config, db, defaults, logging, models, util
 from aurweb.auth import creds, requires_auth
 from aurweb.exceptions import InvariantError
+from aurweb.models.dependency_type import (
+    CHECKDEPENDS_ID,
+    DEPENDS_ID,
+    MAKEDEPENDS_ID,
+    OPTDEPENDS_ID,
+)
 from aurweb.models.relation_type import CONFLICTS_ID, PROVIDES_ID, REPLACES_ID
 from aurweb.packages import util as pkgutil
 from aurweb.packages.search import PackageSearch
@@ -21,15 +26,17 @@ logger = logging.get_logger(__name__)
 router = APIRouter()
 
 
-async def packages_get(request: Request, context: Dict[str, Any],
-                       status_code: HTTPStatus = HTTPStatus.OK):
+async def packages_get(
+    request: Request, context: Dict[str, Any], status_code: HTTPStatus = HTTPStatus.OK
+):
     # Query parameters used in this request.
     context["q"] = dict(request.query_params)
 
     # Per page and offset.
     offset, per_page = util.sanitize_params(
         request.query_params.get("O", defaults.O),
-        request.query_params.get("PP", defaults.PP))
+        request.query_params.get("PP", defaults.PP),
+    )
     context["O"] = offset
     context["PP"] = per_page
 
@@ -80,8 +87,7 @@ async def packages_get(request: Request, context: Dict[str, Any],
     if submit == "Orphans":
         # If the user clicked the "Orphans" button, we only want
         # orphaned packages.
-        search.query = search.query.filter(
-            models.PackageBase.MaintainerUID.is_(None))
+        search.query = search.query.filter(models.PackageBase.MaintainerUID.is_(None))
 
     # Apply user-specified specified sort column and ordering.
     search.sort_by(sort_by, sort_order)
@@ -105,15 +111,16 @@ async def packages_get(request: Request, context: Dict[str, Any],
         models.PackageBase.OutOfDateTS,
         models.User.Username.label("Maintainer"),
         models.PackageVote.PackageBaseID.label("Voted"),
-        models.PackageNotification.PackageBaseID.label("Notify")
+        models.PackageNotification.PackageBaseID.label("Notify"),
     )
 
     packages = results.limit(per_page).offset(offset)
     context["packages"] = packages
     context["packages_count"] = num_packages
 
-    return render_template(request, "packages/index.html", context,
-                           status_code=status_code)
+    return render_template(
+        request, "packages/index.html", context, status_code=status_code
+    )
 
 
 @router.get("/packages")
@@ -144,41 +151,67 @@ async def package(request: Request, name: str) -> Response:
 
     # Package sources.
     context["sources"] = pkg.package_sources.order_by(
-        models.PackageSource.Source.asc()).all()
+        models.PackageSource.Source.asc()
+    ).all()
 
     # Package dependencies.
     max_depends = config.getint("options", "max_depends")
-    context["dependencies"] = pkg.package_dependencies.order_by(
-        models.PackageDependency.DepTypeID.asc(),
-        models.PackageDependency.DepName.asc()
-    ).limit(max_depends).all()
+    dependencies = (
+        pkg.package_dependencies.order_by(
+            models.PackageDependency.DepTypeID.asc(),
+            models.PackageDependency.DepName.asc(),
+        )
+        .limit(max_depends)
+        .all()
+    )
+
+    context["depends"] = []
+    context["optdepends"] = []
+    context["makedepends"] = []
+    context["checkdepends"] = []
+
+    for dep in dependencies:
+        if dep.DepTypeID == DEPENDS_ID:
+            context["depends"] += [dep]
+        elif dep.DepTypeID == OPTDEPENDS_ID:
+            context["optdepends"] += [dep]
+        elif dep.DepTypeID == MAKEDEPENDS_ID:
+            context["makedepends"] += [dep]
+        elif dep.DepTypeID == CHECKDEPENDS_ID:
+            context["checkdepends"] += [dep]
 
     # Package requirements (other packages depend on this one).
     context["required_by"] = pkgutil.pkg_required(
-        pkg.Name, [p.RelName for p in rels_data.get("p", [])], max_depends)
+        pkg.Name, [p.RelName for p in rels_data.get("p", [])], max_depends
+    )
 
     context["licenses"] = pkg.package_licenses
 
-    conflicts = pkg.package_relations.filter(
-        models.PackageRelation.RelTypeID == CONFLICTS_ID
-    ).order_by(models.PackageRelation.RelName.asc())
+    conflicts = (
+        pkg.package_relations.filter(models.PackageRelation.RelTypeID == CONFLICTS_ID)
+        .order_by(models.PackageRelation.RelName.asc())
+        .all()
+    )
     context["conflicts"] = conflicts
 
-    provides = pkg.package_relations.filter(
-        models.PackageRelation.RelTypeID == PROVIDES_ID
-    ).order_by(models.PackageRelation.RelName.asc())
+    provides = (
+        pkg.package_relations.filter(models.PackageRelation.RelTypeID == PROVIDES_ID)
+        .order_by(models.PackageRelation.RelName.asc())
+        .all()
+    )
     context["provides"] = provides
 
-    replaces = pkg.package_relations.filter(
-        models.PackageRelation.RelTypeID == REPLACES_ID
-    ).order_by(models.PackageRelation.RelName.asc())
+    replaces = (
+        pkg.package_relations.filter(models.PackageRelation.RelTypeID == REPLACES_ID)
+        .order_by(models.PackageRelation.RelName.asc())
+        .all()
+    )
     context["replaces"] = replaces
 
     return render_template(request, "packages/show.html", context)
 
 
-async def packages_unflag(request: Request, package_ids: List[int] = [],
-                          **kwargs):
+async def packages_unflag(request: Request, package_ids: List[int] = [], **kwargs):
     if not package_ids:
         return (False, ["You did not select any packages to unflag."])
 
@@ -187,11 +220,11 @@ async def packages_unflag(request: Request, package_ids: List[int] = [],
     bases = set()
 
     package_ids = set(package_ids)  # Convert this to a set for O(1).
-    packages = db.query(models.Package).filter(
-        models.Package.ID.in_(package_ids)).all()
+    packages = db.query(models.Package).filter(models.Package.ID.in_(package_ids)).all()
     for pkg in packages:
         has_cred = request.user.has_credential(
-            creds.PKGBASE_UNFLAG, approved=[pkg.PackageBase.Flagger])
+            creds.PKGBASE_UNFLAG, approved=[pkg.PackageBase.Flagger]
+        )
         if not has_cred:
             return (False, ["You did not select any packages to unflag."])
 
@@ -203,20 +236,17 @@ async def packages_unflag(request: Request, package_ids: List[int] = [],
     return (True, ["The selected packages have been unflagged."])
 
 
-async def packages_notify(request: Request, package_ids: List[int] = [],
-                          **kwargs):
+async def packages_notify(request: Request, package_ids: List[int] = [], **kwargs):
     # In cases where we encounter errors with the request, we'll
     # use this error tuple as a return value.
     # TODO: This error does not yet have a translation.
-    error_tuple = (False,
-                   ["You did not select any packages to be notified about."])
+    error_tuple = (False, ["You did not select any packages to be notified about."])
     if not package_ids:
         return error_tuple
 
     bases = set()
     package_ids = set(package_ids)
-    packages = db.query(models.Package).filter(
-        models.Package.ID.in_(package_ids)).all()
+    packages = db.query(models.Package).filter(models.Package.ID.in_(package_ids)).all()
 
     for pkg in packages:
         if pkg.PackageBase not in bases:
@@ -224,9 +254,11 @@ async def packages_notify(request: Request, package_ids: List[int] = [],
 
     # Perform some checks on what the user selected for notify.
     for pkgbase in bases:
-        notif = db.query(pkgbase.notifications.filter(
-            models.PackageNotification.UserID == request.user.ID
-        ).exists()).scalar()
+        notif = db.query(
+            pkgbase.notifications.filter(
+                models.PackageNotification.UserID == request.user.ID
+            ).exists()
+        ).scalar()
         has_cred = request.user.has_credential(creds.PKGBASE_NOTIFY)
 
         # If the request user either does not have credentials
@@ -242,23 +274,20 @@ async def packages_notify(request: Request, package_ids: List[int] = [],
     return (True, ["The selected packages' notifications have been enabled."])
 
 
-async def packages_unnotify(request: Request, package_ids: List[int] = [],
-                            **kwargs):
+async def packages_unnotify(request: Request, package_ids: List[int] = [], **kwargs):
     if not package_ids:
         # TODO: This error does not yet have a translation.
-        return (False,
-                ["You did not select any packages for notification removal."])
+        return (False, ["You did not select any packages for notification removal."])
 
     # TODO: This error does not yet have a translation.
     error_tuple = (
         False,
-        ["A package you selected does not have notifications enabled."]
+        ["A package you selected does not have notifications enabled."],
     )
 
     bases = set()
     package_ids = set(package_ids)
-    packages = db.query(models.Package).filter(
-        models.Package.ID.in_(package_ids)).all()
+    packages = db.query(models.Package).filter(models.Package.ID.in_(package_ids)).all()
 
     for pkg in packages:
         if pkg.PackageBase not in bases:
@@ -266,9 +295,11 @@ async def packages_unnotify(request: Request, package_ids: List[int] = [],
 
     # Perform some checks on what the user selected for notify.
     for pkgbase in bases:
-        notif = db.query(pkgbase.notifications.filter(
-            models.PackageNotification.UserID == request.user.ID
-        ).exists()).scalar()
+        notif = db.query(
+            pkgbase.notifications.filter(
+                models.PackageNotification.UserID == request.user.ID
+            ).exists()
+        ).scalar()
         if not notif:
             return error_tuple
 
@@ -279,19 +310,24 @@ async def packages_unnotify(request: Request, package_ids: List[int] = [],
     return (True, ["The selected packages' notifications have been removed."])
 
 
-async def packages_adopt(request: Request, package_ids: List[int] = [],
-                         confirm: bool = False, **kwargs):
+async def packages_adopt(
+    request: Request, package_ids: List[int] = [], confirm: bool = False, **kwargs
+):
     if not package_ids:
         return (False, ["You did not select any packages to adopt."])
 
     if not confirm:
-        return (False, ["The selected packages have not been adopted, "
-                        "check the confirmation checkbox."])
+        return (
+            False,
+            [
+                "The selected packages have not been adopted, "
+                "check the confirmation checkbox."
+            ],
+        )
 
     bases = set()
     package_ids = set(package_ids)
-    packages = db.query(models.Package).filter(
-        models.Package.ID.in_(package_ids)).all()
+    packages = db.query(models.Package).filter(models.Package.ID.in_(package_ids)).all()
 
     for pkg in packages:
         if pkg.PackageBase not in bases:
@@ -302,8 +338,10 @@ async def packages_adopt(request: Request, package_ids: List[int] = [],
         has_cred = request.user.has_credential(creds.PKGBASE_ADOPT)
         if not (has_cred or not pkgbase.Maintainer):
             # TODO: This error needs to be translated.
-            return (False, ["You are not allowed to adopt one of the "
-                            "packages you selected."])
+            return (
+                False,
+                ["You are not allowed to adopt one of the " "packages you selected."],
+            )
 
     # Now, really adopt the bases.
     for pkgbase in bases:
@@ -312,8 +350,7 @@ async def packages_adopt(request: Request, package_ids: List[int] = [],
     return (True, ["The selected packages have been adopted."])
 
 
-def disown_all(request: Request, pkgbases: List[models.PackageBase]) \
-        -> List[str]:
+def disown_all(request: Request, pkgbases: List[models.PackageBase]) -> List[str]:
     errors = []
     for pkgbase in pkgbases:
         try:
@@ -323,19 +360,24 @@ def disown_all(request: Request, pkgbases: List[models.PackageBase]) \
     return errors
 
 
-async def packages_disown(request: Request, package_ids: List[int] = [],
-                          confirm: bool = False, **kwargs):
+async def packages_disown(
+    request: Request, package_ids: List[int] = [], confirm: bool = False, **kwargs
+):
     if not package_ids:
         return (False, ["You did not select any packages to disown."])
 
     if not confirm:
-        return (False, ["The selected packages have not been disowned, "
-                        "check the confirmation checkbox."])
+        return (
+            False,
+            [
+                "The selected packages have not been disowned, "
+                "check the confirmation checkbox."
+            ],
+        )
 
     bases = set()
     package_ids = set(package_ids)
-    packages = db.query(models.Package).filter(
-        models.Package.ID.in_(package_ids)).all()
+    packages = db.query(models.Package).filter(models.Package.ID.in_(package_ids)).all()
 
     for pkg in packages:
         if pkg.PackageBase not in bases:
@@ -343,12 +385,15 @@ async def packages_disown(request: Request, package_ids: List[int] = [],
 
     # Check that the user has credentials for every package they selected.
     for pkgbase in bases:
-        has_cred = request.user.has_credential(creds.PKGBASE_DISOWN,
-                                               approved=[pkgbase.Maintainer])
+        has_cred = request.user.has_credential(
+            creds.PKGBASE_DISOWN, approved=[pkgbase.Maintainer]
+        )
         if not has_cred:
             # TODO: This error needs to be translated.
-            return (False, ["You are not allowed to disown one "
-                            "of the packages you selected."])
+            return (
+                False,
+                ["You are not allowed to disown one " "of the packages you selected."],
+            )
 
     # Now, disown all the bases if we can.
     if errors := disown_all(request, bases):
@@ -357,23 +402,31 @@ async def packages_disown(request: Request, package_ids: List[int] = [],
     return (True, ["The selected packages have been disowned."])
 
 
-async def packages_delete(request: Request, package_ids: List[int] = [],
-                          confirm: bool = False, merge_into: str = str(),
-                          **kwargs):
+async def packages_delete(
+    request: Request,
+    package_ids: List[int] = [],
+    confirm: bool = False,
+    merge_into: str = str(),
+    **kwargs,
+):
     if not package_ids:
         return (False, ["You did not select any packages to delete."])
 
     if not confirm:
-        return (False, ["The selected packages have not been deleted, "
-                        "check the confirmation checkbox."])
+        return (
+            False,
+            [
+                "The selected packages have not been deleted, "
+                "check the confirmation checkbox."
+            ],
+        )
 
     if not request.user.has_credential(creds.PKGBASE_DELETE):
         return (False, ["You do not have permission to delete packages."])
 
     # set-ify package_ids and query the database for related records.
     package_ids = set(package_ids)
-    packages = db.query(models.Package).filter(
-        models.Package.ID.in_(package_ids)).all()
+    packages = db.query(models.Package).filter(models.Package.ID.in_(package_ids)).all()
 
     if len(packages) != len(package_ids):
         # Let the user know there was an issue with their input: they have
@@ -389,11 +442,14 @@ async def packages_delete(request: Request, package_ids: List[int] = [],
         notifs += pkgbase_actions.pkgbase_delete_instance(request, pkgbase)
 
     # Log out the fact that this happened for accountability.
-    logger.info(f"Privileged user '{request.user.Username}' deleted the "
-                f"following package bases: {str(deleted_bases)}.")
+    logger.info(
+        f"Privileged user '{request.user.Username}' deleted the "
+        f"following package bases: {str(deleted_bases)}."
+    )
 
     util.apply_all(notifs, lambda n: n.send())
     return (True, ["The selected packages have been deleted."])
+
 
 # A mapping of action string -> callback functions used within the
 # `packages_post` route below. We expect any action callback to
@@ -410,10 +466,12 @@ PACKAGE_ACTIONS = {
 
 @router.post("/packages")
 @requires_auth
-async def packages_post(request: Request,
-                        IDs: List[int] = Form(default=[]),
-                        action: str = Form(default=str()),
-                        confirm: bool = Form(default=False)):
+async def packages_post(
+    request: Request,
+    IDs: List[int] = Form(default=[]),
+    action: str = Form(default=str()),
+    confirm: bool = Form(default=False),
+):
 
     # If an invalid action is specified, just render GET /packages
     # with an BAD_REQUEST status_code.

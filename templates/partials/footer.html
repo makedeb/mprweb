@@ -1,18 +1,10 @@
-<div id="footer">
-    <p>
-        mprweb <a href="https://github.com/makedeb/mprweb/">{{ config.AURWEB_VERSION }}</a>
-        {% if commit_hash %}
-            -
-            {% if commit_url %}
-                <a href="{{ commit_url | format(commit_hash) }}">
-                    HEAD@{{ commit_hash }}
-                </a>
-            {% else %}
-                HEAD@{{ commit_hash }}
-            {% endif %}
-        {% endif %}
-    </p>
-    <p>Copyright &copy; 2021-{{ now.strftime("%Y") }} Hunter Wittenborn.</p>
-    <p>Copyright &copy; 2004-{{ now.strftime("%Y") }} aurweb Development Team.</p>
-    <p>{% trans %}MPR packages are user produced content. Any use of the provided files is at your own risk.{% endtrans %}</p>
-</div>
+<footer>
+	<div class="copyright">
+		<p>Copyright &copy; 2021-{{ now.strftime("%Y") }} makedeb Development Team.</p>
+	</div>
+	<div class="links">
+		<a href="/about">Instance Information</a>
+		<a href="https://docs.{{ makedeb_url }}">Docs</a>
+		<a href="https://github.com/makedeb">GitHub</a>
+	</div>
+</footer>

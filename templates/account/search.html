@@ -1,69 +1,103 @@
-{% extends "partials/layout.html" %}
+<!DOCTYPE html>
+	{% include "partials/head.html" %}
+	{% include "partials/navbar.html" %}
+	{% include "partials/archdev-navbar.html" %}
 
-{% block pageContent %}
     <div class="box">
         <h2>{{ "Accounts" | tr }}</h2>
         {{ "Use this form to search existing accounts." | tr }}
         <br />
         <br />
-        <form class="account-search-form" action="/accounts" method="post">
+        <form class="account-search-form" action="/accounts" method="get">
             <fieldset>
-                <p>
-                    <label for="id_username">{{ "Username" | tr }}:</label>
-                    <input type="text" size="30" maxlength="64" name="U"
-                           id="id_username" />
-                </p>
+                <div class="item">
+                    <label for="id_username">
+                        <h2>{{ "Username" | tr }}:</h2>
+                    </label>
+                    <input type="text" size="30" maxlength="64" name="U" id="id_username" />
+                </div>
 
-
-                <p>
-                    <label for="id_type">{{ "Account Type" | tr }}:</label>
+                <div class="item">
+                    <label for="id_type">
+                        <h2>{{ "Account Type" | tr }}:</h2>
+                    </label>
                     <select name="T" id="id_type">
-                        <option value="">{{ "Any type" | tr }}</option>
-                        <option value="u">{{ "Normal user" | tr }}</option>
-                        <option value="t">{{ "Trusted user" | tr }}</option>
-                        <option value="d">{{ "Developer" | tr }}</option>
-                        <option value="td">{{ "Trusted User & Developer" | tr }}</option>
+                        <option value="" {% if T == "" %}selected{% endif %}>{{ "Any type" | tr }}</option>
+                        <option value="u" {% if T == "u" %}selected{% endif %}>{{ "Normal user" | tr }}</option>
+                        <option value="t" {% if T == "t" %}selected{% endif %}>{{ "Trusted user" | tr }}</option>
+                        <option value="d" {% if T == "d" %}selected{% endif %}>{{ "Developer" | tr }}</option>
+                        <option value="td" {% if T == "td" %}selected{% endif %}>{{ "Trusted User & Developer" | tr }}</option>
                     </select>
-                </p>
-                <p>
-                <label for="id_suspended">{{ "Account Suspended" | tr }}:</label>
-                <input type="checkbox" name="S" id="id_suspended" />
-                </p>
-                <p>
-                    <label for="id_email">{{ "Email Address" | tr }}:</label>
-                    <input type="text" size="30" maxlength="64" name="E"
-                           id="id_email" />
-                </p>
-                <p>
-                    <label for="id_realname">{{ "Real Name" | tr }}:</label>
-                    <input type="text" size="30" maxlength="32" name="R"
-                           id="id_realname" />
-                </p>
-                <p>
-                    <label for="id_irc">{{ "IRC Nick" | tr }}:</label>
-                    <input type="text" size="30" maxlength="32" name="I"
-                           id="id_irc" />
-                </p>
-                <p>
-                    <label for="id_sortby">{{ "Sort by" | tr }}:</label>
+                </div>
+
+                <div class="item">
+                    <label for="id_suspended">{{ "Account Suspended" | tr }}:</label>
+                    <input class="checkbox" type="checkbox" name="S" id="id_suspended" />
+                </div>
+
+                <div class="item">
+                    <label for="id_email">
+                        <h2>{{ "Email Address" | tr }}:</h2>
+                    </label>
+                    <input type="text" size="30" maxlength="64" name="E" id="id_email" />
+                </div>
+
+                <div class="item">
+                    <label for="id_realname">
+                        <h2>{{ "Real Name" | tr }}:</h2>
+                    </label>
+                    <input type="text" size="30" maxlength="32" name="R" id="id_realname" />
+                </div>
+
+                <div class="item">
+                    <label for="id_irc">
+                        <h2>{{ "IRC Nick" | tr }}:</h2>
+                    </label>
+                    <input type="text" size="30" maxlength="32" name="I" id="id_irc" />
+                </div>
+
+                <div class="item">
+                    <label for="id_sortby">
+                        <h2>{{ "Sort by" | tr }}:</h2>
+                        </label>
                     <select name="SB" id="id_sortby">
-                        <option value="u">{{ "Username" | tr }}</option>
-                        <option value="t">{{ "Account Type" | tr }}</option>
-                        <option value="r">{{ "Real Name" | tr }}</option>
-                        <option value="i">{{ "IRC Nick" | tr }}</option>
+                        <option value="u" {% if SB == "u" %}selected{% endif %}>{{ "Username" | tr }}</option>
+                        <option value="t" {% if SB == "t" %}selected{% endif %}>{{ "Account Type" | tr }}</option>
+                        <option value="r" {% if SB == "r" %}selected{% endif %}>{{ "Real Name" | tr }}</option>
+                        <option value="i" {% if SB == "i" %}selected{% endif %}>{{ "IRC Nick" | tr }}</option>
                     </select>
-                </p>
-                <p>
+                </div>
+
+                <div class="item">
+                    <label for "id_per_page">
+                        <h2>{{ "Per page" | tr }}</h2>
+                    </label>
+                    <select name='PP'>
+                        <option value="5" {% if PP == 5 %}selected{% endif %}>5</option>
+                        <option value="10" {% if PP == 10 %}selected{% endif %}>10</option>
+                        <option value="20" {% if PP == 20 %}selected{% endif %}>20</option>
+                    </select>
+                </div>
+
+                <div class="item">
                     <label></label>
-                    <button type="submit" class="button">
-                        {{ "Search" | tr }}
-                    </button>
+                    <input class="button" type="submit" value="{{ "Search" | tr }}">
                     &nbsp;
-                    <button type="reset" class="button">
-                        {{ "Reset" | tr }}
-                    </button>
-                </p>
+                    <input class="button" type="reset" value="{{ "Reset" | tr }}">
+                </div>
             </fieldset>
         </form>
     </div>
-{% endblock %}
+
+    {% with total=total_users, prefix="/accounts" %}
+    {% include "partials/pager.html" %}
+    {% endwith %}
+    
+    <div id="search-results">
+        {% include "partials/account/results.html" %}
+    </div>
+
+    {% include "partials/footer.html" %}
+</html>
+
+{# vim: set ts=4 sw=4 expandtab: #}
