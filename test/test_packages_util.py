@@ -65,6 +65,7 @@ def test_updated_packages(maintainer: User, package: Package):
     expected = {
         "Name": package.Name,
         "Version": package.Version,
+        "Description": package.Description,
         "PackageBase": {"ModifiedTS": package.PackageBase.ModifiedTS},
     }
 
