@@ -24,10 +24,8 @@ sed -i "s;YOUR_AUR_ROOT;$(pwd);g" conf/config
 ./docker/test-mysql-entrypoint.sh
 make -C po all install
 make -C doc
-make -C test clean
 make -C test sh
 pytest
-make -C test coverage
 black ./
 flake8 --count ./
 isort --check-only ./
