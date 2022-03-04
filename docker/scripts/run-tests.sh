@@ -3,7 +3,7 @@ set -eou pipefail
 dir=$(dirname $0)
 
 # Run sharness tests.
-#bash $dir/run-sharness.sh
+bash $dir/run-sharness.sh
 
 # Run Python tests with MariaDB database.
 # Pass --silence to avoid reporting coverage. We will do that below.
