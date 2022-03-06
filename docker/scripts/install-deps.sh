@@ -15,11 +15,12 @@ pacman -Sy --noconfirm --noprogressbar archlinux-keyring
 pacman -Syu --noconfirm --noprogressbar \
     --cachedir .pkg-cache git gpgme nginx redis openssh \
     mariadb mariadb-libs cgit-aurweb uwsgi uwsgi-plugin-cgi \
-    php php-fpm memcached php-memcached python-pip pyalpm \
-    python-srcinfo curl libeatmydata cronie step-cli step-ca \
-    words fortune-mod asciidoc npm
+    memcached python-pip pyalpm python-srcinfo curl libeatmydata \
+    cronie step-cli step-ca words fortune-mod asciidoc npm
 
 # Install needed npm packages.
 npm install -g sass
 
 exec "$@"
+
+# vim: set sw=4 expandtab:

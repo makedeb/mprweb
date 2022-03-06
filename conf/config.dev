@@ -34,10 +34,6 @@ client_secret =
 
 [auth]
 
-[php]
-bind_address = 127.0.0.1:8081
-htmldir = YOUR_AUR_ROOT/web/html
-
 [fastapi]
 bind_address = 127.0.0.1:8082
 session_secret = secret

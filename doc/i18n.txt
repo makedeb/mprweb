@@ -36,9 +36,6 @@ $ msginit -l <locale> -o <locale>.po -i aurweb.pot
 
 $ poedit <locale>.po
 
-5. If you have a working aurweb setup, add a line for the new translation in
-   "web/lib/config.inc.php.proto" and test if everything looks right.
-
 6. Upload the newly created ".po" file to Transifex. If you don't like the web
    interface, you can also use transifex-client to do that (see below).
 
