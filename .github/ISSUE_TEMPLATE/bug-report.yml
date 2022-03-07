@@ -5,6 +5,6 @@ body:
   - type: textarea
     attributes:
       label: Issue
-      placeholder: Type a complete description of your issue
+      placeholder: Type a complete description of your issue.
     validations:
       required: true
