@@ -69,8 +69,8 @@ def create_pkgbase(pkgbase, user):
     cur = conn.execute(
         "INSERT INTO PackageBases (Name, SubmittedTS, "
         + "ModifiedTS, SubmitterUID, MaintainerUID, "
-        + "FlaggerComment) VALUES (?, ?, ?, ?, ?, '')",
-        [pkgbase, now, now, userid, userid],
+        + "FlaggerComment, RepologyCheck) VALUES (?, ?, ?, ?, ?, '', ?)",
+        [pkgbase, now, now, userid, userid, 0],
     )
     pkgbase_id = cur.lastrowid
 
