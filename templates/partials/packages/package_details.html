@@ -20,8 +20,18 @@
 
         <div class="sections">
             <h2 class="text active package-details">Package Details</h2>
-            <h2 class="text package-actions">Package Actions</h2>
+            <h2 class="text package-actions">
+                Package Actions
+
+                {% if out_of_date and request.user.Username == pkgbase.Maintainer.Username %}
+                    <span class="notify-dot"></span>
+                {% endif %}
+            </h2>
             <h2 class="text dependency-information">Dependency Information</h2>
+
+            {% if request.user.Username == pkgbase.Maintainer.Username %}
+                <h2 class="text integrations">Integrations</h2>
+            {% endif %}
         </div>
         
         <div class="pages">
@@ -146,8 +156,12 @@
                     <p><a href="/pkgbase/{{ pkgbase.Name }}/flag">{{ "Flag package out-of-date" | tr }}</a></p>
                 {% else %}
                     <p><a href="/pkgbase/{{ pkgbase.Name }}/flag-comment">
+                        {% if request.user.Username == pkgbase.Maintainer.Username %}<strong>{% endif %}
+
                         {% set ood_ts = pkgbase.OutOfDateTS | dt | as_timezone(timezone) %}
                         {{ "Flagged out of date (%s)" | tr | format(ood_ts.strftime("%Y-%m-%d")) }}
+                        
+                        {% if request.user.Username == pkgbase.Maintainer.Username %}</strong>{% endif %}
                     </a></p>
                     <form action="/pkgbase/{{ pkgbase.Name }}/unflag" method="post">
                         <input type="submit" name="do_UnFlag" value="{{ "Unflag package" | tr }}" />
@@ -182,7 +196,7 @@
                     <p class="comment">{{ requests | tn("%d pending request", "%d pending requests") | format(requests) }}</p>
                 {% endif %}
 
-                <p><a href="/pkgbase/{{ pkgbase.Name }}/request">{{ "Submit Request" | tr }}</a</p>
+                <p><a href="/pkgbase/{{ pkgbase.Name }}/request">{{ "Submit Request" | tr }}</a></p>
                 
                 {% if request.user.has_credential(creds.PKGBASE_DELETE) %}
                     <p><a href="/pkgbase/{{ pkgbase.Name }}/delete">{{ "Delete Package" | tr }}</a></p>
@@ -293,6 +307,13 @@
                         <p><em>None</em></p>
                     {% endif %}
                 </div>
+
+            </div>
+
+            <div class="hidden integrations">
+                <form action="/pkgbase/{{ pkgbase.Name }}/repology-check" method="post">
+                    <input type="submit" name="repology_check" value="{% if pkgbase.RepologyCheck == 0 %}Enable{% else %}Disable{%endif%} Repology Out of Date Notifications"/>
+                </form>
             </div>
         </div>
 </div>

@@ -46,6 +46,8 @@ salt_rounds = 12
 redis_address = redis://localhost
 ; Toggles traceback display in templates/errors/500.html.
 traceback = 0
+; Bot user for actions such as automatic out of date notifications.
+bot-user = kavplex
 
 [ratelimit]
 request_limit = 4000

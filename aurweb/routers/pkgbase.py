@@ -455,7 +455,9 @@ async def pkgbase_unvote(request: Request, name: str):
 async def pkgbase_notify(request: Request, name: str):
     pkgbase = get_pkg_or_base(name, PackageBase)
     actions.pkgbase_notify_instance(request, pkgbase)
-    return RedirectResponse(f"/pkgbase/{name}", status_code=HTTPStatus.SEE_OTHER)
+    return RedirectResponse(
+        f"/pkgbase/{name}/#package-actions", status_code=HTTPStatus.SEE_OTHER
+    )
 
 
 @router.post("/pkgbase/{name}/unnotify")
@@ -463,7 +465,9 @@ async def pkgbase_notify(request: Request, name: str):
 async def pkgbase_unnotify(request: Request, name: str):
     pkgbase = get_pkg_or_base(name, PackageBase)
     actions.pkgbase_unnotify_instance(request, pkgbase)
-    return RedirectResponse(f"/pkgbase/{name}", status_code=HTTPStatus.SEE_OTHER)
+    return RedirectResponse(
+        f"/pkgbase/{name}/#package-actions", status_code=HTTPStatus.SEE_OTHER
+    )
 
 
 @router.post("/pkgbase/{name}/unflag")
@@ -849,6 +853,33 @@ async def pkgbase_merge_post(
 
     # Redirect to the newly merged into package.
     return RedirectResponse(next, status_code=HTTPStatus.SEE_OTHER)
+
+
+@router.post("/pkgbase/{name}/repology-check")
+@requires_auth
+async def repology_check(
+    request: Request, name: str, repology_check: str = Form(default=str())
+):
+    enable_str = "Enable Repology Out of Date Notifications"
+
+    pkgbase = get_pkg_or_base(name, Package).PackageBase
+
+    if (request.user != pkgbase.Maintainer) and (
+        not request.user.has_credential(creds.PKGBASE_REPOLOGY_CHECK)
+    ):
+        return RedirectResponse(
+            f"/pkgbase/{pkgbase.Name}/#integrations", status_code=HTTPStatus.SEE_OTHER
+        )
+
+    with db.begin():
+        if repology_check == enable_str:
+            pkgbase.RepologyCheck = 1
+        else:
+            pkgbase.RepologyCheck = 0
+
+    return RedirectResponse(
+        f"/pkgbase/{pkgbase.Name}/#integrations", status_code=HTTPStatus.SEE_OTHER
+    )
 
 
 # Git routes.

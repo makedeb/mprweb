@@ -39,6 +39,16 @@
 				cursor: pointer;
 			}
 		}
+
+		.package-actions .notify-dot {
+			height: 0.6em;
+			width: 0.6em;
+			display: inline-block;
+			background-color: $light-orange;
+			border-radius: 50%;
+			margin-left: 0.2em;
+			animation: blink 1.5s infinite;
+		}
 	}
 
 	.pages {
@@ -85,7 +95,7 @@
 			}
 		}
 
-		.package-actions, .git-tree, .commit-log {
+		.package-actions, .git-tree, .commit-log, .integrations {
 			line-height: 1.6em;
 			max-width: 20em;
 			margin: 0 auto;

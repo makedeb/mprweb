@@ -34,6 +34,7 @@ TU_ADD_VOTE = 19
 TU_LIST_VOTES = 20
 TU_VOTE = 21
 PKGBASE_MERGE = 29
+PKGBASE_REPOLOGY_CHECK = 30
 
 user_developer_or_trusted_user = set(
     [USER_ID, TRUSTED_USER_ID, DEVELOPER_ID, TRUSTED_USER_AND_DEV_ID]
@@ -64,6 +65,7 @@ cred_filters = {
     PKGBASE_DISOWN: trusted_user_or_dev,
     PKGBASE_LIST_VOTERS: trusted_user_or_dev,
     PKGBASE_UNFLAG: trusted_user_or_dev,
+    PKGBASE_REPOLOGY_CHECK: trusted_user,
     PKGREQ_CLOSE: trusted_user_or_dev,
     PKGREQ_LIST: trusted_user_or_dev,
     TU_ADD_VOTE: trusted_user,
