@@ -176,6 +176,7 @@ services:
       - ./web/html:/aurweb/web/html
       - ./web/template:/aurweb/web/template
       - ./web/lib:/aurweb/web/lib
+      - ./schema:/aurweb/schema
       - ./templates:/aurweb/templates
       - ./data/git_data:/aurweb/aur.git
       - mariadb_run:/var/run/mysqld
