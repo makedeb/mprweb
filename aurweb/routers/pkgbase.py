@@ -4,6 +4,7 @@ import pygit2
 from fastapi import APIRouter, Form, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy import and_
+from typing import Optional
 
 from aurweb import config, db, l10n, logging, templates, time, util
 from aurweb.auth import creds, requires_auth
@@ -883,6 +884,32 @@ async def repology_check(
 
 
 # Git routes.
+def get_git_file(filename, branch_name):
+    # Get the needed git information.
+    repo = pygit2.Repository("/aurweb/aur.git/")
+
+    # Return an error if we couldn't find the branch.
+    try:
+        repo.revparse_single(branch_name)
+    except KeyError:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
+
+    branch = repo.revparse_single(branch_name)
+
+    # Get the requested file.
+    requested_file = None
+
+    for tree_file in branch.tree:
+        if tree_file.name == filename:
+            requested_file = tree_file
+            break
+
+    # If we couldn't find the file, return an error.
+    if requested_file is None:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
+
+    return requested_file
+
 @router.get("/pkgbase/{name}/git")
 async def git_info(request: Request, name: str):
     pkg = get_pkg_or_base(name, Package)
@@ -957,31 +984,7 @@ async def git_tree(request: Request, name: str, file: str):
     pkgbase = pkg.PackageBase
     context = pkgbaseutil.make_context(request, pkgbase)
 
-    # Get the needed git information.
-    repo = pygit2.Repository("/aurweb/aur.git/")
-
-    # Return an error if we couldn't find the branch.
-    try:
-        repo.revparse_single(name) is not None
-    except KeyError:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-
-    branch = repo.revparse_single(name)
-
-    # Get the requested file.
-    requested_file = None
-
-    for tree_file in branch.tree:
-        if tree_file.name == file:
-            requested_file = tree_file
-            break
-
-    # If we couldn't find the file, return an error.
-    if requested_file is None:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-
-    file_data = requested_file
-
+    file_data = get_git_file(file, name)
     context["pkg"] = pkg
     context["pkgbase"] = pkgbase
     context["file"] = file
@@ -989,6 +992,15 @@ async def git_tree(request: Request, name: str, file: str):
 
     return render_template(request, "pkgbase/git/tree.html", context)
 
+
+@router.get("/pkgbase/{name}/git/raw/{file}")
+async def git_raw(request: Request, name: str, file: str):
+    pkg = get_pkg_or_base(name, Package)
+    pkgbase = pkg.PackageBase
+    context = pkgbaseutil.make_context(request, pkgbase)
+
+    file_data = get_git_file(file, name)
+    return Response(content=file_data.data.decode())
 
 @router.get("/pkgbase/{name}/git/commit/{commit_hash}")
 async def git_commit(request: Request, name: str, commit_hash: str):
