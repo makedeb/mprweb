@@ -4,7 +4,6 @@ import pygit2
 from fastapi import APIRouter, Form, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy import and_
-from typing import Optional
 
 from aurweb import config, db, l10n, logging, templates, time, util
 from aurweb.auth import creds, requires_auth
@@ -910,6 +909,7 @@ def get_git_file(filename, branch_name):
 
     return requested_file
 
+
 @router.get("/pkgbase/{name}/git")
 async def git_info(request: Request, name: str):
     pkg = get_pkg_or_base(name, Package)
@@ -995,12 +995,9 @@ async def git_tree(request: Request, name: str, file: str):
 
 @router.get("/pkgbase/{name}/git/raw/{file}")
 async def git_raw(request: Request, name: str, file: str):
-    pkg = get_pkg_or_base(name, Package)
-    pkgbase = pkg.PackageBase
-    context = pkgbaseutil.make_context(request, pkgbase)
-
     file_data = get_git_file(file, name)
     return Response(content=file_data.data.decode())
+
 
 @router.get("/pkgbase/{name}/git/commit/{commit_hash}")
 async def git_commit(request: Request, name: str, commit_hash: str):
