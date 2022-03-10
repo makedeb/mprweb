@@ -30,35 +30,33 @@ async def oodcheck():
     repology_packages = orjson.loads(repology_packages)
 
     for pkgbase in packages:
-        repology_pkg = repology_packages.get(pkgbase.Name)
+        for pkg_key in repology_packages.keys():
+            repology_pkg = repology_packages[pkg_key]
 
-        if repology_pkg is None:
-            continue
-
-        for repo in repology_pkg:
-            if repo["repo"] != "mpr":
-                continue
-            elif repo["srcname"] != pkgbase.Name:
-                continue
-
-            if repo["status"] == "outdated":
-                now = time.utcnow()
-
-                # Don't mark the package as out of date if it already is such.
-                if pkgbase.Flagger is not None:
+            for repo in repology_pkg:
+                if repo["repo"] != "mpr":
+                    continue
+                elif repo["srcname"] != pkgbase.Name:
                     continue
 
-                # Mark the package as out of date in the db.
-                with db.begin():
-                    pkgbase.OutOfDateTS = now
-                    pkgbase.Flagger = bot
-                    pkgbase.FlaggerComment = (
-                        "Package marked out of date on Repology - "
-                        + f"https://{repology_url}/project/{pkgbase.Name}/versions"
-                    )
+                if repo["status"] == "outdated":
+                    now = time.utcnow()
 
-                # Send a notification to the maintainer and comaintainers if needed.
-                FlagNotification(pkgbase.Maintainer.ID, pkgbase.ID)
+                    # Don't mark the package as out of date if it already is such.
+                    if pkgbase.Flagger is not None:
+                        continue
+
+                    # Mark the package as out of date in the db.
+                    with db.begin():
+                        pkgbase.OutOfDateTS = now
+                        pkgbase.Flagger = bot
+                        pkgbase.FlaggerComment = (
+                            "Package marked out of date on Repology - "
+                            + f"https://{repology_url}/project/{pkgbase.Name}/versions"
+                        )
+
+                    # Send a notification to the maintainer and comaintainers if needed.
+                    FlagNotification(pkgbase.Maintainer.ID, pkgbase.ID)
 
 
 def main():
