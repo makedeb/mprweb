@@ -106,6 +106,7 @@ services:
       mariadb_init:
         condition: service_started
     volumes:
+      - ./aurweb:/aurweb/aurweb
       - ./data/git_data:/aurweb/aur.git
       - ./data:/aurweb/data
       - ./docker:/docker

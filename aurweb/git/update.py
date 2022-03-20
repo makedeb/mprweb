@@ -11,7 +11,19 @@ import srcinfo.parse
 import srcinfo.utils
 
 import aurweb.config
-import aurweb.db
+from aurweb import db
+from aurweb.models.dependency_type import DependencyType
+from aurweb.models.license import License
+from aurweb.models.package import Package
+from aurweb.models.package_base import PackageBase
+from aurweb.models.package_blacklist import PackageBlacklist
+from aurweb.models.package_dependency import PackageDependency
+from aurweb.models.package_license import PackageLicense
+from aurweb.models.package_notification import PackageNotification
+from aurweb.models.package_relation import PackageRelation
+from aurweb.models.package_source import PackageSource
+from aurweb.models.relation_type import RelationType
+from aurweb.models.user import User
 
 notify_cmd = aurweb.config.get("notifications", "notify-cmd")
 
@@ -55,191 +67,188 @@ def parse_dep(depstring):
     return (depname, desc, depcond)
 
 
-def create_pkgbase(conn, pkgbase, user):
-    cur = conn.execute("SELECT ID FROM Users WHERE Username = ?", [user])
-    userid = cur.fetchone()[0]
-
+def create_pkgbase(pkgbase_name, user):
     now = int(time.time())
-    cur = conn.execute(
-        "INSERT INTO PackageBases (Name, SubmittedTS, "
-        + "ModifiedTS, SubmitterUID, MaintainerUID, "
-        + "FlaggerComment, RepologyCheck) VALUES (?, ?, ?, ?, ?, '', ?)",
-        [pkgbase, now, now, userid, userid, 0],
-    )
-    pkgbase_id = cur.lastrowid
 
-    cur = conn.execute(
-        "INSERT INTO PackageNotifications " + "(PackageBaseID, UserID) VALUES (?, ?)",
-        [pkgbase_id, userid],
-    )
-
-    conn.commit()
-
-    return pkgbase_id
-
-
-def save_metadata(metadata, conn, user):  # noqa: C901
-    # Obtain package base ID and previous maintainer.
-    pkgbase = metadata["pkgbase"]
-    cur = conn.execute(
-        "SELECT ID, MaintainerUID FROM PackageBases " "WHERE Name = ?", [pkgbase]
-    )
-    (pkgbase_id, maintainer_uid) = cur.fetchone()
-    was_orphan = not maintainer_uid
-
-    # Obtain the user ID of the new maintainer.
-    cur = conn.execute("SELECT ID FROM Users WHERE Username = ?", [user])
-    user_id = int(cur.fetchone()[0])
-
-    # Update package base details and delete current packages.
-    now = int(time.time())
-    conn.execute(
-        "UPDATE PackageBases SET ModifiedTS = ?, "
-        + "PackagerUID = ?, OutOfDateTS = NULL WHERE ID = ?",
-        [now, user_id, pkgbase_id],
-    )
-    conn.execute(
-        "UPDATE PackageBases SET MaintainerUID = ? "
-        + "WHERE ID = ? AND MaintainerUID IS NULL",
-        [user_id, pkgbase_id],
-    )
-    for table in ("Sources", "Depends", "Relations", "Licenses", "Groups"):
-        conn.execute(
-            "DELETE FROM Package"
-            + table
-            + " WHERE EXISTS ("
-            + "SELECT * FROM Packages "
-            + "WHERE Packages.PackageBaseID = ? AND "
-            + "Package"
-            + table
-            + ".PackageID = Packages.ID)",
-            [pkgbase_id],
+    with db.begin():
+        pkgbase = db.create(
+            PackageBase,
+            Name=pkgbase_name,
+            SubmittedTS=now,
+            ModifiedTS=now,
+            SubmitterUID=user.ID,
+            MaintainerUID=user.ID,
         )
-    conn.execute("DELETE FROM Packages WHERE PackageBaseID = ?", [pkgbase_id])
 
+    with db.begin():
+        db.create(PackageNotification, PackageBaseID=pkgbase.ID, UserID=user.ID)
+
+    return pkgbase
+
+
+def save_metadata(metadata, user):  # noqa: C901
+    with db.begin():
+        pkgbase = (
+            db.query(PackageBase)
+            .filter(PackageBase.Name == metadata["pkgbase"])
+            .first()
+        )
+        was_orphan = pkgbase.MaintainerUID is None
+
+        # Update package base details and delete current packages.
+        now = int(time.time())
+
+        pkgbase.ModifiedTS = (now,)
+        pkgbase.PackagerUID = (user.ID,)
+        pkgbase.OutOfDateTS = (None,)
+        pkgbase.FlaggerComment = ("",)
+        pkgbase.FlaggerUID = None
+
+        # If package is an orphan, set the maintainer to the pusher.
+        if was_orphan:
+            pkgbase.MaintainerUID = user.ID
+
+        # Delete all current metadata associated with each pkgname belonging to
+        # this pkgbase.
+        for pkgname in pkgbase.packages:
+            for table in (
+                PackageSource,
+                PackageDependency,
+                PackageRelation,
+                PackageLicense,
+            ):
+                matches = db.query(table).filter(table.PackageID == pkgname.ID).all()
+
+                for match in matches:
+                    db.delete(match)
+
+        # Delete all pkgnames associated with the pkgbase.
+        for pkgname in pkgbase.packages:
+            db.delete(pkgname)
+
+    # Create each specified pkgname.
     for pkgname in srcinfo.utils.get_package_names(metadata):
         pkginfo = srcinfo.utils.get_merged_package(pkgname, metadata)
 
+        # Get version.
         if "epoch" in pkginfo and int(pkginfo["epoch"]) > 0:
-            ver = "{:d}:{:s}-{:s}".format(
+            version = "{:d}:{:s}-{:s}".format(
                 int(pkginfo["epoch"]), pkginfo["pkgver"], pkginfo["pkgrel"]
             )
         else:
-            ver = "{:s}-{:s}".format(pkginfo["pkgver"], pkginfo["pkgrel"])
+            version = "{:s}-{:s}".format(pkginfo["pkgver"], pkginfo["pkgrel"])
 
+        # Set pkgdesc and url if not set.
         for field in ("pkgdesc", "url"):
             if field not in pkginfo:
                 pkginfo[field] = None
 
-        # Create a new package.
-        cur = conn.execute(
-            "INSERT INTO Packages (PackageBaseID, Name, "
-            + "Version, Description, URL) "
-            + "VALUES (?, ?, ?, ?, ?)",
-            [pkgbase_id, pkginfo["pkgname"], ver, pkginfo["pkgdesc"], pkginfo["url"]],
-        )
-        conn.commit()
-        pkgid = cur.lastrowid
+        # Create the pkgname.
+        with db.begin():
+            pkgname = db.create(
+                Package,
+                PackageBaseID=pkgbase.ID,
+                Name=pkginfo["pkgname"],
+                Version=version,
+                Description=pkginfo["pkgdesc"],
+                URL=pkginfo["url"],
+            )
 
         # Add package sources.
-        for source_info in extract_arch_fields(pkginfo, "source"):
-            conn.execute(
-                "INSERT INTO PackageSources (PackageID, Source, "
-                + "SourceArch) VALUES (?, ?, ?)",
-                [pkgid, source_info["value"], source_info["arch"]],
-            )
+        with db.begin():
+            for source_info in extract_arch_fields(pkginfo, "source"):
+                db.create(
+                    PackageSource,
+                    PackageID=pkgname.ID,
+                    Source=source_info["value"],
+                    SourceArch=source_info["arch"],
+                )
 
         # Add package dependencies.
-        for deptype in ("depends", "makedepends", "checkdepends", "optdepends"):
-            cur = conn.execute(
-                "SELECT ID FROM DependencyTypes WHERE Name = ?", [deptype]
-            )
-            deptypeid = cur.fetchone()[0]
-            for dep_info in extract_arch_fields(pkginfo, deptype):
-                depname, depdesc, depcond = parse_dep(dep_info["value"])
-                deparch = dep_info["arch"]
-                conn.execute(
-                    "INSERT INTO PackageDepends (PackageID, "
-                    + "DepTypeID, DepName, DepDesc, DepCondition, "
-                    + "DepArch) VALUES (?, ?, ?, ?, ?, ?)",
-                    [pkgid, deptypeid, depname, depdesc, depcond, deparch],
+        with db.begin():
+            for deptype in ("depends", "makedepends", "checkdepends", "optdepends"):
+                dep_id = (
+                    db.query(DependencyType)
+                    .filter(DependencyType.Name == deptype)
+                    .first()
+                    .ID
                 )
 
+                for dep_info in extract_arch_fields(pkginfo, deptype):
+                    depname, depdesc, depcond = parse_dep(dep_info["value"])
+                    deparch = dep_info["arch"]
+
+                    db.create(
+                        PackageDependency,
+                        PackageID=pkgname.ID,
+                        DepTypeID=dep_id,
+                        DepName=depname,
+                        DepDesc=depdesc,
+                        DepCondition=depcond,
+                        DepArch=deparch,
+                    )
+
         # Add package relations (conflicts, provides, replaces).
-        for reltype in ("conflicts", "provides", "replaces"):
-            cur = conn.execute("SELECT ID FROM RelationTypes WHERE Name = ?", [reltype])
-            reltypeid = cur.fetchone()[0]
-            for rel_info in extract_arch_fields(pkginfo, reltype):
-                relname, _, relcond = parse_dep(rel_info["value"])
-                relarch = rel_info["arch"]
-                conn.execute(
-                    "INSERT INTO PackageRelations (PackageID, "
-                    + "RelTypeID, RelName, RelCondition, RelArch) "
-                    + "VALUES (?, ?, ?, ?, ?)",
-                    [pkgid, reltypeid, relname, relcond, relarch],
+        with db.begin():
+            for reltype in ("conflicts", "provides", "replaces"):
+                rel_id = (
+                    db.query(RelationType)
+                    .filter(RelationType.Name == reltype)
+                    .first()
+                    .ID
                 )
+
+                for rel_info in extract_arch_fields(pkginfo, reltype):
+                    relname, _, relcond = parse_dep(rel_info["value"])
+                    relarch = rel_info["arch"]
+
+                    db.create(
+                        PackageRelation,
+                        PackageID=pkgname.ID,
+                        RelTypeID=rel_id,
+                        RelName=relname,
+                        RelCondition=relcond,
+                        RelArch=relarch,
+                    )
 
         # Add package licenses.
         if "license" in pkginfo:
-            for license in pkginfo["license"]:
-                cur = conn.execute("SELECT ID FROM Licenses WHERE Name = ?", [license])
-                row = cur.fetchone()
-                if row:
-                    licenseid = row[0]
-                else:
-                    cur = conn.execute(
-                        "INSERT INTO Licenses (Name) " + "VALUES (?)", [license]
-                    )
-                    conn.commit()
-                    licenseid = cur.lastrowid
-                conn.execute(
-                    "INSERT INTO PackageLicenses (PackageID, "
-                    + "LicenseID) VALUES (?, ?)",
-                    [pkgid, licenseid],
+            for license_name in pkginfo["license"]:
+                db_license = (
+                    db.query(License).filter(License.Name == license_name).first()
                 )
 
-        # Add package groups.
-        if "groups" in pkginfo:
-            for group in pkginfo["groups"]:
-                cur = conn.execute("SELECT ID FROM `Groups` WHERE Name = ?", [group])
-                row = cur.fetchone()
-                if row:
-                    groupid = row[0]
-                else:
-                    cur = conn.execute(
-                        "INSERT INTO `Groups` (Name) VALUES (?)", [group]
-                    )
-                    conn.commit()
-                    groupid = cur.lastrowid
-                conn.execute(
-                    "INSERT INTO PackageGroups (PackageID, " "GroupID) VALUES (?, ?)",
-                    [pkgid, groupid],
-                )
+                # If the current license name hasn't been recorded in the
+                # Licenses table yet.
+                if not db_license:
+                    with db.begin():
+                        db_license = db.create(License, Name=license_name)
 
-    # Add user to notification list on adoption.
+                # Create the package license rows.
+                with db.begin():
+                    db.create(
+                        PackageLicense, PackageID=pkgname.ID, LicenseID=db_license.ID
+                    )
+
+    # Add user to notification list on adoption (if they aren't already).
     if was_orphan:
-        cur = conn.execute(
-            "SELECT COUNT(*) FROM PackageNotifications WHERE "
-            + "PackageBaseID = ? AND UserID = ?",
-            [pkgbase_id, user_id],
-        )
-        if cur.fetchone()[0] == 0:
-            conn.execute(
-                "INSERT INTO PackageNotifications "
-                + "(PackageBaseID, UserID) VALUES (?, ?)",
-                [pkgbase_id, user_id],
+        with db.begin():
+            current_notification_length = len(
+                db.query(PackageNotification)
+                .filter(PackageNotification.PackageBaseID == pkgbase.ID)
+                .filter(PackageNotification.UserID == user.id)
+                .all()
             )
 
-    conn.commit()
+            is_notified = current_notification_length == 1
+
+            if not is_notified:
+                db.create(PackageNotification, PackageBaseID=pkgbase.ID, UserID=user.ID)
 
 
-def update_notify(conn, user, pkgbase_id):
-    # Obtain the user ID of the new maintainer.
-    cur = conn.execute("SELECT ID FROM Users WHERE Username = ?", [user])
-    user_id = int(cur.fetchone()[0])
-
+def update_notify(user, pkgbase):
     # Execute the notification script.
-    subprocess.Popen((notify_cmd, "update", str(user_id), str(pkgbase_id)))
+    subprocess.Popen((notify_cmd, "update", str(user.ID), str(pkgbase.ID)))
 
 
 def die(msg):
@@ -259,13 +268,16 @@ def die_commit(msg, commit):
 
 
 def main():  # noqa: C901
-    repo = pygit2.Repository(repo_path)
+    with db.begin():
+        repo = pygit2.Repository(repo_path)
+        user = (
+            db.query(User).filter(User.Username == os.environ.get("AUR_USER")).first()
+        )
+        pkgbase = os.environ.get("AUR_PKGBASE")
+        privileged = os.environ.get("AUR_PRIVILEGED", "0") == "1"
+        allow_overwrite = (os.environ.get("AUR_OVERWRITE", "0") == "1") and privileged
 
-    user = os.environ.get("AUR_USER")
-    pkgbase = os.environ.get("AUR_PKGBASE")
-    privileged = os.environ.get("AUR_PRIVILEGED", "0") == "1"
-    allow_overwrite = (os.environ.get("AUR_OVERWRITE", "0") == "1") and privileged
-    warn_or_die = warn if privileged else die
+        warn_or_die = warn if privileged else die
 
     if len(sys.argv) == 2 and sys.argv[1] == "restore":
         if "refs/heads/" + pkgbase not in repo.listall_references():
@@ -280,8 +292,6 @@ def main():  # noqa: C901
 
     if refname != "refs/heads/master":
         die("pushing to a branch other than master is restricted")
-
-    conn = aurweb.db.Connection()
 
     # Detect and deny non-fast-forwards.
     if sha1_old != "0" * 40 and not allow_overwrite:
@@ -413,47 +423,47 @@ def main():  # noqa: C901
         die("invalid pkgbase: {:s}, expected {:s}".format(metadata_pkgbase, pkgbase))
 
     # Ensure that packages are neither blacklisted nor overwritten.
-    pkgbase = metadata["pkgbase"]
-    cur = conn.execute("SELECT ID FROM PackageBases WHERE Name = ?", [pkgbase])
-    row = cur.fetchone()
-    pkgbase_id = row[0] if row else 0
+    with db.begin():
+        # Some of these functions require some kind of pkgbase to be given,
+        # which wont work with the pkgbase function below when the pkgbase
+        # doesn't exist yet.
+        pkgbase_name = metadata["pkgbase"]
+        pkgbase = db.query(PackageBase).filter(PackageBase.Name == pkgbase_name).first()
+        blacklist = db.query(PackageBlacklist)
 
-    cur = conn.execute("SELECT Name FROM PackageBlacklist")
-    blacklist = [row[0] for row in cur.fetchall()]
+        for pkgname in srcinfo.utils.get_package_names(metadata):
+            pkginfo = srcinfo.utils.get_merged_package(pkgname, metadata)
+            pkgname = pkginfo["pkgname"]
 
-    cur = conn.execute("SELECT Name, Repo FROM OfficialProviders")
-    providers = dict(cur.fetchall())
+            if blacklist.filter(PackageBlacklist.Name == pkgname).first() is not None:
+                warn_or_die("package is blacklisted: {:s}".format(pkgname))
 
-    for pkgname in srcinfo.utils.get_package_names(metadata):
-        pkginfo = srcinfo.utils.get_merged_package(pkgname, metadata)
-        pkgname = pkginfo["pkgname"]
-
-        if pkgname in blacklist:
-            warn_or_die("package is blacklisted: {:s}".format(pkgname))
-        if pkgname in providers:
-            warn_or_die(
-                "package already provided by [{:s}]: {:s}".format(
-                    providers[pkgname], pkgname
-                )
-            )
-
-        cur = conn.execute(
-            "SELECT COUNT(*) FROM Packages WHERE Name = ? " + "AND PackageBaseID <> ?",
-            [pkgname, pkgbase_id],
+        # Overwritten packages would occur in the following scenario:
+        # 1. pkgbase 'a' contains pkgnames 'hugo' and 'terraform'.
+        # 2. pkgbase 'b' pushes a package with pkgnames 'zebra' and 'terraform'.
+        # 3. Likewise, we should block this push of 'b' since it tries to edit
+        #    data of the 'terraform' pkgname from the 'a' package.
+        overwritten_packages = (
+            db.query(Package)
+            .join(PackageBase)
+            .filter(Package.Name == pkgname)
+            .filter(PackageBase.Name != pkgbase_name)
+            .all()
         )
-        if cur.fetchone()[0] > 0:
+
+        if len(overwritten_packages) > 0:
             die("cannot overwrite package: {:s}".format(pkgname))
 
     # Create a new package base if it does not exist yet.
-    if pkgbase_id == 0:
-        pkgbase_id = create_pkgbase(conn, pkgbase, user)
+    if pkgbase is None:
+        pkgbase = create_pkgbase(pkgbase_name, user)
 
     # Store package base details in the database.
-    save_metadata(metadata, conn, user)
+    save_metadata(metadata, user)
 
     # Create (or update) a branch with the name of the package base for better
     # accessibility.
-    branchref = "refs/heads/" + pkgbase
+    branchref = "refs/heads/" + pkgbase.Name
     repo.create_reference(branchref, sha1_new, True)
 
     # Work around a Git bug: The HEAD ref is not updated when using
@@ -461,15 +471,11 @@ def main():  # noqa: C901
     # mainline. See
     # http://git.661346.n2.nabble.com/PATCH-receive-pack-Create-a-HEAD-ref-for-ref-namespace-td7632149.html
     # for details.
-    headref = "refs/namespaces/" + pkgbase + "/HEAD"
+    headref = "refs/namespaces/" + pkgbase.Name + "/HEAD"
     repo.create_reference(headref, sha1_new, True)
 
     # Send package update notifications.
-    update_notify(conn, user, pkgbase_id)
-
-    # Close the database.
-    cur.close()
-    conn.close()
+    update_notify(user, pkgbase)
 
 
 if __name__ == "__main__":
