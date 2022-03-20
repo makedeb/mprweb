@@ -254,38 +254,6 @@ PackageLicenses = Table(
 )
 
 
-# Information about groups
-Groups = Table(
-    "Groups",
-    metadata,
-    Column("ID", INTEGER(unsigned=True), primary_key=True),
-    Column("Name", String(255), nullable=False, unique=True),
-    mysql_engine="InnoDB",
-    mysql_charset="utf8mb4",
-    mysql_collate="utf8mb4_general_ci",
-)
-
-
-# Information about package-group-relations
-PackageGroups = Table(
-    "PackageGroups",
-    metadata,
-    Column(
-        "PackageID",
-        ForeignKey("Packages.ID", ondelete="CASCADE"),
-        primary_key=True,
-        nullable=True,
-    ),
-    Column(
-        "GroupID",
-        ForeignKey("Groups.ID", ondelete="CASCADE"),
-        primary_key=True,
-        nullable=True,
-    ),
-    mysql_engine="InnoDB",
-)
-
-
 # Define the package dependency types
 DependencyTypes = Table(
     "DependencyTypes",

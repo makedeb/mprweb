@@ -4,7 +4,6 @@ from .account_type import AccountType  # noqa: F401
 from .api_rate_limit import ApiRateLimit  # noqa: F401
 from .ban import Ban  # noqa: F401
 from .dependency_type import DependencyType  # noqa: F401
-from .group import Group  # noqa: F401
 from .license import License  # noqa: F401
 from .official_provider import OfficialProvider  # noqa: F401
 from .package import Package  # noqa: F401
@@ -13,7 +12,6 @@ from .package_blacklist import PackageBlacklist  # noqa: F401
 from .package_comaintainer import PackageComaintainer  # noqa: F401
 from .package_comment import PackageComment  # noqa: F401
 from .package_dependency import PackageDependency  # noqa: F401
-from .package_group import PackageGroup  # noqa: F401
 from .package_keyword import PackageKeyword  # noqa: F401
 from .package_license import PackageLicense  # noqa: F401
 from .package_notification import PackageNotification  # noqa: F401

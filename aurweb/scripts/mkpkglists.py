@@ -113,17 +113,6 @@ def get_extended_fields():
         )
         .distinct()
         .order_by("Name"),
-        # Groups
-        db.query(models.PackageGroup)
-        .join(models.Group, models.PackageGroup.GroupID == models.Group.ID)
-        .with_entities(
-            models.PackageGroup.PackageID.label("ID"),
-            literal("Groups").label("Type"),
-            models.Group.Name.label("Name"),
-            literal(str()).label("Cond"),
-        )
-        .distinct()
-        .order_by("Name"),
         # Licenses
         db.query(models.PackageLicense)
         .join(models.License, models.PackageLicense.LicenseID == models.License.ID)
