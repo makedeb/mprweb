@@ -5,7 +5,7 @@
 document.addEventListener("DOMContentLoaded", function() {
 	const addApiKeyButton = document.querySelector(".add-new-api-key");
 
-	addApiKeyButton.addEventListener("click", function() {
+	addApiKeyButton.querySelector("input").addEventListener("click", function() {
 		addApiKeyButton.classList.add("hidden");
 
 		const addApiKeyMenu = document.querySelector(".api-key-menu");
