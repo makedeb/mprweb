@@ -23,13 +23,18 @@ $header-color: darken($light-grey, 30%);
 	}
 
 	.search-item {
-		background-color: lighten($silver, 1.5%);
+		background-color: lighten($light-grey, 8%);
 		border: solid;
 		border-color: $light-grey;
 		border-radius: 0.2em;
 		border-width: 0.15em;
 		padding: 0.5em;
 		margin: 0.5em;
+		
+		// If we're not in a .box, we want the background color to be a bit lighter.
+		&:not(.box .search-results .search-item) {
+			background-color: lighten($silver, 1.5%);
+		}
 		
 		p {
 			line-height: 1.3em;

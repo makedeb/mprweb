@@ -1,0 +1,80 @@
+{% extends "partials/layout.html" %}
+{% block body %}
+    <!-- Javascript for API key creation and deletion -->
+    <script src="/static/js/api-key.js"></script>
+
+    <div class="box field">
+        <h2>{% trans %}API Keys{% endtrans %} - {{ user.Username }}</h2>
+        <hr>
+        
+        <!-- API Creating forms -->
+        <div class="add-new-api-key item">
+            <input class="button" type="button" value="Add new API key" />
+            
+            <!-- This section gets filled in via some JavaScript functions -->
+            <div class="new-api-key hidden">
+            </div>
+            <hr>
+        </div>
+
+        <form class="api-key-menu item hidden">
+            <div class="item">
+                <label><h2>Expiration Date</h2></label>
+                <select class="add-new-api-key-expiration-date">
+                    <option value="1">1 day</option>
+                    <option value="7">1 week</option>
+                    <option value="14">2 weeks</option>
+                    <option value="31">1 month</option>
+                    <option value="61">2 months</option>
+                    <option value="92">3 months</option>
+                    <option value="184">6 months</option>
+                    <option value="365">1 year</option>
+                    <option value="0">Never</option>
+                </select>
+            </div>
+
+            <div class="item">
+                <label><h2>Note:</h2></label>
+                <input class="add-new-api-key-note" type="text" />
+            </div>
+
+            <div class="item">
+                <input class="add-new-api-key-button" type="button" class="button" value="Create Key" />
+            </div>
+            <hr>
+        </form>
+        
+        <!-- Current API Keys -->
+        <div class="search-results">
+            {% for api_key in api_keys %}
+                <div class="search-item">
+                    <div class="item-section">
+                        <p class="title">Note:</p>
+
+                        {% if api_key.Note is not none %}
+                            <p class="value">{{ api_key.Note }}</p>
+                        {% else %}
+                            <p><em>None</em></p>
+                        {% endif %}
+                    </div>
+
+                    <div class="item-section">
+                        <p class="title">Expires:</p>
+                        {% if api_key.ExpireTS is not none %}
+                            {% set expire_time = api_key.ExpireTS | dt | as_timezone(timezone) %}
+                            <p class="value">{{ expire_time.strftime("%Y-%m-%d") }}</p>
+                        {% else %}
+                            <p class="value"><em>Never</em></p>
+                        {% endif %}
+                    </div>
+
+                    <div class="item-section">
+                        <p class="title">Actions:</p>
+                        <p class="value"><a href="javascript:void(0)" class="api-key-delete id-{{ api_key.ID }}">Delete</a></p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+{# vim: set sw=4 expandtab: #}

@@ -39,6 +39,15 @@
                     | safe
                     }}
                 </p>
+                <p>
+                    {{ "Click %shere%s to list current API keys."
+                    | tr
+                    | format('<a href="%s/api-keys">' | format(user | account_url),
+                             "</a>")
+                    | safe
+                    }}
+                </p>
+
             {% endif %}
 
             {% set form_type = "UpdateAccount" %}

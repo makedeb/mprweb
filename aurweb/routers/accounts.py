@@ -1,18 +1,21 @@
 import copy
+import secrets
 import typing
 from http import HTTPStatus
 
+import orjson
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, or_
 
 import aurweb.config
-from aurweb import cookies, db, defaults, l10n, logging, models, util
+from aurweb import cookies, db, defaults, l10n, logging, models, time, util
 from aurweb.auth import account_type_required, requires_auth, requires_guest
 from aurweb.captcha import get_captcha_salts
 from aurweb.exceptions import ValidationError
 from aurweb.l10n import get_translator_for_request
 from aurweb.models import account_type as at
+from aurweb.models.api_key import ApiKey
 from aurweb.models.ssh_pub_key import get_fingerprint
 from aurweb.models.user import generate_resetkey
 from aurweb.scripts.notify import ResetKeyNotification, WelcomeNotification
@@ -495,6 +498,64 @@ async def account_comments(request: Request, username: str):
         models.PackageComment.CommentTS.desc()
     )
     return render_template(request, "account/comments.html", context)
+
+
+@router.get("/account/{username}/api-keys")
+@requires_auth
+async def api_keys(request: Request, username: str):
+    user = get_user_by_name(username)
+    context = make_context(request, "API Keys")
+
+    if user != request.user:
+        return RedirectResponse(
+            f"/account/{username}", status_code=HTTPStatus.SEE_OTHER
+        )
+
+    context["user"] = user
+    context["api_keys"] = db.query(ApiKey).filter(ApiKey.UserID == user.ID).all()
+
+    return render_template(request, "account/api-keys.html", context)
+
+
+@router.post("/api-keys/delete/{api_key_id}")
+@requires_auth
+async def api_key_delete(request: Request, api_key_id: int):
+    api_key = (
+        db.query(ApiKey)
+        .filter(ApiKey.ID == api_key_id)
+        .filter(ApiKey.UserID == request.user.ID)
+        .first()
+    )
+
+    if api_key is None:
+        return Response(status_code=HTTPStatus.FORBIDDEN)
+
+    with db.begin():
+        db.delete(api_key)
+
+
+@router.post("/api-keys/create")
+@requires_auth
+async def api_key_create(request: Request):
+    day = 86400  # Seconds in a day.
+    body = orjson.loads(await request.body())
+    note = body["note"]
+    expiration_date = body["expirationDate"]
+
+    if expiration_date == "0":
+        expire_time = None
+    else:
+        now = time.utcnow()
+        expiration_delay = day * int(expiration_date)
+        expire_time = now + expiration_delay
+
+    with db.begin():
+        secret = secrets.token_hex(32)
+        db.create(
+            ApiKey, UserID=request.user.ID, Key=secret, Note=note, ExpireTS=expire_time
+        )
+
+    return Response(content=secret)
 
 
 @router.get("/accounts")

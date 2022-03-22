@@ -127,6 +127,19 @@ SSHPubKeys = Table(
 )
 
 
+# API keys.
+ApiKeys = Table(
+    "ApiKeys",
+    metadata,
+    Column("ID", INTEGER(unsigned=True), primary_key=True),
+    Column("UserID", ForeignKey("Users.ID", ondelete="CASCADE"), nullable=False),
+    Column("Key", Text, nullable=False, unique=True),
+    Column("Note", Text, server_default=text("''")),
+    Column("ExpireTS", BIGINT(unsigned=True)),
+    mysql_engine="InnoDB",
+    mysql_charset="utf8mb4",
+)
+
 # Track Users logging in/out of AUR web site.
 Sessions = Table(
     "Sessions",

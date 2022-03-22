@@ -34,6 +34,8 @@ class User(Base):
         uselist=False,
     )
 
+    api_keys = relationship("ApiKey", back_populates="User")
+
     # High-level variables used to track authentication (not in DB).
     authenticated = False
     nonce = None
