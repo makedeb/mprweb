@@ -5,6 +5,7 @@ See https://fastapi.tiangolo.com/tutorial/bigger-applications/
 """
 from . import (
     accounts,
+    api,
     auth,
     html,
     packages,
@@ -23,6 +24,7 @@ to a fastapi.APIRouter.
 """
 APP_ROUTES = [
     accounts,
+    api,
     auth,
     html,
     packages,

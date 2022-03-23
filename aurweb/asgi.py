@@ -9,7 +9,7 @@ import typing
 from urllib.parse import quote_plus
 
 from fastapi import FastAPI, HTTPException, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from jinja2 import TemplateNotFound
 from prometheus_client import multiprocess
@@ -147,6 +147,10 @@ async def internal_server_error(request: Request, exc: Exception) -> Response:
     logger.error(f"FATAL[{tb_id}]: An unexpected exception has occurred.")
     logger.error(retval)
 
+    # If we're on an API route, return a JSON response.
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(content={"type": "error", "msg": "Internal server error"})
+
     return render_template(
         request,
         "errors/500.html",
@@ -165,6 +169,11 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> Respon
 
     # Additional context for some exceptions.
     if exc.status_code == http.HTTPStatus.NOT_FOUND:
+
+        # If we're at a '/api/' endpoint, return a JSON response.
+        if request.url.path.startswith("/api/"):
+            return JSONResponse(content={"type": "error", "msg": "Not found."})
+
         tokens = request.url.path.split("/")
         matches = re.match("^([a-z0-9][a-z0-9.+_-]*?)(\\.git)?$", tokens[1])
         if matches:
