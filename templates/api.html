@@ -13,7 +13,7 @@
             <p>API endpoints are specified via their endpoint, followed by any number of tags in capitialized letters (i.e. <code>POST</code>):</p>
             <ul>
                 <li><code>GET</code> and <code>POST</code> refer to the HTTP request types required in order to send the request.</li>
-                <li>API interfaces marked with <code>AUTH</code> require an API key in order to access.</li>
+                <li>API interfaces marked with <code>AUTH</code> require an API key in order to access. Pass the API key as part of your request via an HTTP header with a title of <code>Authorization</code> and a value of the API key.</li>
             </ul>
             <p>Text in brackets (i.e. <code>{pkgbase}</code> is expected to be filled in by the client (i.e. <code>/api/adopt/{pkgbase}</code> would become <code>/api/adopt/makedeb</code>, (or any other package base on the MPR).</p>
             {% if request.user.is_authenticated() %}
