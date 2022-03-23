@@ -2,12 +2,14 @@ import functools
 
 from fastapi import APIRouter, Request
 
-from aurweb import db
+from aurweb import config, db
+from aurweb.models.account_type import TRUSTED_USER_ID
 from aurweb.models.api_key import ApiKey
 from aurweb.models.package_base import PackageBase
 from aurweb.models.package_notification import PackageNotification
 from aurweb.models.package_request import CLOSED_ID, PENDING_ID, PackageRequest
 from aurweb.models.request_type import RequestType
+from aurweb.models.user import User
 from aurweb.packages.util import get_pkg_or_base
 from aurweb.templates import make_context, render_template
 
@@ -48,6 +50,30 @@ def auth_required(func):
 async def api(request: Request):
     context = make_context(request, "API")
     return render_template(request, "api.html", context)
+
+
+@router.get("/api/meta")
+async def api_meta():
+    packages = db.query(PackageBase).all()
+    orphan_packages = (
+        db.query(PackageBase)
+        .filter(PackageBase.MaintainerUID == None)  # noqa: E711
+        .all()
+    )
+    trusted_users = db.query(User).filter(User.AccountTypeID == TRUSTED_USER_ID).all()
+
+    return {
+        "ssh_key_fingerprints": {
+            "ED25519": config.get("fingerprints", "Ed25519"),
+            "ECDSA": config.get("fingerprints", "ECDSA"),
+            "RSA": config.get("fingerprints", "RSA"),
+        },
+        "statistics": {
+            "packages": len(packages),
+            "orphan_packages": len(orphan_packages),
+            "trusted_users": len(trusted_users),
+        },
+    }
 
 
 @router.get("/api/test")
