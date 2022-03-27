@@ -73,6 +73,8 @@ def make_context(request: Request, title: str, next: str = None):
         commit_hash = commit_hash[:7]
 
     timezone = time.get_request_timezone(request)
+    makedeb_url = "makedeb.org"
+
     return {
         "request": request,
         "commit_url": commit_url,
@@ -89,7 +91,8 @@ def make_context(request: Request, title: str, next: str = None):
         "next": next if next else request.url.path,
         "version": os.environ.get("COMMIT_HASH", aurweb.config.AURWEB_VERSION),
         "hw_url": "hunterwittenborn.com",
-        "makedeb_url": "makedeb.org",
+        "makedeb_url": makedeb_url,
+        "mpr_url": f"mpr.{makedeb_url}",
     }
 
 

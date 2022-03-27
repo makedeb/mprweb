@@ -8,11 +8,16 @@
         <!-- Section toggle for package pages. -->
         <script src="/static/js/package-sections.js"></script>
 
-        <!-- JS to copy links -->
-        <script src="/static/js/copy.js"></script>
-
-        <h2>{{ package.Name }} {{ package.Version }}</h2>
+        <div class="package-header">
+            <h2>{{ package.Name }} {{ package.Version }}</h2>
+            <a class="install-package" href="javascript:void(0)">
+                {% include "svg/install.svg" %}
+            </a>
+        </div>
         <hr>
+
+        <!-- Package installer page -->
+        {% include "partials/packages/helpers.html" %}
 
         {% if package.Description is not none %}
             <p class="comment">{{ package.Description }}</p>

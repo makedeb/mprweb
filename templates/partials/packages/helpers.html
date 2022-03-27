@@ -1,0 +1,30 @@
+<div class="field">
+	<div class="helpers item hidden">
+		<h2>Install Package</h2>
+
+		<!-- Script to bring up helper menu -->
+		<script src="/static/js/helper.js"></script>
+
+		<select>
+			<option value="makedeb" selected>makedeb</option>
+			<option value="Tap">Tap</option>
+			<option value="Una">Una</option>
+		</select>
+	
+		<div class="makedeb code-block">
+			{% include "partials/clipboard_icons.html" %}
+			<pre><code class="hljs language-bash">git clone 'https://{{ mpr_url }}/{{ pkgbase.Name }}'
+cd {{ pkgbase.Name }}/
+makedeb -si</code></pre>
+		</div>
+		<div class="Tap code-block hidden">
+			{% include "partials/clipboard_icons.html" %}
+			<pre><code class="hljs language-bash">sudo tap install {{ pkgbase.Name }}</code></pre>
+		</div>
+
+		<div class="Una code-block hidden">
+			{% include "partials/clipboard_icons.html" %}
+			<pre><code class="hljs language-bash">sudo una install {{ pkgbase.Name }}</code></pre>
+		</div>
+	</div>
+</div>

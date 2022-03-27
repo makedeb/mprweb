@@ -6,6 +6,7 @@ from xml.etree.ElementTree import Element
 import bleach
 import markdown
 import pygit2
+from bs4 import BeautifulSoup
 
 import aurweb.config
 from aurweb import db, logging, util
@@ -113,6 +114,33 @@ class HeadingExtension(markdown.extensions.Extension):
         md.treeprocessors.register(HeadingTreeprocessor(md), "heading", 30)
 
 
+# Convert standard codeblocks into ones with clipboard copy links.
+# This would be a markdown extension, but it doesn't want to work there for some reason.
+def ClipboardOnCodeBlock(text):
+    soup = BeautifulSoup(text, "html.parser")
+    code_blocks = soup.find_all("pre")
+
+    for code_block in code_blocks:
+        with open("/aurweb/templates/svg/clipboard.svg", "r") as file:
+            clipboard_svg = BeautifulSoup(file.read(), "html.parser")
+
+        with open("/aurweb/templates/svg/check.svg", "r") as file:
+            check_svg = BeautifulSoup(file.read(), "html.parser")
+
+        code_block_wrapper = soup.new_tag("div")
+        code_block_wrapper["class"] = "code-block"
+
+        clipboard_icons = soup.new_tag("div")
+        clipboard_icons["class"] = "clipboard-icons"
+        clipboard_icons.append(clipboard_svg)
+        clipboard_icons.append(check_svg)
+
+        code_block.wrap(code_block_wrapper)
+        code_block.insert_before(clipboard_icons)
+
+    return str(soup)
+
+
 def save_rendered_comment(comment: PackageComment, html: str):
     with db.begin():
         comment.RenderedComment = html
@@ -151,6 +179,10 @@ def update_comment_render(comment: PackageComment) -> None:
     html = bleach.clean(
         html, tags=allowed_tags, attributes=bleach.sanitizer.ALLOWED_ATTRIBUTES
     )
+
+    for func in [ClipboardOnCodeBlock]:
+        html = func(html)
+
     save_rendered_comment(comment, html)
     db.refresh(comment)
 

@@ -5,7 +5,14 @@
 	{% include "partials/archdev-navbar.html" %}
 
    <body>
-        {% block body %}{% endblock %}
+       <!-- Dimmer -->
+       <div id="dimmer" class="hidden"></div>
+
+       <!-- Toast notifications -->
+       <div id="toasts"></div>
+        
+       <!-- Actual page content -->
+       {% block body %}{% endblock %}
     </body>
 
     {% include "partials/footer.html" %}

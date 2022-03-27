@@ -11,6 +11,16 @@
 		padding-top: 1em;
 	}
 
+	.package-header {
+		display: flex;
+		justify-content: start;
+
+		.install-icon {
+			margin-left: 0.2em;
+			width: 2em;
+		}
+	}
+
 	.sections {
 		max-width: 45em;
 		margin: 0 auto;

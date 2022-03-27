@@ -209,11 +209,12 @@ async def add_security_headers(request: Request, call_next: typing.Callable):
     # Add CSP header.
     request.user.nonce
     csp = "default-src 'self';"
-    script_hosts = ["https://cdnjs.cloudflare.com"]
+    script_hosts = ["https://cdnjs.cloudflare.com", "https://cdn.jsdelivr.net"]
     css_hosts = [
         "https://fonts.googleapis.com",
         "https://meyerweb.com",
         "https://cdnjs.cloudflare.com",
+        "https://cdn.jsdelivr.net",
     ]
     font_hosts = ["https://fonts.gstatic.com"]
 

@@ -1,0 +1,21 @@
+@import "variables";
+
+.helpers {
+	position: absolute;
+	width: 28em;
+	margin: 0 auto;
+	padding: 1em;
+	background-color: white;
+	border-radius: 0.15em;
+	opacity: 100%;
+	transition-property: opacity;
+	transition-duration: 0.2s;
+
+	@media (max-width: 32em) {
+		width: 80%;
+	}
+
+	// For some reason we need these two items to center properly.
+	left: 0;
+	right: 0;
+}

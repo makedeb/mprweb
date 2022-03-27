@@ -12,6 +12,8 @@
 @import "tu";
 @import "pkgstats";
 @import "animations";
+@import "helpers";
+@import "dimmer";
 
 // External CSS.
 @import url('https://meyerweb.com/eric/tools/css/reset/reset.css');
@@ -99,11 +101,40 @@ code {
 pre {
 	margin: 0.5em 0;
 	padding: 0.3em 0.5em;
+	position: relative;
 	background-color: lighten($light-grey, 5%);
 	overflow: auto;
 
 	code {
 		line-height: 1.4em;
+	}
+}
+
+.code-block {
+	position: relative;
+
+	.clipboard-icon, .check-icon {
+		position: absolute;
+		color: darken($light-grey, 28%);
+		top: 0.3125em; // 5px divided by 16.
+		right: 0.3125em;
+		transition-property: color;
+		transition-duration: 0.2s;
+		z-index: 2;
+	}
+
+	.clipboard-icon {
+		color: darken($light-grey, 28%);
+
+		&:hover {
+			color: $orange;
+			cursor: pointer;
+		}
+	}
+
+	.check-icon {
+		display: none;
+		color: #40a85c;
 	}
 }
 

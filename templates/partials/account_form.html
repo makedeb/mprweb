@@ -265,25 +265,27 @@
                 "your current password:" | tr }}
             </legend>
             <div class="item">
-                <label for="id_passwd_current"><h2>
-                    {% trans %}Your current password{% endtrans %}:
-                </h2></label>
+                <label for="id_passwd_current"><h2>{% trans %}Your current password{% endtrans %}:</h2></label>
                 <input id="id_passwd_current" type="password" name="passwd" id="id_passwd_current">
             </div>
         {% else %}
             <!-- Otherwise, form_type is assumed that it's NewAccount. -->
             <div class="item">
-		<p>{{ "To protect the MPR against automated account creation, "
+		        <p>{{ "To protect the MPR against automated account creation, "
                       "we kindly ask you to provide the output of the following "
-		      "command" | tr }} <em>({% trans %}required{% endtrans %})</em>:</p>
-		<pre><code>{{ captcha_salt | captcha_cmdline }}</code></pre>
-            </div>
-            <div class="item">
-                <label for="id_captcha">
-                    <h2>{% trans %}Answer{% endtrans %}:</h2>
-                </label>
-                <input id="id_captcha" type="text" maxlength="6" name="captcha">
-                <input type="hidden" name="captcha_salt" value="{{ captcha_salt }}">
+		              "command" | tr }} <em>({% trans %}required{% endtrans %})</em>:</p>
+
+                <div class="code-block">
+                    {% include "partials/clipboard_icons.html" %}
+                    <pre><code>{{ captcha_salt | captcha_cmdline }}</code></pre>
+                </div>
+                <div class="item">
+                    <label for="id_captcha">
+                        <h2>{% trans %}Answer{% endtrans %}:</h2>
+                    </label>
+                    <input id="id_captcha" type="text" maxlength="6" name="captcha">
+                    <input type="hidden" name="captcha_salt" value="{{ captcha_salt }}">
+                </div>
             </div>
         {% endif %}
     </fieldset>
