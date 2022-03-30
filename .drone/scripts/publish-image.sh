@@ -33,9 +33,13 @@ aurweb_config set notifications sender "mpr@${hw_url}"
 aurweb_config set notifications reply-to "mpr@${hw_url}"
 aurweb_config set notifications postmaster "hunter@${hw_url}"
 
-aurweb_config set fingerprints Ed25519 'SHA256:8A1Asmd6rEtypl+h1WM/3Jgonauwx6Hez5FaytLFdwY'
-aurweb_config set fingerprints ECDSA 'SHA256:7Wki/ZTENAVOYmAtH4+vhqZB8vHkLURS+eK1SQy0jTs'
-aurweb_config set fingerprints RSA 'SHA256:bAWQvVgBKyuUn8acQIrEQ7Hh1PTXjghXSYovSWhrh7Y'
+ed25519_key="$(ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub  | awk '{print $2}')"
+ecdsa_key="$(ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub  | awk '{print $2}')"
+rsa_key="$(ssh-keygen -lf /etc/ssh/ssh_host_rsa_key.pub  | awk '{print $2}')"
+
+aurweb_config set fingerprints Ed25519 "${ed25519_key}"
+aurweb_config set fingerprints ECDSA "${ecdsa_key}"
+aurweb_config set fingerprints RSA "${rsa_key}"
 
 aurweb_config set serve ssh-cmdline "ssh mpr@${mpr_url}"
 aurweb_config set serve repo-path '/aurweb/aur.git'
