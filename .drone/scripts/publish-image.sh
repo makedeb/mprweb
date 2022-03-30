@@ -28,7 +28,7 @@ aurweb_config set options traceback 0
 
 aurweb_config set notifications notify-cmd '/usr/bin/aurweb-notify'
 aurweb_config set notifications sendmail ' '
-aurweb_config set notifications smtp-server "${hw_url}"
+aurweb_config set notifications smtp-server "mailcow.${hw_url}"
 aurweb_config set notifications smtp-port '465'
 aurweb_config set notifications smtp-use-ssl '1'
 aurweb_config set notifications smtp-user "mpr@${hw_url}"
