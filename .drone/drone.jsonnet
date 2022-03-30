@@ -27,7 +27,6 @@ local publishImage() = {
     node: {server: "mprweb"},
     steps: [{
         name: "publish-image",
-        image: "ubuntu",
         environment: {
             mpr_db_password: {from_secret: "mpr_db_password"},
             mpr_smtp_password: {from_secret: "mpr_smtp_password"}
