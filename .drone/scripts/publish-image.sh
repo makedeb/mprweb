@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-set -e
+set -ex
 
 aurweb_config() {
     AUR_CONFIG='conf/config.dev' python3 -m aurweb.scripts.config "${@}"
