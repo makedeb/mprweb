@@ -5,6 +5,10 @@ aurweb_config() {
     AUR_CONFIG='conf/config.dev' python3 -m aurweb.scripts.config "${@}"
 }
 
+# Temporary variables until the Drone Exec runner supports variables from environment extensions.
+export mpr_url='mpr.makedeb.org'
+export hw_url='hunterwittenborn.com'
+
 # Get needed data.
 commit_hash="$(git rev-parse --short HEAD)"
 fastapi_secret="$(openssl rand -hex 32)"
