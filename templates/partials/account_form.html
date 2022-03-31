@@ -19,6 +19,10 @@
         <input type="hidden" name="Action" value="{{ form_type }}">
     </fieldset>
 
+    {% if form_type != "UpdateAccount" %}
+        <p><strong>We're currently experiencing issues with registrations. Reach out in the MPR's <a href="https://docs.{{ makedeb_url }}/support/obtaining-support/">support rooms</a> for current information on creating an account.</strong></p>
+    {% endif %}
+
     <fieldset>
         <!-- Username -->
         <div class="item">
