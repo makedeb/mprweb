@@ -2,7 +2,7 @@ local runTests() = {
     name: "run-tests",
     kind: "pipeline",
     type: "docker",
-
+    trigger: {branch: ["mprweb"]},
     steps: [{
         name: "run-tests",
         image: "archlinux:base-devel",
