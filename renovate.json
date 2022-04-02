@@ -5,7 +5,6 @@
   "groupName": "all dependencies",
   "separateMajorMinor": false,
   "groupSlug": "all",
-  "prHourlyLimit": 0,
   "packageRules": [
     {
       "matchPackagePatterns": [
