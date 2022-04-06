@@ -883,9 +883,9 @@ async def repology_check(
 
 
 # Git routes.
-def get_git_file(filename, branch_name):
+def get_git_file(pkgbase, filename, branch_name):
     # Get the needed git information.
-    repo = pygit2.Repository("/aurweb/aur.git/")
+    repo = pygit2.Repository(f"/aurweb/aur.git/{pkgbase}")
 
     # Return an error if we couldn't find the branch.
     try:
@@ -917,7 +917,7 @@ async def git_info(request: Request, name: str):
     context = pkgbaseutil.make_context(request, pkgbase)
 
     # Get the needed git information.
-    repo = pygit2.Repository("/aurweb/aur.git/")
+    repo = pygit2.Repository(f"/aurweb/aur.git/{name}")
 
     # Return an error if we couldn't find the branch.
     try:
@@ -984,7 +984,7 @@ async def git_tree(request: Request, name: str, file: str):
     pkgbase = pkg.PackageBase
     context = pkgbaseutil.make_context(request, pkgbase)
 
-    file_data = get_git_file(file, name)
+    file_data = get_git_file(name, file, name)
     context["pkg"] = pkg
     context["pkgbase"] = pkgbase
     context["file"] = file
@@ -995,7 +995,7 @@ async def git_tree(request: Request, name: str, file: str):
 
 @router.get("/pkgbase/{name}/git/raw/{file}")
 async def git_raw(request: Request, name: str, file: str):
-    file_data = get_git_file(file, name)
+    file_data = get_git_file(name, file, name)
     return Response(content=file_data.data.decode())
 
 
@@ -1006,7 +1006,7 @@ async def git_commit(request: Request, name: str, commit_hash: str):
     context = pkgbaseutil.make_context(request, pkgbase)
 
     # Get the needed git information.
-    repo = pygit2.Repository("/aurweb/aur.git/")
+    repo = pygit2.Repository(f"/aurweb/aur.git/{name}")
 
     # Return an error if we couldn't find the branch.
     try:
