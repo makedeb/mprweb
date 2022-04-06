@@ -461,11 +461,6 @@ def main():  # noqa: C901
     # Store package base details in the database.
     save_metadata(metadata, user)
 
-    # Create (or update) a branch with the name of the package base for better
-    # accessibility.
-    branchref = "refs/heads/master"
-    repo.create_reference(branchref, sha1_new, True)
-
     # Create a tag for the current package's version if it doesn't currently exist.
     if "epoch" in metadata and int(pkginfo["epoch"]) > 0:
         version = "{:d}!{:s}-{:s}".format(
