@@ -883,17 +883,10 @@ async def repology_check(
 
 
 # Git routes.
-def get_git_file(pkgbase, filename, branch_name):
+def get_git_file(pkgbase, filename):
     # Get the needed git information.
     repo = pygit2.Repository(f"/aurweb/aur.git/{pkgbase}")
-
-    # Return an error if we couldn't find the branch.
-    try:
-        repo.revparse_single(branch_name)
-    except KeyError:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-
-    branch = repo.revparse_single(branch_name)
+    branch = repo.revparse_single("master")
 
     # Get the requested file.
     requested_file = None
@@ -920,12 +913,7 @@ async def git_info(request: Request, name: str):
     repo = pygit2.Repository(f"/aurweb/aur.git/{name}")
 
     # Return an error if we couldn't find the branch.
-    try:
-        repo.revparse_single(name) is not None
-    except KeyError:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-
-    branch = repo.revparse_single(name)
+    branch = repo.revparse_single("master")
     commit = repo.revparse_single(branch.hex)
 
     # Get the number of commits in the last week, month, and year.
@@ -984,7 +972,7 @@ async def git_tree(request: Request, name: str, file: str):
     pkgbase = pkg.PackageBase
     context = pkgbaseutil.make_context(request, pkgbase)
 
-    file_data = get_git_file(name, file, name)
+    file_data = get_git_file(name, file)
     context["pkg"] = pkg
     context["pkgbase"] = pkgbase
     context["file"] = file
@@ -995,7 +983,7 @@ async def git_tree(request: Request, name: str, file: str):
 
 @router.get("/pkgbase/{name}/git/raw/{file}")
 async def git_raw(request: Request, name: str, file: str):
-    file_data = get_git_file(name, file, name)
+    file_data = get_git_file(name, file)
     return Response(content=file_data.data.decode())
 
 
@@ -1009,12 +997,7 @@ async def git_commit(request: Request, name: str, commit_hash: str):
     repo = pygit2.Repository(f"/aurweb/aur.git/{name}")
 
     # Return an error if we couldn't find the branch.
-    try:
-        repo.revparse_single(name) is not None
-    except KeyError:
-        raise HTTPException(status_code=HTTPStatus.NOT_FOUND)
-
-    branch = repo.revparse_single(name)
+    branch = repo.revparse_single("master")
 
     # If the user requested 'latest' as the commit, redirect to the last commit.
     if commit_hash == "latest":
