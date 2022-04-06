@@ -468,13 +468,13 @@ def main():  # noqa: C901
 
     # Create a tag for the current package's version if it doesn't currently exist.
     if "epoch" in metadata and int(pkginfo["epoch"]) > 0:
-        version = "{:d}:{:s}-{:s}".format(
+        version = "{:d}!{:s}-{:s}".format(
             int(metadata["epoch"]), metadata["pkgver"], metadata["pkgrel"]
         )
     else:
         version = "{:s}-{:s}".format(metadata["pkgver"], metadata["pkgrel"])
 
-    tag_name = f"refs/tags/{version}"
+    tag_name = f"refs/tags/ver/{version}"
 
     if not repo.references.get(tag_name):
         repo.references.create(tag_name, sha1_new)
