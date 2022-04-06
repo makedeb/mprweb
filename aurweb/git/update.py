@@ -275,7 +275,7 @@ def main():  # noqa: C901
         pkgbase = os.environ.get("AUR_PKGBASE")
         privileged = os.environ.get("AUR_PRIVILEGED", "0") == "1"
         allow_overwrite = (os.environ.get("AUR_OVERWRITE", "0") == "1") and privileged
-        repo = pygit2.Repository(f"{repo_path}{pkgbase}")
+        repo = pygit2.Repository(f"{repo_path}/{pkgbase}")
 
         warn_or_die = warn if privileged else die
 
