@@ -4,9 +4,6 @@ set -eou pipefail
 SSHD_CONFIG=/etc/ssh/sshd_config
 AUTH_SCRIPT=/app/git-auth.sh
 
-GIT_REPO=/aurweb/aur.git
-GIT_BRANCH=master # 'Master' branch.
-
 if ! grep -q 'PYTHONPATH' /etc/environment; then
     echo "PYTHONPATH='/aurweb:/aurweb/app'" >> /etc/environment
 else
@@ -54,23 +51,6 @@ ssh-keygen -A
 # supply them in ./data.
 if [ -d /aurweb/data ]; then
     find /aurweb/data -type f -name 'ssh_host_*' -exec cp -vf "{}" /etc/ssh/ \;
-fi
-
-# Taken from INSTALL.
-mkdir -pv $GIT_REPO
-
-# Initialize git repository.
-if [ ! -f $GIT_REPO/config ]; then
-    curdir="$(pwd)"
-    cd $GIT_REPO
-    git config --global init.defaultBranch $GIT_BRANCH
-    git init --bare
-    git config --local transfer.hideRefs '^refs/'
-    git config --local --add transfer.hideRefs '!refs/'
-    git config --local --add transfer.hideRefs '!HEAD'
-    ln -sf /usr/bin/aurweb-git-update hooks/update
-    cd $curdir
-    chown -R mpr:mpr $GIT_REPO
 fi
 
 exec "$@"

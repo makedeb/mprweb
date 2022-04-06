@@ -269,21 +269,21 @@ def die_commit(msg, commit):
 
 def main():  # noqa: C901
     with db.begin():
-        repo = pygit2.Repository(repo_path)
         user = (
             db.query(User).filter(User.Username == os.environ.get("AUR_USER")).first()
         )
         pkgbase = os.environ.get("AUR_PKGBASE")
         privileged = os.environ.get("AUR_PRIVILEGED", "0") == "1"
         allow_overwrite = (os.environ.get("AUR_OVERWRITE", "0") == "1") and privileged
+        repo = pygit2.Repository(f"{repo_path}{pkgbase}")
 
         warn_or_die = warn if privileged else die
 
     if len(sys.argv) == 2 and sys.argv[1] == "restore":
-        if "refs/heads/" + pkgbase not in repo.listall_references():
+        if "refs/heads/master" not in repo.listall_references():
             die("{:s}: repository not found: {:s}".format(sys.argv[1], pkgbase))
         refname = "refs/heads/master"
-        branchref = "refs/heads/" + pkgbase
+        branchref = "refs/heads/master"
         sha1_old = sha1_new = repo.lookup_reference(branchref).target
     elif len(sys.argv) == 4:
         refname, sha1_old, sha1_new = sys.argv[1:4]
@@ -463,16 +463,21 @@ def main():  # noqa: C901
 
     # Create (or update) a branch with the name of the package base for better
     # accessibility.
-    branchref = "refs/heads/" + pkgbase.Name
+    branchref = "refs/heads/master"
     repo.create_reference(branchref, sha1_new, True)
 
-    # Work around a Git bug: The HEAD ref is not updated when using
-    # gitnamespaces. This can be removed once the bug fix is included in Git
-    # mainline. See
-    # http://git.661346.n2.nabble.com/PATCH-receive-pack-Create-a-HEAD-ref-for-ref-namespace-td7632149.html
-    # for details.
-    headref = "refs/namespaces/" + pkgbase.Name + "/HEAD"
-    repo.create_reference(headref, sha1_new, True)
+    # Create a tag for the current package's version if it doesn't currently exist.
+    if "epoch" in metadata and int(pkginfo["epoch"]) > 0:
+        version = "{:d}:{:s}-{:s}".format(
+            int(metadata["epoch"]), metadata["pkgver"], metadata["pkgrel"]
+        )
+    else:
+        version = "{:s}-{:s}".format(metadata["pkgver"], metadata["pkgrel"])
+
+    tag_name = f"refs/tags/{version}"
+
+    if not repo.references.get(tag_name):
+        repo.references.create(tag_name, sha1_new)
 
     # Send package update notifications.
     update_notify(user, pkgbase)

@@ -3,6 +3,7 @@
 import os
 import re
 import shlex
+import subprocess
 import sys
 import time
 
@@ -133,12 +134,22 @@ def serve(action, cmdargv, username, privileged, remote_addr):  # noqa: C901
         if not os.access(git_update_cmd, os.R_OK | os.X_OK):
             raise aurweb.exceptions.BrokenUpdateHookException(git_update_cmd)
 
+        # If the Git repository doesn't exist, create it an initialize the Git hooks.
         os.environ["AUR_USER"] = username
         os.environ["AUR_PKGBASE"] = pkgbase_name
         os.environ["GIT_NAMESPACE"] = pkgbase_name
+        git_repo_path = f"{repo_path}{pkgbase_name}"
 
-        cmd = action + " '" + repo_path + "'"
-        os.execl(git_shell_cmd, git_shell_cmd, "-c", cmd)
+        if os.path.exists(git_repo_path) is False:
+            os.mkdir(git_repo_path)
+            subprocess.run(
+                ["git", "init", "-q", "--bare", git_repo_path],
+                stdout=subprocess.DEVNULL,
+            )
+            os.symlink(git_update_cmd, f"{git_repo_path}/hooks/update")
+
+        # Run the requested command.
+        subprocess.run([git_shell_cmd, "-c", f"{action} '{repo_path}{pkgbase_name}'"])
 
     # Show an error for anything else.
     else:

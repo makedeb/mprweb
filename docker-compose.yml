@@ -168,7 +168,6 @@ services:
       cron:
         condition: service_started
     volumes:
-      - ./data:/data
       - ./docker:/docker
       - ./aurweb:/aurweb/aurweb
       - ./media:/aurweb/media
