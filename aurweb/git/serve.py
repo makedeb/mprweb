@@ -137,7 +137,6 @@ def serve(action, cmdargv, username, privileged, remote_addr):  # noqa: C901
         # If the Git repository doesn't exist, create it an initialize the Git hooks.
         os.environ["AUR_USER"] = username
         os.environ["AUR_PKGBASE"] = pkgbase_name
-        os.environ["GIT_NAMESPACE"] = pkgbase_name
         git_repo_path = f"{repo_path}/{pkgbase_name}"
 
         if os.path.exists(git_repo_path) is False:
