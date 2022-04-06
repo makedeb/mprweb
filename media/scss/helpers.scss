@@ -10,6 +10,7 @@
 	opacity: 100%;
 	transition-property: opacity;
 	transition-duration: 0.2s;
+	z-index: 2;
 
 	@media (max-width: 32em) {
 		width: 80%;
