@@ -149,7 +149,7 @@ def serve(action, cmdargv, username, privileged, remote_addr):  # noqa: C901
             os.symlink(git_update_cmd, f"{git_repo_path}/hooks/update")
 
         # Run the requested command.
-        subprocess.run([git_shell_cmd, "-c", f"{action} '{repo_path}{pkgbase_name}'"])
+        subprocess.run([git_shell_cmd, "-c", f"{action} '{git_repo_path}'"])
 
     # Show an error for anything else.
     else:
