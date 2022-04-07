@@ -5,7 +5,35 @@
             <h1>About</h1>
             <hr>
         </div>
+        <div class="item">
+            <h2>Statistics</h2>
+            <hr>
 
+            <div class="p-block">
+                <p class="title">Packages:</p>
+                <p>{{ number_of_packages }}</p>
+            </div>
+            <div class="p-block">
+                <p class="title">Orphaned Packages:</p>
+                <p>{{ number_of_orphaned_packages }}</p>
+            </div>
+            <div class="p-block">
+                <p class="title">Package Commits:</p>
+                <p>{{ number_of_commits }}</p>
+            </div>
+            <div class="p-block">
+                <p class="title">Users:</p>
+                <p>{{ number_of_users }}</p>
+            </div>
+            <div class="p-block">
+                <p class="title">Maintainers:</p>
+                <p>{{ number_of_maintainers }}</p>
+            </div>
+            <div class="p-block">
+                <p class="title">Trusted Users:</p>
+                <p>{{ number_of_trusted_users }}</p>
+            </div>
+        </div>
         <div class="item">
             <h2>SSH Keys</h2>
             <hr>

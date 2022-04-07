@@ -4,6 +4,7 @@ own modules and imported here. """
 import os
 from http import HTTPStatus
 
+import pygit2
 from fastapi import APIRouter, Form, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from prometheus_client import (
@@ -18,8 +19,11 @@ import aurweb.config
 import aurweb.models.package_request
 from aurweb import cookies, db, models
 from aurweb.auth import requires_auth
+from aurweb.models.account_type import TRUSTED_USER_ID
+from aurweb.models.package import Package
 from aurweb.models.package_base import PackageBase
 from aurweb.models.package_request import PENDING_ID
+from aurweb.models.user import User
 from aurweb.packages.search import PackageSearch
 from aurweb.packages.util import updated_packages
 from aurweb.templates import make_context, render_template
@@ -94,11 +98,56 @@ async def index(request: Request):
     return render_template(request, "home.html", context)
 
 
+def get_number_of_commits():
+    commits = 0
+
+    for directory in os.listdir("/aurweb/aur.git"):
+        repo = pygit2.Repository(f"/aurweb/aur.git/{directory}")
+        branch = repo.references.get("refs/heads/master")
+
+        # The branch won't exist for the repository if there haven't been any
+        # commits to it yet.
+        if branch is None:
+            continue
+
+        for commit in repo.walk(branch.target.hex):
+            commits += 1
+
+    return commits
+
+
 @router.get("/about", response_class=HTMLResponse)
 async def about(request: Request):
     """Instance information."""
     context = make_context(request, "About")
 
+    # Get the number of packages.
+    context["number_of_packages"] = db.query(Package).count()
+
+    # Get the number of orphan packages.
+    context["number_of_orphaned_packages"] = (
+        db.query(PackageBase)
+        .filter(PackageBase.MaintainerUID == None)  # noqa: E711
+        .count()
+    )
+
+    # Get the number of users.
+    context["number_of_users"] = db.query(User).count()
+
+    # Get the number of users who maintain a package (users who are maintainers).
+    context["number_of_maintainers"] = (
+        db.query(PackageBase).group_by(PackageBase.MaintainerUID).count()
+    )
+
+    # Get the number of Trusted Users.
+    context["number_of_trusted_users"] = (
+        db.query(User).filter(User.AccountTypeID == TRUSTED_USER_ID).count()
+    )
+
+    # Get the number of commits.
+    context["number_of_commits"] = get_number_of_commits()
+
+    # Get the list of SSH keys.
     context["ssh_key_ed25519"] = aurweb.config.get("fingerprints", "Ed25519")
     context["ssh_key_ecdsa"] = aurweb.config.get("fingerprints", "ECDSA")
     context["ssh_key_rsa"] = aurweb.config.get("fingerprints", "RSA")

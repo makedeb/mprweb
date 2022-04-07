@@ -5,12 +5,14 @@ from fastapi import APIRouter, Request
 from aurweb import config, db
 from aurweb.models.account_type import TRUSTED_USER_ID
 from aurweb.models.api_key import ApiKey
+from aurweb.models.package import Package
 from aurweb.models.package_base import PackageBase
 from aurweb.models.package_notification import PackageNotification
 from aurweb.models.package_request import CLOSED_ID, PENDING_ID, PackageRequest
 from aurweb.models.request_type import RequestType
 from aurweb.models.user import User
 from aurweb.packages.util import get_pkg_or_base
+from aurweb.routers.html import get_number_of_commits
 from aurweb.templates import make_context, render_template
 
 router = APIRouter()
@@ -54,13 +56,16 @@ async def api(request: Request):
 
 @router.get("/api/meta")
 async def api_meta():
-    packages = db.query(PackageBase).all()
+    packages = db.query(Package).count()
     orphan_packages = (
         db.query(PackageBase)
         .filter(PackageBase.MaintainerUID == None)  # noqa: E711
-        .all()
+        .count()
     )
-    trusted_users = db.query(User).filter(User.AccountTypeID == TRUSTED_USER_ID).all()
+    users = db.query(User).count()
+    maintainers = db.query(PackageBase).group_by(PackageBase.MaintainerUID).count()
+    trusted_users = db.query(User).filter(User.AccountTypeID == TRUSTED_USER_ID).count()
+    commits = get_number_of_commits()
 
     return {
         "ssh_key_fingerprints": {
@@ -69,9 +74,12 @@ async def api_meta():
             "RSA": config.get("fingerprints", "RSA"),
         },
         "statistics": {
-            "packages": len(packages),
-            "orphan_packages": len(orphan_packages),
-            "trusted_users": len(trusted_users),
+            "packages": packages,
+            "orphan_packages": orphan_packages,
+            "package_commits": commits,
+            "users": users,
+            "maintainers": maintainers,
+            "trusted_users": trusted_users,
         },
     }
 
