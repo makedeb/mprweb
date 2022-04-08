@@ -7,11 +7,10 @@ import sys
 import time
 
 import pygit2
-import srcinfo.parse
-import srcinfo.utils
+from makedeb_srcinfo import SrcinfoParser
 
 import aurweb.config
-from aurweb import db
+from aurweb import db, exceptions
 from aurweb.models.dependency_type import DependencyType
 from aurweb.models.license import License
 from aurweb.models.package import Package
@@ -32,6 +31,11 @@ repo_regex = aurweb.config.get("serve", "repo-regex")
 
 max_blob_size = aurweb.config.getint("update", "max-blob-size")
 
+def get_version(pkgver, pkgrel, epoch):
+    if epoch is not None:
+        return f"{epoch}:{pkgver}-{pkgrel}"
+    else:
+        return f"{pkgver}-{pkgrel}"
 
 def size_humanize(num):
     for unit in ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB"]:
@@ -42,21 +46,6 @@ def size_humanize(num):
                 return "{:.2f}{}".format(num, unit)
         num /= 1024.0
     return "{:.2f}{}".format(num, "YiB")
-
-
-def extract_arch_fields(pkginfo, field):
-    values = []
-
-    if field in pkginfo:
-        for val in pkginfo[field]:
-            values.append({"value": val, "arch": None})
-
-    for arch in pkginfo["arch"]:
-        if field + "_" + arch in pkginfo:
-            for val in pkginfo[field + "_" + arch]:
-                values.append({"value": val, "arch": arch})
-
-    return values
 
 
 def parse_dep(depstring):
@@ -86,31 +75,52 @@ def create_pkgbase(pkgbase_name, user):
     return pkgbase
 
 
-def save_metadata(metadata, user):  # noqa: C901
+def save_metadata(srcinfo, user):  # noqa: C901
+    pkgbase = srcinfo.get_variable("pkgbase")[0]
+    pkgname = srcinfo.get_variable("pkgname")
+    pkgver = srcinfo.get_variable("pkgver")[0]
+    pkgrel = srcinfo.get_variable("pkgrel")[0]
+    epoch = srcinfo.get_variable("epoch")
+    pkgdesc = srcinfo.get_variable("pkgdesc")[0]
+    url = srcinfo.get_variable("url")
+    
+    # Convert some variables if they weren't set to anything in the SRCINFO file.
+    if len(epoch) == 1:
+        epoch = epoch[0]
+    else:
+        epoch = None
+
+    if len(url) == 1:
+        url = url[0]
+    else:
+        url = None
+    
+    # Set up the DB for this package.
     with db.begin():
-        pkgbase = (
+        db_pkgbase = (
             db.query(PackageBase)
-            .filter(PackageBase.Name == metadata["pkgbase"])
+            .filter(PackageBase.Name == pkgbase)
             .first()
         )
-        was_orphan = pkgbase.MaintainerUID is None
+
+        was_orphan = db_pkgbase.MaintainerUID is None
 
         # Update package base details and delete current packages.
         now = int(time.time())
 
-        pkgbase.ModifiedTS = (now,)
-        pkgbase.PackagerUID = (user.ID,)
-        pkgbase.OutOfDateTS = (None,)
-        pkgbase.FlaggerComment = ("",)
-        pkgbase.FlaggerUID = None
+        db_pkgbase.ModifiedTS = now
+        db_pkgbase.PackagerUID = user.ID
+        db_pkgbase.OutOfDateTS = None
+        db_pkgbase.FlaggerComment = ""
+        db_pkgbase.FlaggerUID = None
 
         # If package is an orphan, set the maintainer to the pusher.
         if was_orphan:
-            pkgbase.MaintainerUID = user.ID
+            db_pkgbase.MaintainerUID = user.ID
 
         # Delete all current metadata associated with each pkgname belonging to
         # this pkgbase.
-        for pkgname in pkgbase.packages:
+        for pkgname in db_pkgbase.packages:
             for table in (
                 PackageSource,
                 PackageDependency,
@@ -123,46 +133,36 @@ def save_metadata(metadata, user):  # noqa: C901
                     db.delete(match)
 
         # Delete all pkgnames associated with the pkgbase.
-        for pkgname in pkgbase.packages:
+        for pkgname in db_pkgbase.packages:
             db.delete(pkgname)
 
     # Create each specified pkgname.
-    for pkgname in srcinfo.utils.get_package_names(metadata):
-        pkginfo = srcinfo.utils.get_merged_package(pkgname, metadata)
+    version = get_version(pkgver, pkgrel, epoch)
 
-        # Get version.
-        if "epoch" in pkginfo and int(pkginfo["epoch"]) > 0:
-            version = "{:d}:{:s}-{:s}".format(
-                int(pkginfo["epoch"]), pkginfo["pkgver"], pkginfo["pkgrel"]
-            )
-        else:
-            version = "{:s}-{:s}".format(pkginfo["pkgver"], pkginfo["pkgrel"])
-
-        # Set pkgdesc and url if not set.
-        for field in ("pkgdesc", "url"):
-            if field not in pkginfo:
-                pkginfo[field] = None
-
-        # Create the pkgname.
+    for pkg in srcinfo.get_variable("pkgname"):
         with db.begin():
-            pkgname = db.create(
+            db_pkgname = db.create(
                 Package,
-                PackageBaseID=pkgbase.ID,
-                Name=pkginfo["pkgname"],
+                PackageBaseID=db_pkgbase.ID,
+                Name=pkg,
                 Version=version,
-                Description=pkginfo["pkgdesc"],
-                URL=pkginfo["url"],
+                Description=pkgdesc,
+                URL=url,
             )
-
+        
         # Add package sources.
         with db.begin():
-            for source_info in extract_arch_fields(pkginfo, "source"):
-                db.create(
-                    PackageSource,
-                    PackageID=pkgname.ID,
-                    Source=source_info["value"],
-                    SourceArch=source_info["arch"],
-                )
+            for distro, arch in srcinfo.get_extended_variable("source"):
+                source_var = srcinfo.construct_extended_variable_name(distro, "source", arch)
+
+                for source in srcinfo.get_variable(source_var):
+                    db.create(
+                        PackageSource,
+                        PackageID=db_pkgname.ID,
+                        Source=source,
+                        SourceArch=arch,
+                        SourceDist=distro
+                    )
 
         # Add package dependencies.
         with db.begin():
@@ -174,19 +174,28 @@ def save_metadata(metadata, user):  # noqa: C901
                     .ID
                 )
 
-                for dep_info in extract_arch_fields(pkginfo, deptype):
-                    depname, depdesc, depcond = parse_dep(dep_info["value"])
-                    deparch = dep_info["arch"]
+                for distro, arch in srcinfo.get_extended_variable(deptype):
+                    dep_var = srcinfo.construct_extended_variable_name(distro, deptype, arch)
 
-                    db.create(
-                        PackageDependency,
-                        PackageID=pkgname.ID,
-                        DepTypeID=dep_id,
-                        DepName=depname,
-                        DepDesc=depdesc,
-                        DepCondition=depcond,
-                        DepArch=deparch,
-                    )
+                    for dep in srcinfo.get_variable(dep_var):
+                        depname, depdesc = srcinfo.split_dep_description(dep)
+                        depname, depcond, depver = srcinfo.split_dep_condition(depname)
+
+                        if depcond is not None and depver is not None:
+                            depcondition = depcond + depver
+                        else:
+                            depcondition = None
+
+                        db.create(
+                            PackageDependency,
+                            PackageID=db_pkgname.ID,
+                            DepTypeID=dep_id,
+                            DepName=depname,
+                            DepDesc=depdesc,
+                            DepCondition=depcondition,
+                            DepArch=arch,
+                            DepDist=distro
+                        )
 
         # Add package relations (conflicts, provides, replaces).
         with db.begin():
@@ -198,22 +207,30 @@ def save_metadata(metadata, user):  # noqa: C901
                     .ID
                 )
 
-                for rel_info in extract_arch_fields(pkginfo, reltype):
-                    relname, _, relcond = parse_dep(rel_info["value"])
-                    relarch = rel_info["arch"]
+                for distro, arch in srcinfo.get_extended_variable(reltype):
+                    rel_var = srcinfo.construct_extended_variable_name(distro, reltype, arch)
+
+                    for rel in srcinfo.get_variable(rel_var):
+                        relname, reldesc = srcinfo.split_dep_description(rel)
+                        relname, relcond, relver = srcinfo.split_dep_condition(relname)
+
+                        if relcond is not None and relver is not None:
+                            relcondition = relcond + relver
+                        else:
+                            relcondition = None
 
                     db.create(
                         PackageRelation,
-                        PackageID=pkgname.ID,
+                        PackageID=db_pkgname.ID,
                         RelTypeID=rel_id,
                         RelName=relname,
-                        RelCondition=relcond,
-                        RelArch=relarch,
+                        RelCondition=relcondition,
+                        RelArch=arch,
+                        RelDist=distro
                     )
 
         # Add package licenses.
-        if "license" in pkginfo:
-            for license_name in pkginfo["license"]:
+            for license_name in srcinfo.get_variable("license"):
                 db_license = (
                     db.query(License).filter(License.Name == license_name).first()
                 )
@@ -235,7 +252,7 @@ def save_metadata(metadata, user):  # noqa: C901
         with db.begin():
             current_notification_length = len(
                 db.query(PackageNotification)
-                .filter(PackageNotification.PackageBaseID == pkgbase.ID)
+                .filter(PackageNotification.PackageBaseID == db_pkgbase.ID)
                 .filter(PackageNotification.UserID == user.id)
                 .all()
             )
@@ -243,7 +260,7 @@ def save_metadata(metadata, user):  # noqa: C901
             is_notified = current_notification_length == 1
 
             if not is_notified:
-                db.create(PackageNotification, PackageBaseID=pkgbase.ID, UserID=user.ID)
+                db.create(PackageNotification, PackageBaseID=db_pkgbase.ID, UserID=user.ID)
 
 
 def update_notify(user, pkgbase):
@@ -272,16 +289,16 @@ def main():  # noqa: C901
         user = (
             db.query(User).filter(User.Username == os.environ.get("AUR_USER")).first()
         )
-        pkgbase = os.environ.get("AUR_PKGBASE")
+        env_pkgbase = os.environ.get("AUR_PKGBASE")
         privileged = os.environ.get("AUR_PRIVILEGED", "0") == "1"
         allow_overwrite = (os.environ.get("AUR_OVERWRITE", "0") == "1") and privileged
-        repo = pygit2.Repository(f"{repo_path}/{pkgbase}")
+        repo = pygit2.Repository(f"{repo_path}/{env_pkgbase}")
 
         warn_or_die = warn if privileged else die
 
     if len(sys.argv) == 2 and sys.argv[1] == "restore":
         if "refs/heads/master" not in repo.listall_references():
-            die("{:s}: repository not found: {:s}".format(sys.argv[1], pkgbase))
+            die("{:s}: repository not found: {:s}".format(sys.argv[1], env_pkgbase))
         refname = "refs/heads/master"
         branchref = "refs/heads/master"
         sha1_old = sha1_new = repo.lookup_reference(branchref).target
@@ -329,82 +346,68 @@ def main():  # noqa: C901
                     ),
                     str(commit.id),
                 )
-
+        
+        
+        # Read the SRCINFO file.
         metadata_raw = repo[commit.tree[".SRCINFO"].id].data.decode()
-        (metadata, errors) = srcinfo.parse.parse_srcinfo(metadata_raw)
-        if errors:
-            sys.stderr.write(
-                "error: The following errors occurred "
-                "when parsing .SRCINFO in commit\n"
-            )
-            sys.stderr.write("error: {:s}:\n".format(str(commit.id)))
-            for error in errors:
-                for err in error["error"]:
-                    sys.stderr.write(
-                        "error: line {:d}: {:s}\n".format(error["line"], err)
-                    )
-            exit(1)
+        srcinfo = SrcinfoParser(metadata_raw)
+        
+        pkgbase = srcinfo.get_variable("pkgbase")[0]
+        pkgname = srcinfo.get_variable("pkgname")
+        pkgver = srcinfo.get_variable("pkgver")[0]
+        pkgrel = srcinfo.get_variable("pkgrel")[0]
+        epoch = srcinfo.get_variable("epoch")
+        pkgdesc = srcinfo.get_variable("pkgdesc")[0]
+        arch = srcinfo.get_variable("arch")
+        sources = srcinfo.get_extended_variable("source")
 
-        try:
-            metadata_pkgbase = metadata["pkgbase"]
-        except KeyError:
-            die_commit(
-                "invalid .SRCINFO, does not contain a pkgbase (is the file empty?)",
-                str(commit.id),
-            )
-        if not re.match(repo_regex, metadata_pkgbase):
-            die_commit("invalid pkgbase: {:s}".format(metadata_pkgbase), str(commit.id))
+        if len(epoch) == 1:
+            epoch = epoch[0]
+        else:
+            epoch = None
 
-        if not metadata["packages"]:
-            die_commit("missing pkgname entry", str(commit.id))
+        # Now lint the SRCINFO file.
+        # pkgbase.
+        if not re.match(repo_regex, pkgbase):
+            die_commit("Invalid .SRCINFO, invalid pkgbase: {:s}".format(pkgbase), str(commit.id))
+        
+        # pkgname.
+        for pkg in pkgname:
+            if not re.match(r"[a-z0-9][a-z0-9\.+_-]*$", pkg):
+                die_commit(f"Invalid pkgname {pkg}.", str(commit.id))
 
-        for pkgname in set(metadata["packages"].keys()):
-            pkginfo = srcinfo.utils.get_merged_package(pkgname, metadata)
+        # epoch.
+        if epoch is not None and not epoch.isdigit():
+                die_commit("invalid epoch: {:s}".format(epoch), str(commit.id))
 
-            for field in ("pkgver", "pkgrel", "pkgname"):
-                if field not in pkginfo:
-                    die_commit(
-                        "missing mandatory field: {:s}".format(field), str(commit.id)
-                    )
+        # Check for the presence of maintainer scripts.
+        maintainer_scripts = ("preinst", "postinst", "prerm", "postrm")
 
-            if "epoch" in pkginfo and not pkginfo["epoch"].isdigit():
-                die_commit(
-                    "invalid epoch: {:s}".format(pkginfo["epoch"]), str(commit.id)
-                )
+        for script_type in maintainer_scripts:
+            scripts = srcinfo.get_extended_variable(script_type)
 
-            if not re.match(r"[a-z0-9][a-z0-9\.+_-]*$", pkginfo["pkgname"]):
-                die_commit(
-                    "invalid package name: {:s}".format(pkginfo["pkgname"]),
-                    str(commit.id),
-                )
+            for distro, arch in scripts:
+                script_name = srcinfo.construct_extended_variable_name(distro, script_type, arch)
+                script = srcinfo.get_variable(script_name)[0]
 
-            max_len = {"pkgname": 255, "pkgdesc": 255, "url": 8000}
-            for field in max_len.keys():
-                if field in pkginfo and len(pkginfo[field]) > max_len[field]:
-                    die_commit(
-                        "{:s} field too long: {:s}".format(field, pkginfo[field]),
-                        str(commit.id),
-                    )
+                if script not in commit.tree:
+                    die_commit(f"Missing {script_name} file {script}.", str(commit.id))
 
-            for field in ("install", "changelog"):
-                if field in pkginfo and not pkginfo[field] in commit.tree:
-                    die_commit(
-                        "missing {:s} file: {:s}".format(field, pkginfo[field]),
-                        str(commit.id),
-                    )
 
-            for field in extract_arch_fields(pkginfo, "source"):
-                fname = field["value"]
-                if len(fname) > 8000:
-                    die_commit(
-                        "source entry too long: {:s}".format(fname), str(commit.id)
-                    )
-                if "://" in fname or "lp:" in fname:
-                    continue
-                if fname not in commit.tree:
-                    die_commit(
-                        "missing source file: {:s}".format(fname), str(commit.id)
-                    )
+        # Check sources.
+        source_vars = srcinfo.get_extended_variable("source")
+
+        for distro, arch in source_vars:
+            source_name = srcinfo.construct_extended_variable_name(distro, "source", arch)
+
+            for source in srcinfo.get_variable(source_name):
+                if len(source) > 8000:
+                    die_commit(f"Source entry for {source_name} is too long.", str(commit.id))
+
+                if "://" not in source and "lp:" not in source:
+                    if source not in commit.tree:
+                        die_commit(f"Missing {source_name} file {source}.", str(commit.id))
+    
 
     # Display a warning if .SRCINFO is unchanged.
     if sha1_old not in ("0000000000000000000000000000000000000000", sha1_new):
@@ -412,70 +415,72 @@ def main():  # noqa: C901
         srcinfo_id_new = repo[sha1_new].tree[".SRCINFO"].id
         if srcinfo_id_old == srcinfo_id_new:
             warn(".SRCINFO unchanged. " "The package database will not be updated!")
+    
+    # Get the pkgbase (from the 'AUR_PKGBASE' environment variable at the top of this function) in the db if it exists.
+    db_pkgbase = db.query(PackageBase).filter(PackageBase.Name == env_pkgbase).first()
+
+    # Display a warning if version hasn't been updated.
+    version = get_version(pkgver, pkgrel, epoch)
+
+    if db_pkgbase is not None and db_pkgbase.packages[0].Version == version:
+        version_updated = False
+        warn_or_die("Package version wasn't updated. The database won't be updated with the new package data.")
+    else:
+        version_updated = True
+
 
     # Read .SRCINFO from the HEAD commit.
     metadata_raw = repo[repo[sha1_new].tree[".SRCINFO"].id].data.decode()
-    (metadata, errors) = srcinfo.parse.parse_srcinfo(metadata_raw)
+    srcinfo = SrcinfoParser(metadata_raw)
+
+    pkgbase = srcinfo.get_variable("pkgbase")[0]
+    pkgname = srcinfo.get_variable("pkgname")
 
     # Ensure that the package base name matches the repository name.
-    metadata_pkgbase = metadata["pkgbase"]
-    if metadata_pkgbase != pkgbase:
-        die("invalid pkgbase: {:s}, expected {:s}".format(metadata_pkgbase, pkgbase))
+    if pkgbase != env_pkgbase:
+        die("invalid pkgbase: {:s}, expected {:s}".format(pkgbase, env_pkgbase))
 
     # Ensure that packages are neither blacklisted nor overwritten.
     with db.begin():
-        # Some of these functions require some kind of pkgbase to be given,
-        # which wont work with the pkgbase function below when the pkgbase
-        # doesn't exist yet.
-        pkgbase_name = metadata["pkgbase"]
-        pkgbase = db.query(PackageBase).filter(PackageBase.Name == pkgbase_name).first()
         blacklist = db.query(PackageBlacklist)
+        overwritten_packages = []
+        
+        for pkg in pkgname:
+            if blacklist.filter(PackageBlacklist.Name == pkg).first() is not None:
+                warn_or_die("Package is blacklisted: {:s}".format(pkg))
 
-        for pkgname in srcinfo.utils.get_package_names(metadata):
-            pkginfo = srcinfo.utils.get_merged_package(pkgname, metadata)
-            pkgname = pkginfo["pkgname"]
+            # Overwritten packages would occur in the following scenario:
+            # 1. pkgbase 'a' contains pkgnames 'hugo' and 'terraform'.
+            # 2. pkgbase 'b' pushes a package with pkgnames 'zebra' and 'terraform'.
+            # 3. Likewise, we should block this push of 'b' since it tries to edit
+            #    data of the 'terraform' pkgname from the 'a' package.
+            overwritten_package = (
+                db.query(Package)
+                .join(PackageBase)
+                .filter(Package.Name == pkg)
+                .filter(PackageBase.Name != env_pkgbase)
+                .first()
+            )
 
-            if blacklist.filter(PackageBlacklist.Name == pkgname).first() is not None:
-                warn_or_die("package is blacklisted: {:s}".format(pkgname))
-
-        # Overwritten packages would occur in the following scenario:
-        # 1. pkgbase 'a' contains pkgnames 'hugo' and 'terraform'.
-        # 2. pkgbase 'b' pushes a package with pkgnames 'zebra' and 'terraform'.
-        # 3. Likewise, we should block this push of 'b' since it tries to edit
-        #    data of the 'terraform' pkgname from the 'a' package.
-        overwritten_packages = (
-            db.query(Package)
-            .join(PackageBase)
-            .filter(Package.Name == pkgname)
-            .filter(PackageBase.Name != pkgbase_name)
-            .all()
-        )
-
-        if len(overwritten_packages) > 0:
-            die("cannot overwrite package: {:s}".format(pkgname))
+            if overwritten_package is not None:
+                die(f"Cannot overwrite package '{overwritten_package.Name}', as it's owned by package base '{overwritten_package.PackageBase.Name}'.")
 
     # Create a new package base if it does not exist yet.
-    if pkgbase is None:
-        pkgbase = create_pkgbase(pkgbase_name, user)
+    if db_pkgbase is None:
+        db_pkgbase = create_pkgbase(pkgbase, user)
 
-    # Store package base details in the database.
-    save_metadata(metadata, user)
+    # Update package info if the version was updated.
+    if version_updated:
+        save_metadata(srcinfo, user)
 
-    # Create a tag for the current package's version if it doesn't currently exist.
-    if "epoch" in metadata and int(pkginfo["epoch"]) > 0:
-        version = "{:d}!{:s}-{:s}".format(
-            int(metadata["epoch"]), metadata["pkgver"], metadata["pkgrel"]
-        )
-    else:
-        version = "{:s}-{:s}".format(metadata["pkgver"], metadata["pkgrel"])
+        # Create a tag for the current package's version if it doesn't currently exist.
+        tag_name = f"refs/tags/ver/{version}"
 
-    tag_name = f"refs/tags/ver/{version}"
-
-    if not repo.references.get(tag_name):
-        repo.references.create(tag_name, sha1_new)
+        if not repo.references.get(tag_name):
+            repo.references.create(tag_name, sha1_new)
 
     # Send package update notifications.
-    update_notify(user, pkgbase)
+    update_notify(user, db_pkgbase)
 
 
 if __name__ == "__main__":

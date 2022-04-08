@@ -32,7 +32,6 @@
                     <span class="notify-dot"></span>
                 {% endif %}
             </h2>
-            <h2 class="text dependency-information">Dependency Information</h2>
 
             {% if request.user.Username == pkgbase.Maintainer.Username %}
                 <h2 class="text integrations">Integrations</h2>
@@ -132,18 +131,6 @@
                 </div>
 
                 <div class="section">
-                    <p class="key">Sources:</p>
-                    {% if (sources | length) != 0 %}
-                        {% for src in sources %}
-                            {% set file, uri = (src | source_uri) %}
-                            <a href="{{ uri }}">{{ file }}</a>
-                        {% endfor %}
-                    {% else %}
-                        <p><em>None</em></p>
-                    {% endif %}
-                </div>
-
-                <div class="section">
                     <p class="key">Git Clone URL <em>(click to copy)</em>:</p>
                     <p class="value copy">{{ git_clone_uri_anon | format(pkgbase.Name) }}</p>
                     {% if request.user.is_authenticated() %}
@@ -218,101 +205,6 @@
                 {% elif request.user.has_credential(creds.PKGBASE_DISOWN, approved=[pkgbase.Maintainer]) %}
                     <p><a href="/pkgbase/{{ pkgbase.Name }}/disown">{{ "Disown Package" | tr }}</a></p>
                 {% endif %}
-            </div>
-
-            <div class="hidden dependency-information">
-                <div class="section">
-                    <p class="key">Depends:</p>
-                    {% if (depends | length) != 0 %}
-                        {% for dep in depends %}
-                            <p class="value">{{ dep.DepName }}</p>
-                        {% endfor %}
-                    {% else %}
-                        <p class="value"><em>None</em></p>
-                    {% endif %}
-                </div>
-
-                <div class="section">
-                    <p class="key">Optdepends:</p>  
-                    {% if (optdepends | length) != 0 %}  
-                        {% for dep in optdepends %}
-                            <p class="value">{{ dep.DepName }}</p>
-                        {% endfor %}
-                    {% else %}
-                        <p class="value"><em>None</em></p>
-                    {% endif %}
-                </div>
-
-                <div class="section">
-                    <p class="key">Makedepends:</p>
-                    {% if (makedepends | length) != 0 %}  
-                        {% for dep in makedepends %}
-                            <p class="value">{{ dep.DepName }}</p>
-                        {% endfor %}
-                    {% else %}
-                        <p class="value"><em>None</em></p>
-                    {% endif %}
-                </div>
-
-                <div class="section">
-                    <p class="key">Checkdepends:</p>  
-                    {% if (checkdepends | length) != 0 %}  
-                        {% for dep in checkdepends %}
-                            <p class="value">{{ dep.DepName }}</p>
-                        {% endfor %}
-                    {% else %}
-                        <p class="value"><em>None</em></p>
-                    {% endif %}
-                </div>
-
-                <div class="section">
-                    <p class="key">Conflics:</p>  
-                    {% if (conflicts | length) != 0 %}  
-                        {% for rel in conflicts %}
-                            <p class="value">{{ rel.RelName }}</p>
-                        {% endfor %}
-                    {% else %}
-                        <p class="value"><em>None</em></p>
-                    {% endif %}
-                </div>
-
-                <div class="section">
-                    <p class="key">Provides:</p>
-                    {% if (provides | length) != 0 %}  
-                        {% for rel in provides %}
-                            <p class="value">{{ rel.RelName }}</p>
-                        {% endfor %}
-                    {% else %}
-                        <p class="value"><em>None</em></p>
-                    {% endif %}
-                </div>
-
-                <div class="section">
-                    <p class="key">Replaces:</p>  
-                    {% if (replaces | length) != 0 %}  
-                        {% for rel in replaces %}
-                            <p class="value">{{ rel.RelName }}</p>
-                        {% endfor %}
-                    {% else %}
-                        <p class="value"><em>None</em></p>
-                    {% endif %}
-                </div>
-
-                <div class="section required-section">
-                    <p class="key">Required by:</p>
-                    {% if (required_by | length) != 0 %}
-                        {% for dep in required_by %}
-                            <p class="value"><a href="{{ dep.Package | package_link }}">{{ dep.Package.Name }}</a></p>
-                            {% if dep.DepName != package.Name %}
-                                <p class="value">({{ "requires %s" | tr | format(dep.DepName) }})</p>
-                            {% endif %}
-                            <br>
-                        {% endfor %}
-                    {% else %}
-                        <p><em>None</em></p>
-                    {% endif %}
-                </div>
-
             </div>
 
             <div class="hidden integrations">
