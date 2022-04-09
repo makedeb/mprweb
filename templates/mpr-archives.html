@@ -1,0 +1,45 @@
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div class="box field">
+        <div class="item">
+            <h1>{{ "MPR Archives" | tr }}</h2>
+            <hr>
+        </div>
+
+        <div class="item">
+            <p>The MPR exposes various archives that contain useful information for people wanting to integrate with the MPR.</p>
+            <p>The purpose of the archives over something like the <a href="/api">API</a> is to provide a more manageable format for large amounts of data that would otherwise be tedious for the MPR backend to refresh on every request.</p>
+            <div class="notice note">
+                <p>All archives are served precompressed with Gzip, and will need to be extracted after downloading in order to properly user them.</p>
+            </div>
+        </div>
+        <h2>Available archives:</h2>
+        <br>
+        <div class="item">
+            <code>/packages.gz</code>
+            <hr>
+            <p>A newline-separated list of package names on the MPR.</p>
+        </div>
+        <div class="item">
+            <code>/pkgbase.gz</code>
+            <hr>
+            <p>A newline-separated list of package bases on the MPR.</p>
+        </div>
+        <div class="item">
+            <code>/users.gz</code>
+            <hr>
+            <p>A newline-separated list of users on the MPR.</p>
+        </div>
+        <div class="item">
+            <code>/packages-meta-v1.json.gz</code>
+            <hr>
+            <p>A JSON-formatted archive of packages on the MPR. Notably, this archive does not include any form of dependencies for listed packages.</p>
+        </div>
+        <div class="item">
+            <code>/packages-meta-ext-v2.json.gz</code>
+            <hr>
+            <p>A JSON-formated archive of packages on the MPR. In addition to the data included in <code>/packages-meta-v1.json</code>, these archives also include dependency listings.</p>
+        </div>
+    </div>
+{% endblock %}
+{# vim: set ts=4 sw=4 expandtab: #}

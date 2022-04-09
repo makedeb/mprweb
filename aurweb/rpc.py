@@ -229,7 +229,6 @@ class RPC:
                 models.PackageDependency.DepName.label("Name"),
                 models.PackageDependency.DepCondition.label("Cond"),
             )
-            .distinct()
             .order_by("Name"),
             # PackageRelation
             db.query(models.PackageRelation)
@@ -241,7 +240,6 @@ class RPC:
                 models.PackageRelation.RelName.label("Name"),
                 models.PackageRelation.RelCondition.label("Cond"),
             )
-            .distinct()
             .order_by("Name"),
             # Licenses
             db.query(models.PackageLicense)
@@ -253,7 +251,6 @@ class RPC:
                 models.License.Name.label("Name"),
                 literal(str()).label("Cond"),
             )
-            .distinct()
             .order_by("Name"),
             # Keywords
             db.query(models.PackageKeyword)
@@ -270,9 +267,18 @@ class RPC:
                 models.PackageKeyword.Keyword.label("Name"),
                 literal(str()).label("Cond"),
             )
-            .distinct()
             .order_by("Name"),
         ]
+
+        # If RPC version is 5, we want to remove any dependencies and relations
+        # with extensions, as those will all appear under 'depends' and keys
+        # like that otherwise.
+        if self.version == 5:
+            subqueries[0] = (
+                subqueries[0]
+                .filter(models.PackageDependency.DepArch == None)  # noqa: E711
+                .filter(models.PackageDependency.DepDist == None)  # noqa: E711
+            )
 
         # Union all subqueries together.
         query = subqueries[0].union_all(*subqueries[1:])

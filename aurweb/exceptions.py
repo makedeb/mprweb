@@ -87,8 +87,10 @@ class ValidationError(AurwebException):
         super().__init__(*args, **kwargs)
         self.data = data
 
+
 class InvalidSrcinfoError(AurwebException):
     pass
+
 
 class InvariantError(AurwebException):
     pass

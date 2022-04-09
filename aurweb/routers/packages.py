@@ -1,4 +1,3 @@
-from collections import defaultdict
 from http import HTTPStatus
 from typing import Any, Dict, List
 
@@ -8,14 +7,6 @@ import aurweb.filters  # noqa: F401
 from aurweb import config, db, defaults, logging, models, util
 from aurweb.auth import creds, requires_auth
 from aurweb.exceptions import InvariantError
-from aurweb.models.dependency_type import (
-    CHECKDEPENDS_ID,
-    DEPENDS_ID,
-    MAKEDEPENDS_ID,
-    OPTDEPENDS_ID,
-)
-from aurweb.models.relation_type import CONFLICTS_ID, PROVIDES_ID, REPLACES_ID
-from aurweb.packages import util as pkgutil
 from aurweb.packages.search import PackageSearch
 from aurweb.packages.util import get_pkg_or_base
 from aurweb.pkgbase import actions as pkgbase_actions
