@@ -265,7 +265,6 @@ services:
     profiles: ["dev"]
     init: true
     environment:
-      - AUR_CONFIG=conf/config
       - TEST_RECURSION_LIMIT=${TEST_RECURSION_LIMIT}
       - PROMETHEUS_MULTIPROC_DIR=/tmp_prometheus
       - LOG_CONFIG=logging.test.conf

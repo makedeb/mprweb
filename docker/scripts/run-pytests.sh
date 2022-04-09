@@ -25,4 +25,4 @@ rm -rf $PROMETHEUS_MULTIPROC_DIR
 mkdir -p $PROMETHEUS_MULTIPROC_DIR
 
 # Run pytest with optional targets in front of it.
-pytest
+pytest -v test/test_git.py

@@ -135,7 +135,7 @@ def _main():
     userlist = "\n".join([user[0] for user in query]) + "\n"
     archive = gzip.compress(userlist.encode())
 
-    with open(f"{archivedir}/pkgbase.gz", "bw") as file:
+    with open(f"{archivedir}/users.gz", "bw") as file:
         file.write(archive)
 
     # Produce packages-meta-v1.json.gz.
