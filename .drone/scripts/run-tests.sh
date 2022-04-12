@@ -5,7 +5,7 @@ if echo "${DRONE_COMMIT_MESSAGE}" | grep -q 'TEST SKIP'; then
 fi
 
 set -ex
-AUR_CONFIG='conf/config'
+AUR_CONFIG="${PWD}/conf/config"
 DB_HOST='localhost'
 TEST_RECURSION_LIMIT='10000'
 CURRENT_DIR="$(pwd)"
