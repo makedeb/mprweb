@@ -155,6 +155,12 @@ async def about(request: Request):
     return render_template(request, "about.html", context)
 
 
+@router.get("/mpr-archives")
+async def mpr_archives(request: Request):
+    context = make_context(request, "MPR Archives")
+    return render_template(request, "mpr-archives.html", context)
+
+
 @router.get("/metrics")
 async def metrics(request: Request):
     registry = CollectorRegistry()

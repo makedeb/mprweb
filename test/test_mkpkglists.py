@@ -1,230 +1,174 @@
-import json
-from typing import List, Union
-from unittest import mock
+import gzip
 
+import orjson
 import pytest
 
-from aurweb import config, db, util
-from aurweb.models import (
-    License,
-    Package,
-    PackageBase,
-    PackageDependency,
-    PackageLicense,
-    User,
-)
-from aurweb.models.account_type import USER_ID
-from aurweb.models.dependency_type import DEPENDS_ID
-from aurweb.testing import noop
+from aurweb import config, db, models
+from aurweb.scripts import mkpkglists
+from aurweb.testing import setup_test_db
 
-
-class FakeFile:
-    data = str()
-    __exit__ = noop
-
-    def __init__(self, modes: str) -> "FakeFile":
-        self.modes = modes
-
-    def __enter__(self, *args, **kwargs) -> "FakeFile":
-        return self
-
-    def write(self, data: Union[str, bytes]) -> None:
-        if isinstance(data, bytes):
-            data = data.decode()
-        self.data += data
-
-    def writelines(self, dataset: List[Union[str, bytes]]) -> None:
-        util.apply_all(dataset, self.write)
-
-    def close(self) -> None:
-        return
-
-
-class MockGzipOpen:
-    def __init__(self):
-        self.gzips = dict()
-
-    def open(self, archive: str, modes: str):
-        self.gzips[archive] = FakeFile(modes)
-        return self.gzips.get(archive)
-
-    def get(self, key: str) -> FakeFile:
-        return self.gzips.get(key)
-
-    def __getitem__(self, key: str) -> FakeFile:
-        return self.get(key)
-
-    def __contains__(self, key: str) -> bool:
-        return key in self.gzips
-
-    def data(self, archive: str):
-        return self.get(archive).data
+archivedir = config.get("mkpkglists", "archivedir")
 
 
 @pytest.fixture(autouse=True)
 def setup(db_test):
-    config.rehash()
+    return
 
 
-@pytest.fixture
-def user() -> User:
+def test_mkpkglists():
+    setup_test_db(
+        "Users", "Packages", "PackageBases", "PackageDepends", "PackageRelations"
+    )
+
+    # Setup users.
     with db.begin():
         user = db.create(
-            User,
-            Username="test",
-            Email="test@example.org",
-            Passwd="testPassword",
-            AccountTypeID=USER_ID,
+            models.User, Username="user", Email="test@example.com", Passwd="1234"
         )
-    yield user
 
-
-@pytest.fixture
-def packages(user: User) -> List[Package]:
-    output = []
+    # Setup package bases.
     with db.begin():
-        lic = db.create(License, Name="GPL")
-        for i in range(5):
-            # Create the package.
-            pkgbase = db.create(PackageBase, Name=f"pkgbase_{i}", Packager=user)
-            pkg = db.create(Package, PackageBase=pkgbase, Name=f"pkg_{i}")
+        package_base = db.create(
+            models.PackageBase,
+            Name="pkgbase",
+            MaintainerUID=user.ID,
+            PackagerUID=user.ID,
+        )
 
-            # Create some related records.
-            db.create(PackageLicense, Package=pkg, License=lic)
-            db.create(
-                PackageDependency,
-                DepTypeID=DEPENDS_ID,
-                Package=pkg,
-                DepName=f"dep_{i}",
-                DepCondition=">=1.0",
-            )
+    # Setup packages.
+    with db.begin():
+        package1 = db.create(
+            models.Package, PackageBaseID=package_base.ID, Name="package1"
+        )
 
-            # Add the package to our output list.
-            output.append(pkg)
+        package2 = db.create(
+            models.Package, PackageBaseID=package_base.ID, Name="package2"
+        )
 
-    # Sort output by the package name and return it.
-    yield sorted(output, key=lambda k: k.Name)
+    # Setup dependencies.
+    with db.begin():
+        db.create(
+            models.PackageDependency,
+            DepTypeID=models.dependency_type.DEPENDS_ID,
+            PackageID=package1.ID,
+            DepName="dep1",
+        )
 
+        db.create(
+            models.PackageDependency,
+            DepTypeID=models.dependency_type.DEPENDS_ID,
+            PackageID=package1.ID,
+            DepName="dep2",
+        )
 
-@mock.patch("os.makedirs", side_effect=noop)
-def test_mkpkglists_empty(makedirs: mock.MagicMock):
-    gzips = MockGzipOpen()
-    with mock.patch("gzip.open", side_effect=gzips.open):
-        from aurweb.scripts import mkpkglists
+        db.create(
+            models.PackageDependency,
+            DepTypeID=models.dependency_type.DEPENDS_ID,
+            PackageID=package2.ID,
+            DepName="dep3",
+        )
 
-        mkpkglists.main()
+        db.create(
+            models.PackageDependency,
+            DepTypeID=models.dependency_type.DEPENDS_ID,
+            PackageID=package2.ID,
+            DepName="dep4",
+            DepArch="amd64",
+            DepDist="focal",
+        )
 
-    archives = config.get_section("mkpkglists")
-    archives.pop("archivedir")
-    archives.pop("packagesmetaextfile")
+    # Run mkpkglists.
+    mkpkglists._main()
 
-    for archive in archives.values():
-        assert archive in gzips
+    # Check 'packages.gz'.
+    expected = ["package1", "package2"]
 
-    # Expect that packagesfile got created, but is empty because
-    # we have no DB records.
-    packages_file = archives.get("packagesfile")
-    assert gzips.data(packages_file) == str()
+    with open(f"{archivedir}/packages.gz", "br") as file:
+        packages = gzip.decompress(file.read()).decode().splitlines()
 
-    # Expect that pkgbasefile got created, but is empty because
-    # we have no DB records.
-    users_file = archives.get("pkgbasefile")
-    assert gzips.data(users_file) == str()
+    assert len(expected) == len(packages)
 
-    # Expect that userfile got created, but is empty because
-    # we have no DB records.
-    users_file = archives.get("userfile")
-    assert gzips.data(users_file) == str()
+    for pkg in expected:
+        assert pkg in packages
 
-    # Expect that packagesmetafile got created, but is empty because
-    # we have no DB records; it's still a valid empty JSON list.
-    meta_file = archives.get("packagesmetafile")
-    assert gzips.data(meta_file) == "[\n]"
+    # Check 'pkgbase.gz'.
+    expected = ["pkgbase"]
 
+    with open(f"{archivedir}/pkgbase.gz", "br") as file:
+        packages = gzip.decompress(file.read()).decode().splitlines()
 
-@mock.patch("sys.argv", ["mkpkglists", "--extended"])
-@mock.patch("os.makedirs", side_effect=noop)
-def test_mkpkglists_extended_empty(makedirs: mock.MagicMock):
-    gzips = MockGzipOpen()
-    with mock.patch("gzip.open", side_effect=gzips.open):
-        from aurweb.scripts import mkpkglists
+    assert len(expected) == len(packages)
 
-        mkpkglists.main()
+    for pkg in expected:
+        assert pkg in packages
 
-    archives = config.get_section("mkpkglists")
-    archives.pop("archivedir")
+    # Check 'users.gz'.
+    expected = ["user"]
 
-    for archive in archives.values():
-        assert archive in gzips
+    with open(f"{archivedir}/users.gz", "br") as file:
+        users = gzip.decompress(file.read()).decode().splitlines()
 
-    # Expect that packagesfile got created, but is empty because
-    # we have no DB records.
-    packages_file = archives.get("packagesfile")
-    assert gzips.data(packages_file) == str()
+    assert len(expected) == len(users)
 
-    # Expect that pkgbasefile got created, but is empty because
-    # we have no DB records.
-    users_file = archives.get("pkgbasefile")
-    assert gzips.data(users_file) == str()
+    for user in expected:
+        assert user in users
 
-    # Expect that userfile got created, but is empty because
-    # we have no DB records.
-    users_file = archives.get("userfile")
-    assert gzips.data(users_file) == str()
+    # Check 'packages-meta-v1.json.gz'.
+    expected_keys = (
+        "ID",
+        "Name",
+        "PackageBaseID",
+        "PackageBase",
+        "Version",
+        "Description",
+        "URL",
+        "NumVotes",
+        "Popularity",
+        "OutOfDate",
+        "Maintainer",
+        "FirstSubmitted",
+        "LastModified",
+        "URLPath",
+    )
 
-    # Expect that packagesmetafile got created, but is empty because
-    # we have no DB records; it's still a valid empty JSON list.
-    meta_file = archives.get("packagesmetafile")
-    assert gzips.data(meta_file) == "[\n]"
+    with open(f"{archivedir}/packages-meta-v1.json.gz", "br") as file:
+        data = gzip.decompress(file.read()).decode()
 
-    # Expect that packagesmetafile got created, but is empty because
-    # we have no DB records; it's still a valid empty JSON list.
-    meta_file = archives.get("packagesmetaextfile")
-    assert gzips.data(meta_file) == "[\n]"
+    data = orjson.loads(data)
 
+    for item in data:
+        for key in expected_keys:
+            assert key in item
 
-@mock.patch("sys.argv", ["mkpkglists", "--extended"])
-@mock.patch("os.makedirs", side_effect=noop)
-def test_mkpkglists_extended(
-    makedirs: mock.MagicMock, user: User, packages: List[Package]
-):
-    gzips = MockGzipOpen()
-    with mock.patch("gzip.open", side_effect=gzips.open):
-        from aurweb.scripts import mkpkglists
+    # Check 'packages-meta-ext-v2.json.gz'.
+    expected_keys = (
+        "ID",
+        "Name",
+        "PackageBaseID",
+        "PackageBase",
+        "Version",
+        "Description",
+        "URL",
+        "NumVotes",
+        "Popularity",
+        "OutOfDate",
+        "Maintainer",
+        "FirstSubmitted",
+        "LastModified",
+        "URLPath",
+        "Depends",
+        "MakeDepends",
+        "CheckDepends",
+        "OptDepends",
+        "Provides",
+        "Replaces",
+    )
 
-        mkpkglists.main()
+    with open(f"{archivedir}/packages-meta-ext-v2.json.gz", "br") as file:
+        data = gzip.decompress(file.read()).decode()
 
-    archives = config.get_section("mkpkglists")
-    archives.pop("archivedir")
+    data = orjson.loads(data)
 
-    for archive in archives.values():
-        assert archive in gzips
-
-    # Expect that packagesfile got created, but is empty because
-    # we have no DB records.
-    packages_file = archives.get("packagesfile")
-    expected = "\n".join([p.Name for p in packages]) + "\n"
-    assert gzips.data(packages_file) == expected
-
-    # Expect that pkgbasefile got created, but is empty because
-    # we have no DB records.
-    users_file = archives.get("pkgbasefile")
-    expected = "\n".join([p.PackageBase.Name for p in packages]) + "\n"
-    assert gzips.data(users_file) == expected
-
-    # Expect that userfile got created, but is empty because
-    # we have no DB records.
-    users_file = archives.get("userfile")
-    assert gzips.data(users_file) == "test\n"
-
-    # Expect that packagesmetafile got created, but is empty because
-    # we have no DB records; it's still a valid empty JSON list.
-    meta_file = archives.get("packagesmetafile")
-    data = json.loads(gzips.data(meta_file))
-    assert len(data) == 5
-
-    # Expect that packagesmetafile got created, but is empty because
-    # we have no DB records; it's still a valid empty JSON list.
-    meta_file = archives.get("packagesmetaextfile")
-    data = json.loads(gzips.data(meta_file))
-    assert len(data) == 5
+    for item in data:
+        for key in expected_keys:
+            assert key in item

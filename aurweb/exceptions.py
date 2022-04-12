@@ -88,5 +88,9 @@ class ValidationError(AurwebException):
         self.data = data
 
 
+class InvalidSrcinfoError(AurwebException):
+    pass
+
+
 class InvariantError(AurwebException):
     pass

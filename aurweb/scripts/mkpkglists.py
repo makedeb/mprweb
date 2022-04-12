@@ -1,35 +1,18 @@
 #!/usr/bin/env python3
 """
-Produces package, package base and user archives for the AUR
+Produces package, package base and user archives for the MPR
 database.
 
-Archives:
-
-    packages.gz               | A line-separated list of package names
-    packages-meta-v1.json     | A type=search RPC-formatted JSON dataset
-    packages-meta-ext-v1.json | An --extended archive
-    pkgbase.gz                | A line-separated list of package base names
-    users.gz                  | A line-separated list of user names
-
-This script takes an optional argument: --extended. Based
-on the following, right-hand side fields are added to each item.
-
-    --extended  | License, Keywords, Groups, relations and dependencies
-
+See '/mpr-archives' in the web interface for a list of available archives.
 """
 
 import gzip
 import os
-import sys
-from collections import defaultdict
-from typing import Any, Dict
 
 import orjson
-from sqlalchemy import literal, orm
 
 import aurweb.config
-from aurweb import db, filters, logging, models, util
-from aurweb.benchmark import Benchmark
+from aurweb import db, logging, models
 from aurweb.models import Package, PackageBase, User
 
 logger = logging.get_logger("aurweb.scripts.mkpkglists")
@@ -55,208 +38,301 @@ TYPE_MAP = {
 }
 
 
-def get_extended_dict(query: orm.Query):
-    """
-    Produce data in the form in a single bulk SQL query:
+def get_packages_v1():
+    query = db.query(Package).all()
+    pkglist = []
 
-    {
-        <integer_package_id>: {
-            "Depends": [...],
-            "Conflicts": [...],
-            "License": [...]
-        }
-    }
+    for pkg in query:
+        current_pkg = {}
+        current_pkg["ID"] = pkg.ID
+        current_pkg["Name"] = pkg.Name
+        current_pkg["PackageBaseID"] = pkg.PackageBaseID
+        current_pkg["PackageBase"] = pkg.PackageBase.Name
+        current_pkg["Version"] = pkg.Version
+        current_pkg["Description"] = pkg.Description
+        current_pkg["URL"] = pkg.URL
+        current_pkg["NumVotes"] = pkg.PackageBase.NumVotes
+        current_pkg["Popularity"] = pkg.PackageBase.Popularity
+        current_pkg["OutOfDate"] = pkg.PackageBase.OutOfDateTS
+        current_pkg["Maintainer"] = (
+            pkg.PackageBase.Maintainer
+            if pkg.PackageBase.Maintainer is None
+            else pkg.PackageBase.Maintainer.Username
+        )
+        current_pkg["FirstSubmitted"] = pkg.PackageBase.SubmittedTS
+        current_pkg["LastModified"] = pkg.PackageBase.ModifiedTS
+        current_pkg["URLPath"] = None
 
-    The caller can then use this data to populate a dataset of packages.
+        pkglist += [current_pkg]
 
-    output = produce_base_output_data()
-    data = get_extended_dict(query)
-    for i in range(len(output)):
-        package_id = output[i].get("ID")
-        output[i].update(data.get(package_id))
-    """
-
-    data = defaultdict(lambda: defaultdict(list))
-
-    for result in query:
-        pkgid = result[0]
-        key = TYPE_MAP.get(result[1], result[1])
-        output = result[2]
-        if result[3]:
-            output += result[3]
-        data[pkgid][key].append(output)
-
-    return data
+    return pkglist
 
 
-def get_extended_fields():
-    subqueries = [
-        # PackageDependency
+def get_dependencies(pkg_id):
+    results = {}
+
+    # Base queries so we aren't repeating stuff a lot.
+    base_dep_query = (
         db.query(models.PackageDependency)
         .join(models.DependencyType)
-        .with_entities(
-            models.PackageDependency.PackageID.label("ID"),
-            models.DependencyType.Name.label("Type"),
-            models.PackageDependency.DepName.label("Name"),
-            models.PackageDependency.DepCondition.label("Cond"),
-        )
-        .distinct()
-        .order_by("Name"),
-        # PackageRelation
+        .filter(models.PackageDependency.PackageID == pkg_id)
+    )
+
+    base_rel_query = (
         db.query(models.PackageRelation)
         .join(models.RelationType)
-        .with_entities(
-            models.PackageRelation.PackageID.label("ID"),
-            models.RelationType.Name.label("Type"),
-            models.PackageRelation.RelName.label("Name"),
-            models.PackageRelation.RelCondition.label("Cond"),
-        )
-        .distinct()
-        .order_by("Name"),
-        # Licenses
-        db.query(models.PackageLicense)
-        .join(models.License, models.PackageLicense.LicenseID == models.License.ID)
-        .with_entities(
-            models.PackageLicense.PackageID.label("ID"),
-            literal("License").label("Type"),
-            models.License.Name.label("Name"),
-            literal(str()).label("Cond"),
-        )
-        .distinct()
-        .order_by("Name"),
-        # Keywords
-        db.query(models.PackageKeyword)
-        .join(
-            models.Package, Package.PackageBaseID == models.PackageKeyword.PackageBaseID
-        )
-        .with_entities(
-            models.Package.ID.label("ID"),
-            literal("Keywords").label("Type"),
-            models.PackageKeyword.Keyword.label("Name"),
-            literal(str()).label("Cond"),
-        )
-        .distinct()
-        .order_by("Name"),
-    ]
-    query = subqueries[0].union_all(*subqueries[1:])
-    return get_extended_dict(query)
+        .filter(models.PackageRelation.PackageID == pkg_id)
+    )
 
+    # Actual results.
+    results["depends"] = base_dep_query.filter(models.DependencyType.Name == "depends")
 
-EXTENDED_FIELD_HANDLERS = {"--extended": get_extended_fields}
+    results["makedepends"] = base_dep_query.filter(
+        models.DependencyType.Name == "makedepends"
+    )
 
+    results["checkdepends"] = base_dep_query.filter(
+        models.DependencyType.Name == "checkdepends"
+    )
 
-def as_dict(package: Package) -> Dict[str, Any]:
-    return {
-        "ID": package.ID,
-        "Name": package.Name,
-        "PackageBaseID": package.PackageBaseID,
-        "PackageBase": package.PackageBase,
-        "Version": package.Version,
-        "Description": package.Description,
-        "URL": package.URL,
-        "NumVotes": package.NumVotes,
-        "Popularity": float(package.Popularity),
-        "OutOfDate": package.OutOfDate,
-        "Maintainer": package.Maintainer,
-        "FirstSubmitted": package.FirstSubmitted,
-        "LastModified": package.LastModified,
-    }
+    results["optdepends"] = base_dep_query.filter(
+        models.DependencyType.Name == "optdepends"
+    )
+
+    results["conflicts"] = base_rel_query.filter(
+        models.RelationType.Name == "conflicts"
+    )
+
+    results["provides"] = base_rel_query.filter(models.RelationType.Name == "provides")
+
+    results["replaces"] = base_rel_query.filter(models.RelationType.Name == "replaces")
+
+    return results
 
 
 def _main():
-    bench = Benchmark()
-    logger.info("Started re-creating archives, wait a while...")
+    # Produce packages.gz.
+    logger.info("Creating 'packages.gz'...")
+    query = db.query(Package.Name).all()
+    pkglist = "\n".join([pkg[0] for pkg in query]) + "\n"
+    archive = gzip.compress(pkglist.encode())
 
-    query = (
-        db.query(Package)
-        .join(PackageBase, PackageBase.ID == Package.PackageBaseID)
-        .join(User, PackageBase.MaintainerUID == User.ID, isouter=True)
-        .filter(PackageBase.PackagerUID.isnot(None))
-        .with_entities(
-            Package.ID,
-            Package.Name,
-            PackageBase.ID.label("PackageBaseID"),
-            PackageBase.Name.label("PackageBase"),
-            Package.Version,
-            Package.Description,
-            Package.URL,
-            PackageBase.NumVotes,
-            PackageBase.Popularity,
-            PackageBase.OutOfDateTS.label("OutOfDate"),
-            User.Username.label("Maintainer"),
-            PackageBase.SubmittedTS.label("FirstSubmitted"),
-            PackageBase.ModifiedTS.label("LastModified"),
-        )
-        .distinct()
-        .order_by("Name")
-    )
+    with open(f"{archivedir}/packages.gz", "bw") as file:
+        file.write(archive)
 
-    # Produce packages-meta-v1.json.gz
-    output = list()
-    snapshot_uri = aurweb.config.get("options", "snapshot_uri")
-    gzips = {
-        "packages": gzip.open(PACKAGES, "wt"),
-        "meta": gzip.open(META, "wb"),
-    }
-
-    # Append list opening to the metafile.
-    gzips["meta"].write(b"[\n")
-
-    # Produce packages.gz + packages-meta-ext-v1.json.gz
-    extended = False
-    if len(sys.argv) > 1 and sys.argv[1] in EXTENDED_FIELD_HANDLERS:
-        gzips["meta_ext"] = gzip.open(META_EXT, "wb")
-        # Append list opening to the meta_ext file.
-        gzips.get("meta_ext").write(b"[\n")
-        f = EXTENDED_FIELD_HANDLERS.get(sys.argv[1])
-        data = f()
-        extended = True
-
-    results = query.all()
-    n = len(results) - 1
-    for i, result in enumerate(results):
-        # Append to packages.gz.
-        gzips.get("packages").write(f"{result.Name}\n")
-
-        # Construct our result JSON dictionary.
-        item = as_dict(result)
-        item["URLPath"] = snapshot_uri % result.Name
-
-        # We stream out package json objects line per line, so
-        # we also need to include the ',' character at the end
-        # of package lines (excluding the last package).
-        suffix = b",\n" if i < n else b"\n"
-
-        # Write out to packagesmetafile
-        output.append(item)
-        gzips.get("meta").write(orjson.dumps(output[-1]) + suffix)
-
-        if extended:
-            # Write out to packagesmetaextfile.
-            data_ = data.get(result.ID, {})
-            output[-1].update(data_)
-            gzips.get("meta_ext").write(orjson.dumps(output[-1]) + suffix)
-
-    # Append the list closing to meta/meta_ext.
-    gzips.get("meta").write(b"]")
-    if extended:
-        gzips.get("meta_ext").write(b"]")
-
-    # Close gzip files.
-    util.apply_all(gzips.values(), lambda gz: gz.close())
-
-    # Produce pkgbase.gz
+    # Produce pkgbase.gz.
+    logger.info("Creating 'pkgbase.gz'...")
     query = db.query(PackageBase.Name).filter(PackageBase.PackagerUID.isnot(None)).all()
-    with gzip.open(PKGBASE, "wt") as f:
-        f.writelines([f"{base.Name}\n" for i, base in enumerate(query)])
+    pkglist = "\n".join([pkg[0] for pkg in query]) + "\n"
+    archive = gzip.compress(pkglist.encode())
 
-    # Produce users.gz
+    with open(f"{archivedir}/pkgbase.gz", "bw") as file:
+        file.write(archive)
+
+    # Produce users.gz.
+    logger.info("Creating 'users.gz'...")
     query = db.query(User.Username).all()
-    with gzip.open(USERS, "wt") as f:
-        f.writelines([f"{user.Username}\n" for i, user in enumerate(query)])
+    userlist = "\n".join([user[0] for user in query]) + "\n"
+    archive = gzip.compress(userlist.encode())
 
-    seconds = filters.number_format(bench.end(), 4)
-    logger.info(f"Completed in {seconds} seconds.")
+    with open(f"{archivedir}/users.gz", "bw") as file:
+        file.write(archive)
+
+    # Produce packages-meta-v1.json.gz.
+    logger.info("Creating 'packages-meta-v1.json.gz'...")
+    pkglist = get_packages_v1()
+    archive = gzip.compress(orjson.dumps(pkglist))
+
+    with open(f"{archivedir}/packages-meta-v1.json.gz", "bw") as file:
+        file.write(archive)
+
+    # Produce packages-meta-ext-v1.json.gz.
+    logger.info("Creating 'packages-meta-ext-v1.json.gz'...")
+    pkglist = get_packages_v1()
+
+    for num in range(len(pkglist)):
+        pkg = pkglist[num]
+        pkg_id = pkg["ID"]
+        dependencies = get_dependencies(pkg_id)
+
+        depends = (
+            dependencies["depends"]
+            # We don't have any dependency variables with extensions in the v1 archives.
+            .filter(models.PackageDependency.DepArch == None)  # noqa: E711
+            .filter(models.PackageDependency.DepDist == None)  # noqa: E711
+            .all()
+        )
+        makedepends = (
+            dependencies["makedepends"]
+            .filter(models.PackageDependency.DepArch == None)  # noqa: E711
+            .filter(models.PackageDependency.DepDist == None)  # noqa: E711
+            .all()
+        )
+        checkdepends = (
+            dependencies["checkdepends"]
+            .filter(models.PackageDependency.DepArch == None)  # noqa: E711
+            .filter(models.PackageDependency.DepDist == None)  # noqa: E711
+            .all()
+        )
+        optdepends = (
+            dependencies["optdepends"]
+            .filter(models.PackageDependency.DepArch == None)  # noqa: E711
+            .filter(models.PackageDependency.DepDist == None)  # noqa: E711
+            .all()
+        )
+        conflicts = (
+            dependencies["conflicts"]
+            .filter(models.PackageRelation.RelArch == None)  # noqa: E711
+            .filter(models.PackageRelation.RelDist == None)  # noqa: E711
+            .all()
+        )
+        provides = (
+            dependencies["provides"]
+            .filter(models.PackageRelation.RelArch == None)  # noqa: E711
+            .filter(models.PackageRelation.RelDist == None)  # noqa: E711
+            .all()
+        )
+        replaces = (
+            dependencies["replaces"]
+            .filter(models.PackageRelation.RelArch == None)  # noqa: E711
+            .filter(models.PackageRelation.RelDist == None)  # noqa: E711
+            .all()
+        )
+
+        dependency_mappings = {
+            "Depends": depends,
+            "MakeDepends": makedepends,
+            "CheckDepends": checkdepends,
+            "OptDepends": optdepends,
+        }
+
+        relationship_mappings = {
+            "Conflicts": conflicts,
+            "Provides": provides,
+            "Replaces": replaces,
+        }
+
+        # Add dependencies.
+        for dependency, values in dependency_mappings.items():
+            if len(values) != 0:
+                pkg[dependency] = []
+
+                for dep in values:
+                    if dep.DepCondition:
+                        pkg[dependency] += [dep.DepName + dep.DepCondition]
+                    else:
+                        pkg[dependency] += [dep.DepName]
+
+        # Add relationships.
+        for relation, values in relationship_mappings.items():
+            if len(values) != 0:
+                pkg[relation] = []
+
+                for rel in values:
+                    if rel.RelCondition:
+                        pkg[relation] += [rel.RelName + rel.RelCondition]
+                    else:
+                        pkg[relation] += [rel.RelName]
+
+    archive = gzip.compress(orjson.dumps(pkglist))
+
+    with open(f"{archivedir}/packages-meta-ext-v1.json.gz", "bw") as file:
+        file.write(archive)
+
+    # Produce packages-meta-ext-v2.json.gz.
+    logger.info("Creating 'packages-meta-ext-v2.json.gz'...")
+    pkglist = get_packages_v1()
+
+    for num in range(len(pkglist)):
+        pkg = pkglist[num]
+        pkg_id = pkg["ID"]
+        dependencies = get_dependencies(pkg_id)
+
+        depends = dependencies["depends"].all()
+        makedepends = dependencies["makedepends"].all()
+        checkdepends = dependencies["checkdepends"].all()
+        optdepends = dependencies["optdepends"].all()
+        conflicts = dependencies["optdepends"].all()
+        provides = dependencies["provides"].all()
+        replaces = dependencies["replaces"].all()
+
+        dependency_mappings = {
+            "Depends": depends,
+            "MakeDepends": makedepends,
+            "CheckDepends": checkdepends,
+            "OptDepends": optdepends,
+        }
+
+        relationship_mappings = {
+            "Conflicts": conflicts,
+            "Provides": provides,
+            "Replaces": replaces,
+        }
+
+        for dependency in dependency_mappings:
+            pkg[dependency] = []
+
+        for relation in relationship_mappings:
+            pkg[relation] = []
+
+        # Dependencies.
+        for dependency, values in dependency_mappings.items():
+            dep_mappings = {}
+
+            for dep in values:
+                distro = dep.DepDist
+                arch = dep.DepArch
+
+                if dep.DepCondition:
+                    depname = dep.DepName + dep.DepCondition
+                else:
+                    depname = dep.DepName
+
+                if (distro, arch) in dep_mappings:
+                    dep_mappings[distro, arch] += [depname]
+                else:
+                    dep_mappings[distro, arch] = [depname]
+
+            for distro, arch in dep_mappings:
+                pkg[dependency] += [
+                    {
+                        "Distro": distro,
+                        "Arch": arch,
+                        "Packages": dep_mappings[distro, arch],
+                    }
+                ]
+
+        # Relationships.
+        for relationship, values in relationship_mappings.items():
+            rel_mappings = {}
+
+            for rel in values:
+                distro = rel.RelDist
+                arch = rel.RelArch
+
+                if rel.RelCondition:
+                    relname = rel.RelName + rel.RelCondition
+                else:
+                    relname = rel.RelName
+
+                if (distro, arch) in rel_mappings:
+                    rel_mappings[distro, arch] += [relname]
+                else:
+                    rel_mappings[distro, arch] = [relname]
+
+            for distro, arch in rel_mappings:
+                pkg[relationship] += [
+                    {
+                        "Distro": distro,
+                        "Arch": arch,
+                        "Packages": rel_mappings[distro, arch],
+                    }
+                ]
+
+    archive = gzip.compress(orjson.dumps(pkglist))
+
+    with open(f"{archivedir}/packages-meta-ext-v2.json.gz", "bw") as file:
+        file.write(archive)
 
 
 def main():

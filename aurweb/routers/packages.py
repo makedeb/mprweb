@@ -1,4 +1,3 @@
-from collections import defaultdict
 from http import HTTPStatus
 from typing import Any, Dict, List
 
@@ -8,14 +7,6 @@ import aurweb.filters  # noqa: F401
 from aurweb import config, db, defaults, logging, models, util
 from aurweb.auth import creds, requires_auth
 from aurweb.exceptions import InvariantError
-from aurweb.models.dependency_type import (
-    CHECKDEPENDS_ID,
-    DEPENDS_ID,
-    MAKEDEPENDS_ID,
-    OPTDEPENDS_ID,
-)
-from aurweb.models.relation_type import CONFLICTS_ID, PROVIDES_ID, REPLACES_ID
-from aurweb.packages import util as pkgutil
 from aurweb.packages.search import PackageSearch
 from aurweb.packages.util import get_pkg_or_base
 from aurweb.pkgbase import actions as pkgbase_actions
@@ -135,78 +126,11 @@ async def package(request: Request, name: str) -> Response:
     pkg = get_pkg_or_base(name, models.Package)
     pkgbase = pkg.PackageBase
 
-    rels = pkg.package_relations.order_by(models.PackageRelation.RelName.asc())
-    rels_data = defaultdict(list)
-    for rel in rels:
-        if rel.RelTypeID == CONFLICTS_ID:
-            rels_data["c"].append(rel)
-        elif rel.RelTypeID == PROVIDES_ID:
-            rels_data["p"].append(rel)
-        elif rel.RelTypeID == REPLACES_ID:
-            rels_data["r"].append(rel)
-
     # Add our base information.
     context = pkgbaseutil.make_context(request, pkgbase)
     context["package"] = pkg
 
-    # Package sources.
-    context["sources"] = pkg.package_sources.order_by(
-        models.PackageSource.Source.asc()
-    ).all()
-
-    # Package dependencies.
-    max_depends = config.getint("options", "max_depends")
-    dependencies = (
-        pkg.package_dependencies.order_by(
-            models.PackageDependency.DepTypeID.asc(),
-            models.PackageDependency.DepName.asc(),
-        )
-        .limit(max_depends)
-        .all()
-    )
-
-    context["depends"] = []
-    context["optdepends"] = []
-    context["makedepends"] = []
-    context["checkdepends"] = []
-
-    for dep in dependencies:
-        if dep.DepTypeID == DEPENDS_ID:
-            context["depends"] += [dep]
-        elif dep.DepTypeID == OPTDEPENDS_ID:
-            context["optdepends"] += [dep]
-        elif dep.DepTypeID == MAKEDEPENDS_ID:
-            context["makedepends"] += [dep]
-        elif dep.DepTypeID == CHECKDEPENDS_ID:
-            context["checkdepends"] += [dep]
-
-    # Package requirements (other packages depend on this one).
-    context["required_by"] = pkgutil.pkg_required(
-        pkg.Name, [p.RelName for p in rels_data.get("p", [])], max_depends
-    )
-
     context["licenses"] = pkg.package_licenses
-
-    conflicts = (
-        pkg.package_relations.filter(models.PackageRelation.RelTypeID == CONFLICTS_ID)
-        .order_by(models.PackageRelation.RelName.asc())
-        .all()
-    )
-    context["conflicts"] = conflicts
-
-    provides = (
-        pkg.package_relations.filter(models.PackageRelation.RelTypeID == PROVIDES_ID)
-        .order_by(models.PackageRelation.RelName.asc())
-        .all()
-    )
-    context["provides"] = provides
-
-    replaces = (
-        pkg.package_relations.filter(models.PackageRelation.RelTypeID == REPLACES_ID)
-        .order_by(models.PackageRelation.RelName.asc())
-        .all()
-    )
-    context["replaces"] = replaces
 
     return render_template(request, "packages/show.html", context)
 

@@ -14,7 +14,7 @@ def _get_parser():
     global _parser
 
     if not _parser:
-        path = os.environ.get("AUR_CONFIG", "/etc/aurweb/config")
+        path = os.environ.get("AUR_CONFIG", "/aurweb/conf/config")
         defaults = os.environ.get("AUR_CONFIG_DEFAULTS", path + ".defaults")
 
         _parser = configparser.RawConfigParser()

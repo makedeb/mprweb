@@ -40,8 +40,11 @@ EOF
 NO_INITDB=1 /docker/mariadb-init-entrypoint.sh
 
 # Setup some other options.
-aurweb-config set serve repo-path '/aurweb/aur.git/'
+aurweb-config set serve repo-path '/aurweb/aur.git'
 aurweb-config set serve ssh-cmdline "$SSH_CMDLINE"
+
+# Make sure the Git directory is writable by the 'mpr' user.
+chown mpr /aurweb/aur.git -R
 
 # Setup SSH Keys.
 ssh-keygen -A

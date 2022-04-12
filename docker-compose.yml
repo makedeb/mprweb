@@ -147,7 +147,7 @@ services:
     image: mprweb:latest
     init: true
     environment:
-      - AUR_CONFIG=conf/config
+      - AUR_CONFIG=/aurweb/conf/config
       - FASTAPI_BACKEND=${FASTAPI_BACKEND}
       - FASTAPI_WORKERS=${FASTAPI_WORKERS}
       - AURWEB_FASTAPI_PREFIX=${AURWEB_FASTAPI_PREFIX}
@@ -187,7 +187,7 @@ services:
     image: mprweb:latest
     init: true
     environment:
-      - AUR_CONFIG=conf/config
+      - AUR_CONFIG=/aurweb/conf/config
     entrypoint: /docker/nginx-entrypoint.sh
     command: /docker/scripts/run-nginx.sh
     ports:
@@ -235,7 +235,7 @@ services:
     profiles: ["dev"]
     init: true
     environment:
-      - AUR_CONFIG=conf/config
+      - AUR_CONFIG=/aurweb/conf/config
       - TEST_RECURSION_LIMIT=${TEST_RECURSION_LIMIT}
       - PROMETHEUS_MULTIPROC_DIR=/tmp_prometheus
       - LOG_CONFIG=logging.test.conf
@@ -265,10 +265,10 @@ services:
     profiles: ["dev"]
     init: true
     environment:
-      - AUR_CONFIG=conf/config
       - TEST_RECURSION_LIMIT=${TEST_RECURSION_LIMIT}
       - PROMETHEUS_MULTIPROC_DIR=/tmp_prometheus
       - LOG_CONFIG=logging.test.conf
+      - AUR_CONFIG=/aurweb/conf/config
     entrypoint: /docker/test-mysql-entrypoint.sh
     command: /docker/scripts/run-tests.sh
     stdin_open: true

@@ -1,0 +1,21 @@
+@import "variables";
+
+.notice {
+	border-left: 0.2em solid;
+	padding: 0.2em 0.4em;
+	margin: 1em 0;
+	
+	& *:first-child {
+		padding-top: 0 !important;
+	}
+
+	&.note {
+		border-color: $archlinux-blue;
+		background-color: lighten($archlinux-blue, 51%);
+	}
+
+	&.warning {
+		border-color: #f7e811;
+		background-color: lighten(#f7e811, 42%);
+	}
+}
