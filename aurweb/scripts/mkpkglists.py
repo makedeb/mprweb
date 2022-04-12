@@ -252,7 +252,7 @@ def _main():
         makedepends = dependencies["makedepends"].all()
         checkdepends = dependencies["checkdepends"].all()
         optdepends = dependencies["optdepends"].all()
-        conflicts = dependencies["optdepends"].all()
+        conflicts = dependencies["conflicts"].all()
         provides = dependencies["provides"].all()
         replaces = dependencies["replaces"].all()
 
