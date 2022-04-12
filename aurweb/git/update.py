@@ -223,15 +223,15 @@ def save_metadata(srcinfo, user):  # noqa: C901
                         else:
                             relcondition = None
 
-                    db.create(
-                        PackageRelation,
-                        PackageID=db_pkgname.ID,
-                        RelTypeID=rel_id,
-                        RelName=relname,
-                        RelCondition=relcondition,
-                        RelArch=arch,
-                        RelDist=distro,
-                    )
+                        db.create(
+                            PackageRelation,
+                            PackageID=db_pkgname.ID,
+                            RelTypeID=rel_id,
+                            RelName=relname,
+                            RelCondition=relcondition,
+                            RelArch=arch,
+                            RelDist=distro,
+                        )
 
             # Add package licenses.
             for license_name in srcinfo.get_variable("license"):
@@ -250,6 +250,7 @@ def save_metadata(srcinfo, user):  # noqa: C901
                     db.create(
                         PackageLicense, PackageID=pkgname.ID, LicenseID=db_license.ID
                     )
+        
 
     # Add user to notification list on adoption (if they aren't already).
     if was_orphan:

@@ -5,6 +5,8 @@ import shutil
 from aurweb import config, db, models
 from aurweb.testing import setup_test_db
 from test import util, exceptions
+from aurweb.models.dependency_type import DEPENDS_ID, MAKEDEPENDS_ID, CHECKDEPENDS_ID, OPTDEPENDS_ID
+from aurweb.models.relation_type import CONFLICTS_ID, PROVIDES_ID, REPLACES_ID
 
 base_repo_path = config.get("serve", "repo-path")
 
@@ -68,6 +70,7 @@ def setup(db_test):
         "Users",
         "PackageDepends",
         "PackageRelations",
+        "PackageSources",
         "Packages",
         "PackageBases"
     )
@@ -81,6 +84,7 @@ def setup(db_test):
         )
 
 def test_basic_push():
+    source_url_prefix = "https://example.com"
     repo = create_git_repo("testpkg")
     repo.chdir_repo()
 
@@ -92,7 +96,7 @@ def test_basic_push():
         "pkgver = 1",
         "pkgrel = 1",
         "pkgdesc = pkg",
-        "arch = any"
+        "arch = any",
         "depends = dep1",
         "depends = dep2",
         "focal_makedepends = dep3",
@@ -105,8 +109,18 @@ def test_basic_push():
         "conflicts = rel2",
         "focal_provides = rel3",
         "focal_provides = rel4",
-        "replaces_am64 = rel5",
-        "replaces_amd64 = rel6"
+        "replaces_amd64 = rel5",
+        "replaces_amd64 = rel6",
+        "focal_replaces_amd64 = rel7",
+        "focal_replaces_amd64 = rel8",
+        f"source = {source_url_prefix}/source1",
+        f"source = {source_url_prefix}/source2",
+        f"focal_source = {source_url_prefix}/source3",
+        f"focal_source = {source_url_prefix}/source4",
+        f"source_amd64 = {source_url_prefix}/source5",
+        f"source_amd64 = {source_url_prefix}/source6",
+        f"focal_source_amd64 = {source_url_prefix}/source7",
+        f"focal_source_amd64 = {source_url_prefix}/source8"
     ])
     
     repo.add(["PKGBUILD", ".SRCINFO"])
@@ -128,7 +142,8 @@ def test_basic_push():
 
     assert pkg.Version == "1-1"
     assert pkg.Description == "pkg"
-
+    
+    # Get dependencies, relations, and sources.
     normal_deps = db.query(models.PackageDependency).filter(models.PackageDependency.DepArch == None).filter(models.PackageDependency.DepDist == None).all()
     distro_deps = db.query(models.PackageDependency).filter(models.PackageDependency.DepArch == None).filter(models.PackageDependency.DepDist != None).all()
     arch_deps = db.query(models.PackageDependency).filter(models.PackageDependency.DepArch != None).filter(models.PackageDependency.DepDist == None).all()
@@ -139,7 +154,103 @@ def test_basic_push():
     arch_rels = db.query(models.PackageRelation).filter(models.PackageRelation.RelArch != None).filter(models.PackageRelation.RelDist == None).all()
     distro_arch_rels = db.query(models.PackageRelation).filter(models.PackageRelation.RelArch != None).filter(models.PackageRelation.RelDist != None).all()
 
-    raise Exception("FINISH TOMMOROW!")
+    normal_sources = db.query(models.PackageSource).filter(models.PackageSource.SourceArch == None).filter(models.PackageSource.SourceDist == None).all()
+    distro_sources = db.query(models.PackageSource).filter(models.PackageSource.SourceArch == None).filter(models.PackageSource.SourceDist != None).all()
+    arch_sources = db.query(models.PackageSource).filter(models.PackageSource.SourceArch != None).filter(models.PackageSource.SourceDist == None).all()
+    distro_arch_sources = db.query(models.PackageSource).filter(models.PackageSource.SourceArch != None).filter(models.PackageSource.SourceDist != None).all()
+    
+    # Test that we have the right amount of items for each.
+    # We set up two of each, and each 'pkgname' gets its own copies, so
+    # 2 * 2 -> 4 for each type total.
+    for item in (
+        normal_deps, distro_deps, arch_deps, distro_arch_deps,
+        normal_rels, distro_rels, arch_rels, distro_arch_rels,
+        normal_sources, distro_sources, arch_sources, distro_arch_sources
+    ):
+        assert len(item) == 4
+    
+    # Test dependencies.
+    expected_names = ["dep1", "dep2"]
+    for dep in normal_deps:
+        assert dep.DepTypeID == DEPENDS_ID
+        assert dep.DepArch is None
+        assert dep.DepDist is None
+        assert dep.DepName in expected_names
+
+    expected_names = ["dep3", "dep4"]
+    for dep in distro_deps:
+        assert dep.DepTypeID == MAKEDEPENDS_ID
+        assert dep.DepArch is None
+        assert dep.DepDist == "focal"
+        assert dep.DepName in expected_names
+
+    expected_names = ["dep5", "dep6"]
+    for dep in arch_deps:
+        assert dep.DepTypeID == CHECKDEPENDS_ID
+        assert dep.DepArch == "amd64"
+        assert dep.DepDist is None
+        assert dep.DepName in expected_names
+
+    expected_names = ["dep7", "dep8"]
+    for dep in distro_arch_deps:
+        assert dep.DepTypeID == OPTDEPENDS_ID
+        assert dep.DepArch == "amd64"
+        assert dep.DepDist == "focal"
+        assert dep.DepName in expected_names
+    
+    # Test relations.
+    expected_names = ["rel1", "rel2"]
+    for rel in normal_rels:
+        assert rel.RelTypeID == CONFLICTS_ID
+        assert rel.RelArch is None
+        assert rel.RelDist is None
+        assert rel.RelName in expected_names
+
+    expected_names = ["rel3", "rel4"]
+    for rel in distro_rels:
+        assert rel.RelTypeID == PROVIDES_ID
+        assert rel.RelArch is None
+        assert rel.RelDist == "focal"
+        assert rel.RelName in expected_names
+
+    expected_names = ["rel5", "rel6"]
+    for rel in arch_rels:
+        assert rel.RelTypeID == REPLACES_ID
+        assert rel.RelArch == "amd64"
+        assert rel.RelDist is None
+        assert rel.RelName in expected_names
+
+    expected_names = ["rel7", "rel8"]
+    for rel in distro_arch_rels:
+        assert rel.RelTypeID == REPLACES_ID
+        assert rel.RelArch == "amd64"
+        assert rel.RelDist == "focal"
+        assert rel.RelName in expected_names
+
+    # Test sources.
+    expected_names = ["source1", "source2"]
+    for source in normal_sources:
+        assert source.SourceArch is None
+        assert source.SourceDist is None
+        assert source.Source.removeprefix(f"{source_url_prefix}/") in expected_names
+
+    expected_names = ["source3", "source4"]
+    for source in distro_sources:
+        assert source.SourceArch is None
+        assert source.SourceDist == "focal"
+        assert source.Source.removeprefix(f"{source_url_prefix}/") in expected_names
+
+    expected_names = ["source5", "source6"]
+    for source in arch_sources:
+        assert source.SourceArch == "amd64"
+        assert source.SourceDist is None
+        assert source.Source.removeprefix(f"{source_url_prefix}/") in expected_names
+
+    expected_names = ["source7", "source8"]
+    for source in distro_arch_sources:
+        assert source.SourceArch == "amd64"
+        assert source.SourceDist == "focal"
+        assert source.Source.removeprefix(f"{source_url_prefix}/") in expected_names
 
 def test_push_no_pkgbase():
     repo = create_git_repo("testpkg")
