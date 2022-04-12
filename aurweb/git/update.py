@@ -7,7 +7,7 @@ import sys
 import time
 
 import pygit2
-from makedeb_srcinfo import SrcinfoParser
+from makedeb_srcinfo import SrcinfoParser, ParsingError
 
 import aurweb.config
 from aurweb import db
@@ -354,8 +354,11 @@ def main():  # noqa: C901
                 )
 
         # Read the SRCINFO file.
-        metadata_raw = repo[commit.tree[".SRCINFO"].id].data.decode()
-        srcinfo = SrcinfoParser(metadata_raw)
+        try:
+            metadata_raw = repo[commit.tree[".SRCINFO"].id].data.decode()
+            srcinfo = SrcinfoParser(metadata_raw)
+        except ParsingError as exc:
+            die_commit(str(exc), str(commit.id))
 
         pkgbase = srcinfo.get_variable("pkgbase")[0]
         pkgname = srcinfo.get_variable("pkgname")
