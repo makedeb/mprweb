@@ -1,93 +1,80 @@
-import orjson
 import gzip
-from typing import List, Union
-from unittest import mock
 
+import orjson
 import pytest
 
-from aurweb import config, db, util, models, time
-from aurweb.models.account_type import USER_ID
-from aurweb.models.dependency_type import DEPENDS_ID
-from aurweb.testing import noop, setup_test_db
+from aurweb import config, db, models
 from aurweb.scripts import mkpkglists
+from aurweb.testing import setup_test_db
 
 archivedir = config.get("mkpkglists", "archivedir")
+
 
 @pytest.fixture(autouse=True)
 def setup(db_test):
     return
 
+
 def test_mkpkglists():
     setup_test_db(
-        "Users",
-        "Packages",
-        "PackageBases",
-        "PackageDepends",
-        "PackageRelations"
+        "Users", "Packages", "PackageBases", "PackageDepends", "PackageRelations"
     )
 
     # Setup users.
     with db.begin():
         user = db.create(
-            models.User,
-            Username="user",
-            Email="test@example.com",
-            Passwd="1234"
+            models.User, Username="user", Email="test@example.com", Passwd="1234"
         )
-    
+
     # Setup package bases.
     with db.begin():
         package_base = db.create(
             models.PackageBase,
             Name="pkgbase",
             MaintainerUID=user.ID,
-            PackagerUID=user.ID
+            PackagerUID=user.ID,
         )
-    
+
     # Setup packages.
     with db.begin():
         package1 = db.create(
-            models.Package,
-            PackageBaseID=package_base.ID,
-            Name="package1"
+            models.Package, PackageBaseID=package_base.ID, Name="package1"
         )
 
         package2 = db.create(
-            models.Package,
-            PackageBaseID=package_base.ID,
-            Name="package2"
+            models.Package, PackageBaseID=package_base.ID, Name="package2"
         )
-    
+
     # Setup dependencies.
     with db.begin():
-        dep1 = db.create(
+        db.create(
             models.PackageDependency,
             DepTypeID=models.dependency_type.DEPENDS_ID,
             PackageID=package1.ID,
-            DepName="dep1"
+            DepName="dep1",
         )
 
-        dep2 = db.create(
+        db.create(
             models.PackageDependency,
             DepTypeID=models.dependency_type.DEPENDS_ID,
             PackageID=package1.ID,
-            DepName="dep2"
+            DepName="dep2",
         )
 
-        dep3 = db.create(
+        db.create(
             models.PackageDependency,
             DepTypeID=models.dependency_type.DEPENDS_ID,
             PackageID=package2.ID,
-            DepName="dep3"
+            DepName="dep3",
         )
 
-        dep4 = db.create(
+        db.create(
             models.PackageDependency,
             DepTypeID=models.dependency_type.DEPENDS_ID,
             PackageID=package2.ID,
             DepName="dep4",
             DepArch="amd64",
-            DepDist="focal"
+            DepDist="focal",
         )
 
     # Run mkpkglists.
@@ -97,9 +84,7 @@ def test_mkpkglists():
     expected = ["package1", "package2"]
 
     with open(f"{archivedir}/packages.gz", "br") as file:
-        packages = gzip.decompress(
-            file.read()
-        ).decode().splitlines()
+        packages = gzip.decompress(file.read()).decode().splitlines()
 
     assert len(expected) == len(packages)
 
@@ -110,9 +95,7 @@ def test_mkpkglists():
     expected = ["pkgbase"]
 
     with open(f"{archivedir}/pkgbase.gz", "br") as file:
-        packages = gzip.decompress(
-            file.read()
-        ).decode().splitlines()
+        packages = gzip.decompress(file.read()).decode().splitlines()
 
     assert len(expected) == len(packages)
 
@@ -123,9 +106,7 @@ def test_mkpkglists():
     expected = ["user"]
 
     with open(f"{archivedir}/users.gz", "br") as file:
-        users = gzip.decompress(
-            file.read()
-        ).decode().splitlines()
+        users = gzip.decompress(file.read()).decode().splitlines()
 
     assert len(expected) == len(users)
 
@@ -147,13 +128,11 @@ def test_mkpkglists():
         "Maintainer",
         "FirstSubmitted",
         "LastModified",
-        "URLPath"
+        "URLPath",
     )
 
     with open(f"{archivedir}/packages-meta-v1.json.gz", "br") as file:
-        data = gzip.decompress(
-                file.read()
-            ).decode()
+        data = gzip.decompress(file.read()).decode()
 
     data = orjson.loads(data)
 
@@ -182,13 +161,11 @@ def test_mkpkglists():
         "CheckDepends",
         "OptDepends",
         "Provides",
-        "Replaces"
+        "Replaces",
     )
 
     with open(f"{archivedir}/packages-meta-ext-v2.json.gz", "br") as file:
-        data = gzip.decompress(
-                file.read()
-            ).decode()
+        data = gzip.decompress(file.read()).decode()
 
     data = orjson.loads(data)
 

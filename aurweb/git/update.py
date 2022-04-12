@@ -7,7 +7,7 @@ import sys
 import time
 
 import pygit2
-from makedeb_srcinfo import SrcinfoParser, ParsingError
+from makedeb_srcinfo import ParsingError, SrcinfoParser
 
 import aurweb.config
 from aurweb import db
@@ -250,7 +250,6 @@ def save_metadata(srcinfo, user):  # noqa: C901
                     db.create(
                         PackageLicense, PackageID=pkgname.ID, LicenseID=db_license.ID
                     )
-        
 
     # Add user to notification list on adoption (if they aren't already).
     if was_orphan:
