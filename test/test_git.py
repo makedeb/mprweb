@@ -144,10 +144,13 @@ def test_basic_push():
             f"source_amd64 = {source_url_prefix}/source6",
             f"focal_source_amd64 = {source_url_prefix}/source7",
             f"focal_source_amd64 = {source_url_prefix}/source8",
+            "postinst = ./testfile",
         ],
     )
 
-    repo.add(["PKGBUILD", ".SRCINFO"])
+    write_file("testfile", [])
+
+    repo.add(["PKGBUILD", ".SRCINFO", "testfile"])
     repo.commit()
     repo.push()
 

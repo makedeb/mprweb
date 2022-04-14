@@ -399,7 +399,7 @@ def main():  # noqa: C901
                 )
                 script = srcinfo.get_variable(script_name)[0]
 
-                if script not in commit.tree:
+                if os.path.normpath(script) not in commit.tree:
                     die_commit(f"Missing {script_name} file {script}.", str(commit.id))
 
         # Check sources.
