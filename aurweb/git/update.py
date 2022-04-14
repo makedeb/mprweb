@@ -493,7 +493,10 @@ def main():  # noqa: C901
         save_metadata(srcinfo, user)
 
         # Create a tag for the current package's version if it doesn't currently exist.
-        tag_name = f"refs/tags/ver/{version}"
+        #
+        # Git tags don't support the ':' character, so we replace it with '!'.
+        tag_version = version.replace(":", "!")
+        tag_name = f"refs/tags/ver/{tag_version}"
 
         if not repo.references.get(tag_name):
             repo.references.create(tag_name, sha1_new)

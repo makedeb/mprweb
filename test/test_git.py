@@ -539,3 +539,32 @@ def test_push_invalid_pkgbase():
         match="invalid pkgbase: not_the_correct_pkgbase, expected testpkg",
     ):
         repo.push()
+
+
+def test_push_with_epoch():
+    """
+    Ensure that the update script creates a tag with the ':' in the epoch
+    replaced with a '!'.
+    """
+    repo = create_git_repo("testpkg")
+    repo.chdir_repo()
+
+    write_file("PKGBUILD", [])
+    write_file(
+        ".SRCINFO",
+        [
+            "pkgbase = testpkg",
+            "pkgname = testpkg",
+            "pkgver = 1",
+            "pkgrel = 1",
+            "epoch = 1",
+            "pkgdesc = testpkgdesc",
+            "arch = any",
+        ],
+    )
+
+    repo.add(["PKGBUILD", ".SRCINFO"])
+    repo.commit()
+    repo.push()
+
+    assert repo.run_command(["git", "tag"]).stdout == "ver/1!1-1\n"
