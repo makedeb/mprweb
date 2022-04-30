@@ -197,10 +197,6 @@ fieldset, .field {
         .item {
                 padding-bottom: 0.8rem;
                         
-                label {
-                        pointer-events: none;
-                }
-
                 select, .button {
                         display: block;
                         background-color: lighten($light-grey, 8%);
