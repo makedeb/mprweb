@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function() {
 document.addEventListener("DOMContentLoaded", function() {
 	document.querySelector(".helpers select").addEventListener("change", function(e) {
 		const value = e.target.value;
-		const items = e.target.parentElement.getElementsByClassName("code-block");
+		const items = e.target.parentElement.getElementsByClassName("helper-info");
 
 		for (var i=0; i < items.length; i++) {
 			if (items[i].classList.contains(value)) {

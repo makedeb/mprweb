@@ -7,22 +7,34 @@
 
 		<select>
 			<option value="makedeb" selected>makedeb</option>
+			<option value="Prebuilt-MPR">Prebuilt-MPR</option>
 			<option value="Tap">Tap</option>
 			<option value="Una">Una</option>
 		</select>
 	
-		<div class="makedeb code-block">
+		<div class="makedeb code-block helper-info">
 			{% include "partials/clipboard_icons.html" %}
 			<pre><code class="hljs language-bash">git clone 'https://{{ mpr_url }}/{{ pkgbase.Name }}'
 cd {{ pkgbase.Name }}/
 makedeb -si</code></pre>
 		</div>
-		<div class="Tap code-block hidden">
+		<div class="Prebuilt-MPR helper-info hidden">
+			{% if ci_build is not none %}
+				<p class="notice warning">You need to have set up the <a href="https://docs.{{ makedeb_url }}/prebuilt-mpr">Prebuilt-MPR APT repository</a> before running this command.</p>
+				<div class="code-block">
+					{% include "partials/clipboard_icons.html" %}
+					<pre><code class="hljs language-bash">sudo apt install '{{ package.Name }}={{ package.Version }}'</code></pre>
+				</div>
+			{% else %}
+				<p class="notice note"><code class="no-highlight">{{ package.Name }}</code> isn't available in the Prebuilt-MPR.</code></p>
+			{% endif %}
+		</div>
+		<div class="Tap code-block helper-info hidden">
 			{% include "partials/clipboard_icons.html" %}
 			<pre><code class="hljs language-bash">sudo tap install {{ pkgbase.Name }}</code></pre>
 		</div>
 
-		<div class="Una code-block hidden">
+		<div class="Una code-block helper-info hidden">
 			{% include "partials/clipboard_icons.html" %}
 			<pre><code class="hljs language-bash">sudo una install {{ pkgbase.Name }}</code></pre>
 		</div>
