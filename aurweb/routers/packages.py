@@ -140,7 +140,7 @@ async def package(request: Request, name: str) -> Response:
     async with aiohttp.ClientSession() as session:
         async with session.get(
             "https://drone.hunterwittenborn.com/api/repos/makedeb/"
-            + "prebuilt-mpr-v2/builds"
+            + "prebuilt-mpr/builds"
         ) as response:
             status = response.status
             body = await response.text()

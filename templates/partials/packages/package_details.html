@@ -17,8 +17,8 @@
             </div>
             <div class="right">
                 {% if ci_build is not none %}
-                <a href="https://drone.{{ hw_url }}/makedeb/prebuilt-mpr-v2/{{ ci_build }}">
-                    <img class="badge" src="https://img.shields.io/drone/build/makedeb/prebuilt-mpr-v2/pkg/{{ package.Name }}?server=https%3A%2F%2Fdrone.hunterwittenborn.com&label=prebuilt-mpr">
+                <a href="https://drone.{{ hw_url }}/makedeb/prebuilt-mpr/{{ ci_build }}">
+                    <img class="badge" src="https://img.shields.io/drone/build/makedeb/prebuilt-mpr/pkg/{{ package.Name }}?server=https%3A%2F%2Fdrone.hunterwittenborn.com&label=prebuilt-mpr">
                 </a>
                 {% endif %}
             </div>
