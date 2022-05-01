@@ -217,6 +217,7 @@ async def add_security_headers(request: Request, call_next: typing.Callable):
         "https://cdn.jsdelivr.net",
     ]
     font_hosts = ["https://fonts.gstatic.com"]
+    img_hosts = ["https://img.shields.io"]
 
     # Scripts.
     csp += "script-src 'self' 'unsafe-inline' " + " ".join(script_hosts) + ";"
@@ -226,6 +227,10 @@ async def add_security_headers(request: Request, call_next: typing.Callable):
 
     # Fonts.
     csp += "font-src 'self' " + ".".join(font_hosts) + ";"
+
+    # Images.
+    csp += "img-src 'self' " + " ".join(img_hosts) + ";"
+
     response.headers["Content-Security-Policy"] = csp
 
     # Add XTCO header.

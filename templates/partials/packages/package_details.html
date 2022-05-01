@@ -9,10 +9,19 @@
         <script src="/static/js/package-sections.js"></script>
 
         <div class="package-header">
-            <h2>{{ package.Name }} {{ package.Version }}</h2>
-            <a class="install-package" href="javascript:void(0)">
-                {% include "svg/install.svg" %}
-            </a>
+            <div class="left">
+                <h2>{{ package.Name }} {{ package.Version }}</h2>
+                <a class="install-package" href="javascript:void(0)">
+                    {% include "svg/install.svg" %}
+                </a>
+            </div>
+            <div class="right">
+                {% if ci_build is not none %}
+                <a href="https://drone.{{ hw_url }}/makedeb/prebuilt-mpr-v2/{{ ci_build }}">
+                    <img class="badge" src="https://img.shields.io/drone/build/makedeb/prebuilt-mpr-v2/pkg/{{ package.Name }}?server=https%3A%2F%2Fdrone.hunterwittenborn.com&label=prebuilt-mpr">
+                </a>
+                {% endif %}
+            </div>
         </div>
         <hr>
 

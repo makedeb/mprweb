@@ -1,6 +1,8 @@
+import json
 from http import HTTPStatus
 from typing import Any, Dict, List
 
+import aiohttp
 from fastapi import APIRouter, Form, Request, Response
 
 import aurweb.filters  # noqa: F401
@@ -131,6 +133,28 @@ async def package(request: Request, name: str) -> Response:
     context["package"] = pkg
 
     context["licenses"] = pkg.package_licenses
+
+    # Get the latest Prebuilt-MPR build.
+    ci_build = None
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://drone.hunterwittenborn.com/api/repos/makedeb/"
+            + "prebuilt-mpr-v2/builds"
+        ) as response:
+            status = response.status
+            body = await response.text()
+
+    if status == 200:
+        try:
+            for build in json.loads(body):
+                if build["target"] == f"pkg/{pkg.Name}":
+                    ci_build = build["number"]
+                    break
+        except json.decoder.JSONDecodeError:
+            pass
+
+    context["ci_build"] = ci_build
 
     return render_template(request, "packages/show.html", context)
 

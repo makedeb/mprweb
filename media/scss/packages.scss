@@ -1,5 +1,7 @@
 @import "variables";
 
+$header-width: 35.625em;
+
 #pkgdetails {
 	padding: 0 1em;
 
@@ -13,11 +15,36 @@
 
 	.package-header {
 		display: flex;
-		justify-content: start;
+		justify-content: space-between;
+
+		@media (max-width: $header-width) {
+			flex-direction: column;
+		}
+		
 
 		.install-icon {
 			margin-left: 0.2em;
 			width: 2em;
+		}
+
+		.left, .right {
+			align-self: end;
+			display: flex;
+
+			@media (max-width: $header-width) {
+				align-self: start;
+			}
+		}
+
+		.badge {
+			height: 1.35em;
+			width: auto;
+			margin: 0 0.5em;
+
+			@media (max-width: $header-width) {
+				margin-top: 0.5em;
+				margin-left: 0;
+			}
 		}
 	}
 
