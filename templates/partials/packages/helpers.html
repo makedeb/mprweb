@@ -23,7 +23,7 @@ makedeb -si</code></pre>
 				<p class="notice warning">You need to have set up the <a href="https://docs.{{ makedeb_url }}/prebuilt-mpr">Prebuilt-MPR APT repository</a> before running this command.</p>
 				<div class="code-block">
 					{% include "partials/clipboard_icons.html" %}
-					<pre><code class="hljs language-bash">sudo apt install '{{ package.Name }}={{ package.Version }}'</code></pre>
+					<pre><code class="hljs language-bash">sudo apt install {{ package.Name }}</code></pre>
 				</div>
 			{% else %}
 				<p class="notice note"><code class="no-highlight">{{ package.Name }}</code> isn't available in the Prebuilt-MPR.</code></p>
