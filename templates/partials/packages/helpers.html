@@ -26,7 +26,9 @@ makedeb -si</code></pre>
 					<pre><code class="hljs language-bash">sudo apt install {{ package.Name }}</code></pre>
 				</div>
 			{% else %}
-				<p class="notice note"><code class="no-highlight">{{ package.Name }}</code> isn't available in the Prebuilt-MPR.</code></p>
+				<div class="notice note">
+					<p><code class="no-highlight">{{ package.Name }}</code> isn't available in the Prebuilt-MPR. If you'd like this package included, consider <a href="https://docs.{{ makedeb_url }}/prebuilt-mpr/adding-packages/">submitting a package request</a>.</p>
+				</div>
 			{% endif %}
 		</div>
 		<div class="Tap code-block helper-info hidden">
