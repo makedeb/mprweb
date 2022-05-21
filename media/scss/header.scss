@@ -46,12 +46,14 @@ header {
 		display: flex;
 		flex-direction: row;
 		padding-right: 0.75em;
+		flex-wrap: wrap;
 
 		p, a {
 			font-size: 1.15em;
-			margin: 0 0.75em 0em;
+			margin: 0.3em 0.75em;
 			display: inline;
 			line-height: 1em; // We have a global line height default of 1.6em. We set it to 1em here so it aligns with the line height on the makedeb homepage.
+			white-space: nowrap;
 		}
 		
 		p {
