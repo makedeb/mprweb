@@ -1037,11 +1037,19 @@ async def git_commit(request: Request, name: str, commit_hash: str):
     return render_template(request, "pkgbase/git/commit.html", context)
 
 # Special routes for HTTP Git clone requests. We use this so we can count the number of pulls.
-@router.get("/{pkgbase}/info/refs")
-@router.get("/{pkgbase}/HEAD")
-@router.get("/{pkgbase}/objects/{object:path}")
-@router.post("/{pkgbase}/git-upload-pack")
-async def clone(request: Request, response: Response, pkgbase: str):
+@router.get("/{pkg}/info/refs")
+@router.get("/{pkg}/HEAD")
+@router.get("/{pkg}/objects/{object:path}")
+@router.post("/{pkg}/git-upload-pack")
+async def clone(request: Request, response: Response, pkg: str):
+    # If this route is the start of the request, add a counter to the number of pulls.
+    if request.url.path.startswith(f"/{pkg}/info/refs"):
+        pkgbase = get_pkg_or_base(pkg, PackageBase)
+
+        with db.begin():
+            pkgbase.NumGitPulls += 1
+
+    # Forward the route to our internal Smartgit instance.
     new_path = f"http://nginx/internal-git{request.url.path}"
     request_body = await request.body()
 
@@ -1065,3 +1073,4 @@ async def clone(request: Request, response: Response, pkgbase: str):
             response_body = await response.read()
             response_headers = dict(response.headers)
             return Response(content=response_body, headers=response_headers)
+

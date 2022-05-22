@@ -150,7 +150,7 @@ def serve(action, cmdargv, username, privileged, remote_addr):  # noqa: C901
         # If we're cloning, update the clone counter for the pkgbase.
         if action == "git-upload-pack":
             with db.begin():
-                pkgbase.NumGitClones += 1
+                pkgbase.NumGitPulls += 1
 
         # Run the requested command.
         subprocess.run([git_shell_cmd, "-c", f"{action} '{git_repo_path}'"])

@@ -173,7 +173,7 @@ PackageBases = Table(
     Column("SubmittedTS", BIGINT(unsigned=True), nullable=False),
     Column("ModifiedTS", BIGINT(unsigned=True), nullable=False),
     Column("RepologyCheck", TINYINT(unsigned=True), nullable=False, default=0),
-    Column("NumGitClones", BIGINT(unsigned=True), nullable=False, default=0),
+    Column("NumGitPulls", BIGINT(unsigned=True), nullable=False, default=0),
     Column(
         "FlaggerUID", ForeignKey("Users.ID", ondelete="SET NULL")
     ),  # who flagged the package out-of-date?
