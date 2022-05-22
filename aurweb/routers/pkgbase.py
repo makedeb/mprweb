@@ -25,6 +25,8 @@ from aurweb.scripts.rendercomment import update_comment_render_fastapi
 from aurweb.templates import make_variable_context, render_template
 from aurweb.util import get_current_time
 
+import aiohttp
+
 logger = logging.get_logger(__name__)
 router = APIRouter()
 
@@ -1033,3 +1035,33 @@ async def git_commit(request: Request, name: str, commit_hash: str):
     context["diff"] = diff
 
     return render_template(request, "pkgbase/git/commit.html", context)
+
+# Special routes for HTTP Git clone requests. We use this so we can count the number of pulls.
+@router.get("/{pkgbase}/info/refs")
+@router.get("/{pkgbase}/HEAD")
+@router.get("/{pkgbase}/objects/{object:path}")
+@router.post("/{pkgbase}/git-upload-pack")
+async def clone(request: Request, response: Response, pkgbase: str):
+    new_path = f"http://nginx/internal-git{request.url.path}"
+    request_body = await request.body()
+
+    # Generate a query param string.
+    if len(request.query_params) > 0:
+        items = []
+
+        for key, value in request.query_params.items():
+            items += [f"{key}={value}"]
+
+        query = "?" + "&".join(items)
+        new_path += query
+    
+    async with aiohttp.ClientSession() as session:
+        methods = {
+            "GET": session.get,
+            "POST": session.post
+        }
+
+        async with methods[request.method](new_path, headers=request.headers, data=request_body) as response:
+            response_body = await response.read()
+            response_headers = dict(response.headers)
+            return Response(content=response_body, headers=response_headers)

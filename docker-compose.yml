@@ -196,6 +196,7 @@ services:
       test: "bash /docker/health/nginx.sh"
       interval: 2s
     volumes:
+      - ./aurweb:/aurweb/aurweb
       - ./docker:/docker
       - ./data:/data
       - archives:/var/lib/aurweb/archives

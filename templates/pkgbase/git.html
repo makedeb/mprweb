@@ -53,15 +53,19 @@
                     <p class="value">{{ committer }} ({{ committers[committer] }})</p>
                     {% endfor %}
                 </div>
+                <div class="section">
+                    <p class="key">Clones:</p>
+                    <p class="value">{{ pkgbase.NumGitClones }}</p>
+                </div>
             </div>
 
-            <div class="git-tree">
+            <div class="git-tree hidden">
                 {% for file in tree %}
                     <p><a href="/pkgbase/{{ pkgbase.Name }}/git/tree/{{ file }}">{{ file }}</a></p>
                 {% endfor %}
             </div>
 
-            <div class="commit-log search-results">
+            <div class="commit-log hidden search-results">
                 {% for commit in commits %}
                     <div class="search-item">
                         <p class="key">{{ commit.message.rstrip("\n") }}</p>
