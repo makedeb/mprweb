@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+import aiohttp
 import pygit2
 from fastapi import APIRouter, Form, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
@@ -1033,3 +1034,42 @@ async def git_commit(request: Request, name: str, commit_hash: str):
     context["diff"] = diff
 
     return render_template(request, "pkgbase/git/commit.html", context)
+
+
+# Special routes for HTTP Git clone requests. We use this so we can count the
+# number of pulls.
+@router.get("/{pkg}/info/refs")
+@router.get("/{pkg}/HEAD")
+@router.get("/{pkg}/objects/{object:path}")
+@router.post("/{pkg}/git-upload-pack")
+async def clone(request: Request, response: Response, pkg: str):
+    # If this route is the start of the request, add a counter to the number of pulls.
+    if request.url.path.startswith(f"/{pkg}/info/refs"):
+        pkgbase = get_pkg_or_base(pkg, PackageBase)
+
+        with db.begin():
+            pkgbase.NumGitPulls += 1
+
+    # Forward the route to our internal Smartgit instance.
+    new_path = f"http://nginx/internal-git{request.url.path}"
+    request_body = await request.body()
+
+    # Generate a query param string.
+    if len(request.query_params) > 0:
+        items = []
+
+        for key, value in request.query_params.items():
+            items += [f"{key}={value}"]
+
+        query = "?" + "&".join(items)
+        new_path += query
+
+    async with aiohttp.ClientSession() as session:
+        methods = {"GET": session.get, "POST": session.post}
+
+        async with methods[request.method](
+            new_path, headers=request.headers, data=request_body
+        ) as response:
+            response_body = await response.read()
+            response_headers = dict(response.headers)
+            return Response(content=response_body, headers=response_headers)

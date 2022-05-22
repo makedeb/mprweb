@@ -147,6 +147,11 @@ def serve(action, cmdargv, username, privileged, remote_addr):  # noqa: C901
             )
             os.symlink(git_update_cmd, f"{git_repo_path}/hooks/update")
 
+        # If we're cloning, update the clone counter for the pkgbase.
+        if action == "git-upload-pack":
+            with db.begin():
+                pkgbase.NumGitPulls += 1
+
         # Run the requested command.
         subprocess.run([git_shell_cmd, "-c", f"{action} '{git_repo_path}'"])
 
