@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+import aiohttp
 import pygit2
 from fastapi import APIRouter, Form, HTTPException, Query, Request, Response
 from fastapi.responses import RedirectResponse
@@ -24,8 +25,6 @@ from aurweb.scripts import notify, popupdate
 from aurweb.scripts.rendercomment import update_comment_render_fastapi
 from aurweb.templates import make_variable_context, render_template
 from aurweb.util import get_current_time
-
-import aiohttp
 
 logger = logging.get_logger(__name__)
 router = APIRouter()
@@ -1036,7 +1035,9 @@ async def git_commit(request: Request, name: str, commit_hash: str):
 
     return render_template(request, "pkgbase/git/commit.html", context)
 
-# Special routes for HTTP Git clone requests. We use this so we can count the number of pulls.
+
+# Special routes for HTTP Git clone requests. We use this so we can count the
+# number of pulls.
 @router.get("/{pkg}/info/refs")
 @router.get("/{pkg}/HEAD")
 @router.get("/{pkg}/objects/{object:path}")
@@ -1062,15 +1063,13 @@ async def clone(request: Request, response: Response, pkg: str):
 
         query = "?" + "&".join(items)
         new_path += query
-    
-    async with aiohttp.ClientSession() as session:
-        methods = {
-            "GET": session.get,
-            "POST": session.post
-        }
 
-        async with methods[request.method](new_path, headers=request.headers, data=request_body) as response:
+    async with aiohttp.ClientSession() as session:
+        methods = {"GET": session.get, "POST": session.post}
+
+        async with methods[request.method](
+            new_path, headers=request.headers, data=request_body
+        ) as response:
             response_body = await response.read()
             response_headers = dict(response.headers)
             return Response(content=response_body, headers=response_headers)
-
