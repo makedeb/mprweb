@@ -1,15 +1,15 @@
-name: Build makedeb
+name: unit-tests
 on: {"pull_request"}
 env:
   AUR_CONFIG: "conf/config"
   DB_HOST: "localhost"
   TEST_RECURSION_LIMIT: "10000"
-
 jobs:
-  build:
+  unit-tests:
     runs-on: ubuntu-latest
     container:
       image: archlinux:base-devel
+    steps:
       - name: Checkout Git repository
         uses: actions/checkout@v3
 
