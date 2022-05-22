@@ -1,0 +1,19 @@
+name: unit-tests
+on: {"pull_request"}
+env:
+  AUR_CONFIG: "conf/config"
+  DB_HOST: "localhost"
+  TEST_RECURSION_LIMIT: "10000"
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+    steps:
+      - name: Checkout Git repository
+        uses: actions/checkout@v3
+
+      - name: Run unit tests
+        run: .drone/scripts/run-tests.sh
+
+# vim: expandtab ts=2 sw=2
