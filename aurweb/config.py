@@ -2,27 +2,16 @@ import configparser
 import os
 from typing import Any
 
-# Publicly visible version of aurweb. This is used to display
-# aurweb versioning in the footer and must be maintained.
-# Todo: Make this dynamic/automated.
-AURWEB_VERSION = "v6.0.2"
-
+_mpr_config = "/etc/aurweb/config"
 _parser = None
-
 
 def _get_parser():
     global _parser
 
     if not _parser:
-        path = os.environ.get("AUR_CONFIG", "/aurweb/conf/config")
-        defaults = os.environ.get("AUR_CONFIG_DEFAULTS", path + ".defaults")
-
         _parser = configparser.RawConfigParser()
         _parser.optionxform = lambda option: option
-        if os.path.isfile(defaults):
-            with open(defaults) as f:
-                _parser.read_file(f)
-        _parser.read(path)
+        _parser.read(_mpr_config)
 
     return _parser
 
@@ -65,6 +54,5 @@ def set_option(section: str, option: str, value: Any) -> None:
 
 
 def save() -> None:
-    aur_config = os.environ.get("AUR_CONFIG", "/etc/aurweb/config")
-    with open(aur_config, "w") as fp:
+    with open(_mpr_config, "w") as fp:
         _get_parser().write(fp)
