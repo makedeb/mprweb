@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions & support
+    url: https://docs.makedeb.org/support/obtaining-support
+    about: Ask any questions here.
+  - name: Security issue
+    url: https://github.com/makedeb/mprweb/security/policy
+    about: View our security policy.
