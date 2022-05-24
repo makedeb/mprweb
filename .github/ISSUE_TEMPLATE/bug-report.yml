@@ -1,6 +1,6 @@
 name: Bug report
 description: Functionality issues with mprweb, such as irregular/inconsistent behavior, or otherwise broken features.
-labels: ["bug"]
+labels: ["T-Defect"]
 body:
   - type: textarea
     attributes:
