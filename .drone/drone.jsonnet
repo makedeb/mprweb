@@ -2,7 +2,7 @@ local runTests() = {
     name: "run-tests",
     kind: "pipeline",
     type: "docker",
-    trigger: {branch: ["mprweb"]},
+    trigger: {branch: ["main"]},
     steps: [{
         name: "run-tests",
         image: "archlinux:base-devel",
@@ -22,7 +22,7 @@ local publishImage() = {
     name: "publish-image",
     kind: "pipeline",
     type: "exec",
-    trigger: {branch: ["mprweb"]},
+    trigger: {branch: ["main"]},
     depends_on: ["run-tests"],
     node: {server: "mprweb"},
     steps: [{

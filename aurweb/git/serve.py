@@ -147,8 +147,9 @@ def serve(action, cmdargv, username, privileged, remote_addr):  # noqa: C901
             )
             os.symlink(git_update_cmd, f"{git_repo_path}/hooks/update")
 
-        # If we're cloning, update the clone counter for the pkgbase.
-        if action == "git-upload-pack":
+        # If we're cloning and the pkgbase exists, update the clone counter for
+        # the pkgbase.
+        if action == "git-upload-pack" and pkgbase is not None:
             with db.begin():
                 pkgbase.NumGitPulls += 1
 
