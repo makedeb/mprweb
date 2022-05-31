@@ -23,8 +23,10 @@ def do_action(func, *args, save: bool = True):
             aurweb.config.save()
     except configparser.NoSectionError:
         print("error: no section found", file=sys.stderr)
+        exit(1)
     except configparser.NoOptionError:
         print("error: no option found", file=sys.stderr)
+        exit(1)
 
     return value
 

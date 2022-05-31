@@ -23,8 +23,6 @@ from sqlalchemy.ext.compiler import compiles
 
 import aurweb.config
 
-db_backend = aurweb.config.get("database", "backend")
-
 
 @compiles(TINYINT, "sqlite")
 def compile_tinyint_sqlite(type_, compiler, **kw):  # pragma: no cover
@@ -164,7 +162,7 @@ PackageBases = Table(
     ),
     Column(
         "Popularity",
-        DECIMAL(10, 6, unsigned=True) if db_backend == "mysql" else String(17),
+        DECIMAL(10, 6, unsigned=True),
         nullable=False,
         server_default=text("0"),
     ),
@@ -509,7 +507,7 @@ TU_VoteInfo = Table(
     Column("End", BIGINT(unsigned=True), nullable=False),
     Column(
         "Quorum",
-        DECIMAL(2, 2, unsigned=True) if db_backend == "mysql" else String(5),
+        DECIMAL(2, 2, unsigned=True),
         nullable=False,
     ),
     Column("SubmitterID", ForeignKey("Users.ID", ondelete="CASCADE"), nullable=False),

@@ -12,20 +12,33 @@ while ! mysqladmin ping 2>/dev/null; do
 done
 
 # Configure databases.
-DATABASE="aurweb" # Persistent database for FastAPI.
+DATABASE="$(aurweb-config get database name)" # Persistent database for FastAPI.
+USER="$(aurweb-config get database user)"
+PASSWORD="$(aurweb-config get database password)"
 
 echo "Taking care of primary database '${DATABASE}'..."
-mysql -u root -e "CREATE USER IF NOT EXISTS 'aur'@'localhost' IDENTIFIED BY 'aur';"
-mysql -u root -e "CREATE USER IF NOT EXISTS 'aur'@'%' IDENTIFIED BY 'aur';"
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS $DATABASE;"
+mysql -u root -e "CREATE USER IF NOT EXISTS '${USER}'@'localhost' IDENTIFIED BY '${PASSWORD}';"
+mysql -u root -e "CREATE USER IF NOT EXISTS '${USER}'@'%' IDENTIFIED BY '${PASSWORD}';"
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS ${DATABASE};"
 
-mysql -u root -e "CREATE USER IF NOT EXISTS 'aur'@'%' IDENTIFIED BY 'aur';"
-mysql -u root -e "GRANT ALL ON aurweb.* TO 'aur'@'localhost';"
-mysql -u root -e "GRANT ALL ON aurweb.* TO 'aur'@'%';"
+mysql -u root -e "CREATE USER IF NOT EXISTS '${USER}'@'%' IDENTIFIED BY '${PASSWORD}';"
+mysql -u root -e "GRANT ALL ON ${DATABASE}.* TO '${USER}'@'localhost';"
+mysql -u root -e "GRANT ALL ON ${DATABASE}.* TO '${USER}'@'%';"
 
-mysql -u root -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'aur';"
+mysql -u root -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${PASSWORD}';"
 mysql -u root -e "GRANT ALL ON *.* TO 'root'@'%' WITH GRANT OPTION;"
 
 mysqladmin -uroot shutdown
 
-exec "$@"
+# Start the db.
+echo "Starting db..."
+/usr/bin/mysqld_safe --datadir=/var/lib/mysql &
+db_pid="${!}"
+
+# Initialize the db.
+echo "Initializing db..."
+python -m aurweb.initdb || true
+
+# Return control back to the db.
+echo "Returning control to db..."
+wait "${db_pid}"

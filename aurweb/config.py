@@ -2,7 +2,7 @@ import configparser
 import os
 from typing import Any
 
-_mpr_config = "/etc/aurweb/config"
+_mpr_config = "/mprweb.cfg"
 _parser = None
 
 def _get_parser():
