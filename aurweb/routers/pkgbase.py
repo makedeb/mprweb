@@ -1043,6 +1043,9 @@ async def git_commit(request: Request, name: str, commit_hash: str):
 @router.get("/{pkg}/objects/{object:path}")
 @router.post("/{pkg}/git-upload-pack")
 async def clone(request: Request, response: Response, pkg: str):
+    if pkg.endswith(".git"):
+        pkg = pkg.removesuffix(".git")
+
     # If this route is the start of the request, add a counter to the number of pulls.
     if request.url.path.startswith(f"/{pkg}/info/refs"):
         pkgbase = get_pkg_or_base(pkg, PackageBase)
