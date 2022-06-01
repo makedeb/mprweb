@@ -56,7 +56,7 @@ services:
       - ./aurweb:/aurweb/aurweb
       - ./docker:/docker
     healthcheck:
-      test: "bash /docker/health/mariadb.sh"
+      test: "bash -c '[[ -f /tmp/were-done ]]'"
       interval: 2s
 
   git:
@@ -65,15 +65,18 @@ services:
     environment:
       - SSH_CMDLINE=${SSH_CMDLINE:-ssh ssh://aur@localhost:2222}
     entrypoint: /docker/git-entrypoint.sh
-    command: /docker/scripts/run-sshd.sh
     ports:
       - "2222:2222"
     healthcheck:
       test: "bash /docker/health/sshd.sh"
       interval: 2s
+    depends_on:
+      mariadb:
+        condition: service_healthy
     volumes:
       - ./aurweb:/aurweb/aurweb
       - ./data/git_data:/aurweb/aur.git
+      - ./mprweb.cfg:/mprweb.cfg
       - ./data:/aurweb/data
       - ./docker:/docker
       - mariadb_run:/var/run/mysqld
@@ -96,8 +99,13 @@ services:
     init: true
     entrypoint: /docker/cron-entrypoint.sh
     command: /docker/scripts/run-cron.sh
+    depends_on:
+      mariadb:
+        condition: service_healthy
     volumes:
       - ./aurweb:/aurweb/aurweb
+      - ./docker:/docker
+      - ./mprweb.cfg:/mprweb.cfg
       - mariadb_run:/var/run/mysqld
       - archives:/var/lib/aurweb/archives
 
@@ -124,6 +132,7 @@ services:
       cron:
         condition: service_started
     volumes:
+      - ./mprweb.cfg:/mprweb.cfg
       - ./docker:/docker
       - ./aurweb:/aurweb/aurweb
       - ./media:/aurweb/media

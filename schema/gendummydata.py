@@ -232,7 +232,7 @@ for p in list(seen_pkgs.keys()):
 
     s = (
         "INSERT INTO PackageBases (ID, Name, FlaggerComment, SubmittedTS, ModifiedTS, "
-        "SubmitterUID, MaintainerUID, PackagerUID, RepologyCheck, NumGitClones) VALUES (%d, '%s', '', %d, %d, %d, %s, %s, %d, %d);\n"  # noqa: E501
+        "SubmitterUID, MaintainerUID, PackagerUID, RepologyCheck, NumGitPulls) VALUES (%d, '%s', '', %d, %d, %d, %s, %s, %d, %d);\n"  # noqa: E501
     )
     s = s % (seen_pkgs[p], p, NOW, NOW, uuid, muid, puid, 0, 0)
     out.write(s)

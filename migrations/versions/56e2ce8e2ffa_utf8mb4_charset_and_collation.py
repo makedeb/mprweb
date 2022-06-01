@@ -50,8 +50,6 @@ indexes = {"ProviderNameProvides": ["OfficialProviders", "Name", "Provides"]}
 src_charset = "utf8"
 src_collate = "utf8_general_ci"
 
-db_backend = aurweb.config.get("database", "backend")
-
 
 def rebuild_unique_indexes_with_str_cols():
     for idx_name in indexes:
@@ -88,9 +86,6 @@ COLLATE {collate}
 
 
 def downgrade():
-    if db_backend == "sqlite":
-        return None
-
     def op_execute(table_meta):
         table, charset, collate = table_meta
         sql = f"""
