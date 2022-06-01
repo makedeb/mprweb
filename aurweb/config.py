@@ -2,7 +2,7 @@ import configparser
 import os
 from typing import Any
 
-_mpr_config = "/mprweb.cfg"
+_mpr_config = os.environ.get("MPR_CONFIG", "/mprweb.cfg")
 _parser = None
 
 def _get_parser():
