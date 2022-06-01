@@ -317,14 +317,16 @@ class Connection:
         aur_db_host = aurweb.config.get("database", "host")
         aur_db_name = aurweb.config.get("database", "name")
         aur_db_user = aurweb.config.get("database", "user")
-        aur_db_pass = aurweb.config.get("database", "password")
+        aur_db_pass = aurweb.config.get_with_fallback(
+            "database", "password", None
+        )
         self._conn = MySQLdb.connect(
             host=aur_db_host,
             user=aur_db_user,
             passwd=aur_db_pass,
             db=aur_db_name
         )
-        self._conn = ConnectionExecutor(self._conn, "mysql")
+        self._conn = ConnectionExecutor(self._conn)
 
     def execute(self, query, params=()):
         return self._conn.execute(query, params)

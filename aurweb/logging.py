@@ -6,9 +6,9 @@ import aurweb.config
 
 # For testing, users should set LOG_CONFIG=logging.test.conf
 # We test against various debug log output.
-aurwebdir = aurweb.config.get("options", "aurwebdir")
+mprwebdir = aurweb.config.mprweb_dir
 log_config = os.environ.get("LOG_CONFIG", "logging.conf")
-config_path = os.path.join(aurwebdir, log_config)
+config_path = os.path.join(mprwebdir, log_config)
 
 logging.config.fileConfig(config_path, disable_existing_loggers=False)
 logging.getLogger("root").addHandler(logging.NullHandler())

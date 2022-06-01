@@ -18,9 +18,11 @@ PASSWORD="$(aurweb-config get database password)"
 
 echo "Taking care of primary database '${DATABASE}'..."
 mysql -u root -e "CREATE USER IF NOT EXISTS '${USER}'@'%' IDENTIFIED BY '${PASSWORD}';"
+mysql -u root -e "CREATE USER IF NOT EXISTS '${USER}'@'localhost' IDENTIFIED BY '${PASSWORD}';"
 
 mysql -u root -e "CREATE DATABASE IF NOT EXISTS ${DATABASE};"
 mysql -u root -e "GRANT ALL ON ${DATABASE}.* TO '${USER}'@'%';"
+mysql -u root -e "GRANT ALL ON ${DATABASE}.* TO '${USER}'@'localhost';"
 
 mysqladmin -uroot shutdown
 
@@ -30,18 +32,17 @@ echo "Starting db..."
 db_pid="${!}"
 
 echo "Waiting for db to start up..."
-while ! mysqladmin ping; do
+while ! mysqladmin ping --silent; do
 	sleep 1s
 done
 
 # Initialize the db.
 # Create a dummy config so we can set the host to 'localhost' for this initialization.
 dummy_config="$(mktemp)"
-echo -e "[database]\nhost = localhost\nname = ${DATABASE}\nuser = ${USER}\n[options]\naurwebdir=/aurweb" > "${dummy_config}"
+echo -e "[database]\nhost = localhost\nname = ${DATABASE}\nuser = ${USER}\npassword = ${PASSWORD}\n[options]\naurwebdir=/aurweb" > "${dummy_config}"
 
 echo "Initializing db..."
-MPR_CONFIG="${dummy_config}" python -m aurweb.initdb || true
-echo "${dummy_config}"
+MPR_CONFIG="${dummy_config}" python -m aurweb.initdb 2> /dev/null || true
 
 # Let the Docker Compose healthcheck know that we're done.
 touch /tmp/were-done

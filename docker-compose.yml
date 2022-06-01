@@ -28,7 +28,7 @@ services:
     command: /docker/scripts/run-memcached.sh
     healthcheck:
       test: "bash /docker/health/memcached.sh"
-      interval: 2s
+      interval: 4s
  
   redis:
     image: mprweb:latest
@@ -37,7 +37,7 @@ services:
     command: /docker/scripts/run-redis.sh
     healthcheck:
       test: "bash /docker/health/redis.sh"
-      interval: 2s
+      interval: 4s
     ports:
       - "127.0.0.1:16379:6379"
 
@@ -57,7 +57,7 @@ services:
       - ./docker:/docker
     healthcheck:
       test: "bash -c '[[ -f /tmp/were-done ]]'"
-      interval: 2s
+      interval: 4s
 
   git:
     image: mprweb:latest
@@ -69,7 +69,7 @@ services:
       - "2222:2222"
     healthcheck:
       test: "bash /docker/health/sshd.sh"
-      interval: 2s
+      interval: 4s
     depends_on:
       mariadb:
         condition: service_healthy
@@ -88,7 +88,7 @@ services:
     command: /docker/scripts/run-smartgit.sh
     healthcheck:
       test: "bash /docker/health/smartgit.sh"
-      interval: 2s
+      interval: 4s
     volumes:
       - ./data/git_data:/aurweb/aur.git
       - ./data:/data
@@ -123,7 +123,7 @@ services:
     command: /docker/scripts/run-fastapi.sh "${FASTAPI_BACKEND}"
     healthcheck:
       test: "bash /docker/health/fastapi.sh ${FASTAPI_BACKEND}"
-      interval: 2s
+      interval: 4s
     depends_on:
       git:
         condition: service_healthy

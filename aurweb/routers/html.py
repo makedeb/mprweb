@@ -25,7 +25,6 @@ from aurweb.models.package_base import PackageBase
 from aurweb.models.package_request import PENDING_ID
 from aurweb.models.user import User
 from aurweb.packages.search import PackageSearch
-from aurweb.packages.util import updated_packages
 from aurweb.templates import make_context, render_template
 from aurweb.util import get_current_time
 
@@ -78,10 +77,15 @@ async def language(
 async def index(request: Request):
     """Homepage route."""
     context = make_context(request, "Home")
-    cache_expire = 300  # Five minutes.
 
     # Get the 10 most recently updated packages.
-    context["package_updates"] = updated_packages(10, cache_expire)
+    context["package_updates"] = (
+        db.query(Package)
+        .join(PackageBase)
+        .filter(models.PackageBase.PackagerUID.isnot(None))
+        .order_by(models.PackageBase.ModifiedTS.desc())
+        .limit(10)
+    ).all()
 
     # Get the 10 most popular packages.
     #

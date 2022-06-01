@@ -2,6 +2,7 @@ import configparser
 import os
 from typing import Any
 
+mprweb_dir = "/aurweb"
 _mpr_config = os.environ.get("MPR_CONFIG", "/mprweb.cfg")
 _parser = None
 
