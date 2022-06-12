@@ -34,13 +34,21 @@ def auth_required(func):
         api_key = request.headers.get("Authorization")
 
         if api_key is None:
-            return {"type": "error", "msg": "No API key was provided."}
+            return {
+                "type": "error",
+                "code": "err_missing_api_key",
+                "msg": "No API key was provided.",
+            }
 
         # If so, make sure it exists.
         db_api_key = db.query(ApiKey).filter(ApiKey.Key == api_key).first()
 
         if db_api_key is None:
-            return {"type": "error", "msg": "Invalid API key."}
+            return {
+                "type": "error",
+                "code": "err_invalid_api_key",
+                "msg": "Invalid API key.",
+            }
 
         # If all checks out, continue with processing the request.
         return await func(request, *args, **kwargs)
@@ -89,7 +97,11 @@ async def api_meta():
 @auth_required
 async def api_test(request: Request):
     user = get_user_from_api_key(request)
-    return {"type": "success", "msg": f"Succesfully authenticated as '{user.Username}'"}
+    return {
+        "type": "success",
+        "msg": f"Succesfully authenticated as '{user.Username}'",
+        "user": user.Username,
+    }
 
 
 @router.post("/api/adopt/{pkgbase_name}")

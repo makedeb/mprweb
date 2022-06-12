@@ -163,12 +163,12 @@ footer {
 		margin-bottom: 1em;
 	}
 	
-	h2 {
-		padding-bottom: 0.5em;
-	}
-
 	p {
 		line-height: 1.6em;
+	}
+
+	h4 {
+		padding-top: 0.5em;
 	}
 }
 
@@ -191,8 +191,11 @@ fieldset, .field {
                         
         h2 {
 		font-size: 1.4em;
-                padding: 0;
         }
+
+	h4 {
+		padding-top: 0.2em;
+	}
 
         .item {
                 padding-bottom: 0.8rem;

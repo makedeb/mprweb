@@ -9,13 +9,16 @@
         <div class="item">
             <h2>{{ "Using the API" | tr }}</h2>
             <hr>
-            <p class="comment"><b>NOTE:</b> The API interface is current in development, and stability is not guaranteed. Endpoints may be changed and removed at any point, and you should avoid using the API interface for the time being if you're expecting stability.</p>
+            <p class="notice warning"><b>NOTE:</b> The API interface is current in development, and stability is not guaranteed. Endpoints may be changed and removed at any point, and you should avoid using the API interface for the time being if you're expecting stability.</p>
+            <p class="notice note">Consumers of the API can expect endpoints to not have data removed, but <strong>possibly</strong> have data added. Note that this will <strong>only apply <em>after</em></strong> API stability has been reached.</p>
             <p>API endpoints are specified via their endpoint, followed by any number of tags in capitialized letters (i.e. <code>POST</code>):</p>
             <ul>
                 <li><code>GET</code> and <code>POST</code> refer to the HTTP request types required in order to send the request.</li>
                 <li>API interfaces marked with <code>AUTH</code> require an API key in order to access. Pass the API key as part of your request via an HTTP header with a title of <code>Authorization</code> and a value of the API key.</li>
             </ul>
+            <br>
             <p>Text in brackets (i.e. <code>{pkgbase}</code> is expected to be filled in by the client (i.e. <code>/api/adopt/{pkgbase}</code> would become <code>/api/adopt/makedeb</code>, (or any other package base on the MPR).</p>
+            <br>
             {% if request.user.is_authenticated() %}
                 <p>You can create and manage your API keys <a href="/account/{{ request.user.Username }}/api-keys">here</a>.</p>
             {% else %}
@@ -29,11 +32,11 @@
         <div class="item">
             <h4><code>/api/meta</code> <code>GET</code></h4>
             <hr>
-            <p>Shows current instance information. Currently includes SSH keys, number of packages, number of orphan packages, and number of trusted users.</p>
+            <p>Shows current instance information.</p>
         </div>
 
         <div class="item">
-            <h4><code>/api/test</code> <code>GET</code> <code>POST</code> <code>AUTH</code></h4>
+            <h4><code>/api/test</code> <code>GET/POST</code> <code>AUTH</code></h4>
             <hr>
             <p>Verifies that you are succesfully logged in.</p>
         </div>
