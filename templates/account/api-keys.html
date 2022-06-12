@@ -20,17 +20,7 @@
         <form class="api-key-menu item hidden">
             <div class="item">
                 <label><h2>Expiration Date</h2></label>
-                <select class="add-new-api-key-expiration-date">
-                    <option value="1">1 day</option>
-                    <option value="7">1 week</option>
-                    <option value="14">2 weeks</option>
-                    <option value="31">1 month</option>
-                    <option value="61">2 months</option>
-                    <option value="92">3 months</option>
-                    <option value="184">6 months</option>
-                    <option value="365">1 year</option>
-                    <option value="0">Never</option>
-                </select>
+                <input class="add-new-api-key-expiration-date" type="date" min="{{ now.strftime('%Y-%m-%d') }}">
             </div>
 
             <div class="item">
@@ -51,10 +41,10 @@
                     <div class="item-section">
                         <p class="title">Note:</p>
 
-                        {% if api_key.Note is not none %}
+                        {% if api_key.Note != "" %}
                             <p class="value">{{ api_key.Note }}</p>
                         {% else %}
-                            <p><em>None</em></p>
+                            <p class="value"><em>None</em></p>
                         {% endif %}
                     </div>
 

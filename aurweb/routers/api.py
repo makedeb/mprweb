@@ -1,4 +1,5 @@
 import functools
+import hashlib
 
 from fastapi import APIRouter, Request
 
@@ -18,13 +19,14 @@ from aurweb.templates import make_context, render_template
 router = APIRouter()
 
 
+def hash_api_key(api_key):
+    return hashlib.sha256(api_key.encode()).hexdigest()
+
+
 def get_user_from_api_key(request):
-    return (
-        db.query(ApiKey)
-        .filter(ApiKey.Key == request.headers["Authorization"])
-        .first()
-        .User
-    )
+    api_key = hash_api_key(request.headers["Authorization"])
+
+    return db.query(ApiKey).filter(ApiKey.KeyHash == api_key).first().User
 
 
 def auth_required(func):
@@ -41,7 +43,8 @@ def auth_required(func):
             }
 
         # If so, make sure it exists.
-        db_api_key = db.query(ApiKey).filter(ApiKey.Key == api_key).first()
+        hashed_api_key = hash_api_key(api_key)
+        db_api_key = db.query(ApiKey).filter(ApiKey.KeyHash == hashed_api_key).first()
 
         if db_api_key is None:
             return {
