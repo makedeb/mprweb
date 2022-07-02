@@ -13,8 +13,8 @@ LOG_CONFIG='logging.test.conf'
 PYTHONPATH="${PWD}:${PWD}/app"
 export AUR_CONFIG DB_HOST TEST_RECURSION_LIMIT CURRENT_DIR LOG_CONFIG PYTHONPATH
 
-./docker/scripts/install-deps.sh
-./docker/scripts/install-python-deps.sh
+.drone/scripts/install-deps.sh
+
 useradd -U -d /aurweb -c 'AUR User' mpr
 ./docker/mariadb-entrypoint.sh
 (cd '/usr' && /usr/bin/mysqld_safe --datadir='/var/lib/mysql') &

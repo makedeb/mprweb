@@ -26,27 +26,5 @@ mysql -u root -e "GRANT ALL ON ${DATABASE}.* TO '${USER}'@'localhost';"
 
 mysqladmin -uroot shutdown
 
-# Start the db.
-echo "Starting db..."
-/usr/bin/mysqld_safe --datadir="${MYSQL_DATA}" &
-db_pid="${!}"
-
-echo "Waiting for db to start up..."
-while ! mysqladmin ping --silent; do
-	sleep 1s
-done
-
-# Initialize the db.
-# Create a dummy config so we can set the host to 'localhost' for this initialization.
-dummy_config="$(mktemp)"
-echo -e "[database]\nhost = localhost\nname = ${DATABASE}\nuser = ${USER}\npassword = ${PASSWORD}\n[options]\naurwebdir=/aurweb" > "${dummy_config}"
-
-echo "Initializing db..."
-MPR_CONFIG="${dummy_config}" python -m aurweb.initdb 2> /dev/null || true
-
-# Let the Docker Compose healthcheck know that we're done.
-touch /tmp/were-done
-
-# Return control back to the db.
-echo "Returning control to db..."
-wait "${db_pid}"
+# Start mysql back up with networking.
+/usr/bin/mysqld_safe --datadir=/var/lib/mysql

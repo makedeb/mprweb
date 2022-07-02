@@ -1,0 +1,18 @@
+image: archlinux:base-devel
+command_prefix: set -e
+tasks:
+  install_deps:
+    description: Install needed dependencies.
+    input_paths:
+      - .drone/scripts/install-deps.sh
+      - docker/scripts/
+      - ./pyproject.toml
+      - ./setup.cfg
+      - ./aurweb
+    command: .drone/scripts/install-deps.sh
+
+  run_unit_tests:
+    description: Run unit tests.
+    input_paths:
+      - ./
+    command: .drone/scripts/run-tests.sh

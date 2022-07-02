@@ -56,8 +56,19 @@ services:
       - ./aurweb:/aurweb/aurweb
       - ./docker:/docker
     healthcheck:
-      test: "bash -c '[[ -f /tmp/were-done ]]'"
+      test: "bash /docker/health/mariadb.sh"
       interval: 4s
+
+  mariadb_init:
+    image: mprweb:latest
+    init: true
+    entrypoint: /docker/mariadb-init-entrypoint.sh
+    volumes:
+      - mariadb_run:/var/run/mysqld
+      - ./mprweb.cfg:/mprweb.cfg
+    depends_on:
+      mariadb:
+        condition: service_healthy
 
   git:
     image: mprweb:latest
@@ -71,8 +82,8 @@ services:
       test: "bash /docker/health/sshd.sh"
       interval: 4s
     depends_on:
-      mariadb:
-        condition: service_healthy
+      mariadb_init:
+        condition: service_started
     volumes:
       - ./aurweb:/aurweb/aurweb
       - ./data/git_data:/aurweb/aur.git
@@ -100,8 +111,8 @@ services:
     entrypoint: /docker/cron-entrypoint.sh
     command: /docker/scripts/run-cron.sh
     depends_on:
-      mariadb:
-        condition: service_healthy
+      mariadb_init:
+        condition: service_started
     volumes:
       - ./aurweb:/aurweb/aurweb
       - ./docker:/docker
