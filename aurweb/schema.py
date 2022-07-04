@@ -131,7 +131,7 @@ ApiKeys = Table(
     metadata,
     Column("ID", INTEGER(unsigned=True), primary_key=True),
     Column("UserID", ForeignKey("Users.ID", ondelete="CASCADE"), nullable=False),
-    Column("Key", Text, nullable=False, unique=True),
+    Column("KeyHash", Text, nullable=False, unique=True),
     Column("Note", Text, server_default=text("''")),
     Column("ExpireTS", BIGINT(unsigned=True)),
     mysql_engine="InnoDB",

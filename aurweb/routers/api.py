@@ -1,32 +1,53 @@
 import functools
+import hashlib
 
+import orjson
 from fastapi import APIRouter, Request
 
-from aurweb import config, db
+from aurweb import config, db, time
 from aurweb.models.account_type import TRUSTED_USER_ID
 from aurweb.models.api_key import ApiKey
 from aurweb.models.package import Package
 from aurweb.models.package_base import PackageBase
+from aurweb.models.package_comment import PackageComment
 from aurweb.models.package_notification import PackageNotification
 from aurweb.models.package_request import CLOSED_ID, PENDING_ID, PackageRequest
 from aurweb.models.request_type import RequestType
 from aurweb.models.user import User
 from aurweb.packages.util import get_pkg_or_base
 from aurweb.routers.html import get_number_of_commits
+from aurweb.scripts.rendercomment import update_comment_render
 from aurweb.templates import make_context, render_template
 
 router = APIRouter()
 
 
+class MissingJsonKeyException(Exception):
+    pass
+
+
+# Helpful functions.
+def hash_api_key(api_key):
+    return hashlib.sha256(api_key.encode()).hexdigest()
+
+
 def get_user_from_api_key(request):
-    return (
-        db.query(ApiKey)
-        .filter(ApiKey.Key == request.headers["Authorization"])
-        .first()
-        .User
-    )
+    api_key = hash_api_key(request.headers["Authorization"])
+
+    return db.query(ApiKey).filter(ApiKey.KeyHash == api_key).first().User
 
 
+def get_json_item(body, *args):
+    try:
+        for item in args:
+            body = body[item]
+    except (IndexError, KeyError):
+        raise MissingJsonKeyException
+
+    return body
+
+
+# Function wrappers.
 def auth_required(func):
     @functools.wraps(func)
     async def wrapper(request, *args, **kwargs):
@@ -34,16 +55,46 @@ def auth_required(func):
         api_key = request.headers.get("Authorization")
 
         if api_key is None:
-            return {"type": "error", "msg": "No API key was provided."}
+            return {
+                "type": "error",
+                "code": "err_missing_api_key",
+                "msg": "No API key was provided.",
+            }
 
         # If so, make sure it exists.
-        db_api_key = db.query(ApiKey).filter(ApiKey.Key == api_key).first()
+        hashed_api_key = hash_api_key(api_key)
+        db_api_key = db.query(ApiKey).filter(ApiKey.KeyHash == hashed_api_key).first()
 
         if db_api_key is None:
-            return {"type": "error", "msg": "Invalid API key."}
+            return {
+                "type": "error",
+                "code": "err_invalid_api_key",
+                "msg": "Invalid API key.",
+            }
 
         # If all checks out, continue with processing the request.
         return await func(request, *args, **kwargs)
+
+    return wrapper
+
+
+def catch_exceptions(func):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except orjson.JSONDecodeError:
+            return {
+                "type": "error",
+                "code": "err_invalid_json_body",
+                "msg": "Invalid JSON body in request.",
+            }
+        except MissingJsonKeyException:
+            return {
+                "type": "error",
+                "code": "err_missing_json_key",
+                "msg": "Missing JSON items in body of request.",
+            }
 
     return wrapper
 
@@ -89,7 +140,11 @@ async def api_meta():
 @auth_required
 async def api_test(request: Request):
     user = get_user_from_api_key(request)
-    return {"type": "success", "msg": f"Succesfully authenticated as '{user.Username}'"}
+    return {
+        "type": "success",
+        "msg": f"Succesfully authenticated as '{user.Username}'",
+        "user": user.Username,
+    }
 
 
 @router.post("/api/adopt/{pkgbase_name}")
@@ -159,3 +214,60 @@ async def disown_pkgbase(request: Request, pkgbase_name: str):
             pkgbase.MaintainerUID = None
 
     return {"type": "success", "msg": "Succesfully disowned package."}
+
+
+@router.post("/api/comment/{pkgbase_name}")
+@auth_required
+@catch_exceptions
+async def post_comment(request: Request, pkgbase_name: str):
+    user = get_user_from_api_key(request)
+    pkgbase = get_pkg_or_base(pkgbase_name, PackageBase)
+
+    # Get the comment from the request.
+    body = orjson.loads(await request.body())
+    msg = get_json_item(body, "msg")
+
+    # Create the comment.
+    with db.begin():
+        comment = db.create(
+            PackageComment,
+            User=user,
+            PackageBase=pkgbase,
+            Comments=msg,
+            RenderedComment=str(),
+            CommentTS=time.utcnow(),
+        )
+
+    update_comment_render(comment)
+
+    aur_location = config.get("options", "aur_location")
+
+    return {
+        "type": "success",
+        "msg": "Succesfully posted comment.",
+        "link": f"{aur_location}/packages/{pkgbase.Name}/#comment-{comment.ID}",
+    }
+
+
+@router.get("/api/list-comments/{pkgbase_name}")
+async def get_comments(pkgbase_name: str):
+    pkgbase = get_pkg_or_base(pkgbase_name, PackageBase)
+    comments = (
+        db.query(PackageComment)
+        .filter(PackageComment.PackageBaseID == pkgbase.ID)
+        .all()
+    )
+
+    result = []
+
+    for comment in comments:
+        result += [
+            {
+                "date": comment.CommentTS,
+                "msg": comment.Comments,
+                "msg_rendered": comment.RenderedComment,
+                "user": comment.User.Username,
+            }
+        ]
+
+    return result

@@ -17,8 +17,15 @@ document.addEventListener("DOMContentLoaded", function() {
 document.addEventListener("DOMContentLoaded", function() {
 	document.querySelector(".add-new-api-key-button").addEventListener("click", async function() {
 		const apiKeyNote = document.querySelector(".add-new-api-key-note").value;
-		const apiKeyExpirationDate = document.querySelector(".add-new-api-key-expiration-date").value;
+		const apiKeyExpirationDate = Date.parse(
+			document.querySelector(".add-new-api-key-expiration-date").value
+		) / 1000;
 		const apiKeyData = {note: apiKeyNote, expirationDate: apiKeyExpirationDate};
+
+		// If the user didn't enter a valid date, abort.
+		if (Number.isNaN(apiKeyExpirationDate)) {
+			return;
+		}
 
 		// Create the new API key.
 		const response = await fetch("/api-keys/create", {

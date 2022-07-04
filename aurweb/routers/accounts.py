@@ -1,4 +1,6 @@
 import copy
+import hashlib
+import math
 import secrets
 import typing
 from http import HTTPStatus
@@ -9,7 +11,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import and_, or_
 
 import aurweb.config
-from aurweb import cookies, db, defaults, l10n, logging, models, time, util
+from aurweb import cookies, db, defaults, l10n, logging, models, util
 from aurweb.auth import account_type_required, requires_auth, requires_guest
 from aurweb.captcha import get_captcha_salts
 from aurweb.exceptions import ValidationError
@@ -537,22 +539,19 @@ async def api_key_delete(request: Request, api_key_id: int):
 @router.post("/api-keys/create")
 @requires_auth
 async def api_key_create(request: Request):
-    day = 86400  # Seconds in a day.
     body = orjson.loads(await request.body())
     note = body["note"]
-    expiration_date = body["expirationDate"]
-
-    if expiration_date == "0":
-        expire_time = None
-    else:
-        now = time.utcnow()
-        expiration_delay = day * int(expiration_date)
-        expire_time = now + expiration_delay
+    expiration_time = math.floor(float(body["expirationDate"]))
 
     with db.begin():
         secret = secrets.token_hex(32)
+        secret_hashed = hashlib.sha256(secret.encode()).hexdigest()
         db.create(
-            ApiKey, UserID=request.user.ID, Key=secret, Note=note, ExpireTS=expire_time
+            ApiKey,
+            UserID=request.user.ID,
+            KeyHash=secret_hashed,
+            Note=note,
+            ExpireTS=expiration_time,
         )
 
     return Response(content=secret)

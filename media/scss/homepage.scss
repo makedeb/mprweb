@@ -2,6 +2,14 @@
 
 .intro {
 	text-align: center;
+	// We have a global setting to where the second to last item in 'body'
+	// has a 'padding-bottom' of 3em so that there's space between it and
+	// the footer. We don't want that here, as that's the
+	// 'Newest/Popular Packages' sections, and it looks weird with the
+	// white gap at the bottom.
+	//
+	// You can remove this if a new section gets added.
+	margin-bottom: 0 !important;
 	
 	.big-intro {
 		padding: 3em 10%;
