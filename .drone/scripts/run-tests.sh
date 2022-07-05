@@ -29,4 +29,6 @@ make -C doc
 pytest
 black ./
 flake8 --count ./
-isort --check-only /aurweb # No clue why this is needed, but './' isn't working in GitHub Actions.
+# DEBUG, REMOVE BEFORE MERGING!!!!!
+pwd
+isort --check-only ./
