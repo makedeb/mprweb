@@ -14,6 +14,8 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run unit tests
-        run: .drone/scripts/run-tests.sh
+        run: |
+          .drone/scripts/install-deps.sh
+          .drone/scripts/run-tests.sh
 
 # vim: expandtab ts=2 sw=2
