@@ -107,7 +107,7 @@ def setup(db_test):
 def test_sqlalchemy_sqlite_url():
     tmpctx, tmp = make_temp_sqlite_config()
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             assert db.get_sqlalchemy_url()
     aurweb.config.rehash()
@@ -116,7 +116,7 @@ def test_sqlalchemy_sqlite_url():
 def test_sqlalchemy_mysql_url():
     tmpctx, tmp = make_temp_mysql_config()
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             assert db.get_sqlalchemy_url()
     aurweb.config.rehash()
@@ -126,7 +126,7 @@ def test_sqlalchemy_mysql_port_url():
     tmpctx, tmp = make_temp_config((r";port = 3306", "port = 3306"))
 
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             assert db.get_sqlalchemy_url()
         aurweb.config.rehash()
@@ -136,7 +136,7 @@ def test_sqlalchemy_mysql_socket_url():
     tmpctx, tmp = make_temp_config()
 
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             assert db.get_sqlalchemy_url()
         aurweb.config.rehash()
@@ -146,7 +146,7 @@ def test_sqlalchemy_unknown_backend():
     tmpctx, tmp = make_temp_config((r"backend = .+", "backend = blah"))
 
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             with pytest.raises(ValueError):
                 db.get_sqlalchemy_url()
@@ -162,7 +162,7 @@ def test_connection_class_unsupported_backend():
     tmpctx, tmp = make_temp_config((r"backend = .+", "backend = blah"))
 
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             with pytest.raises(ValueError):
                 db.Connection()
@@ -173,7 +173,7 @@ def test_connection_class_unsupported_backend():
 def test_connection_mysql():
     tmpctx, tmp = make_temp_mysql_config()
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             db.Connection()
         aurweb.config.rehash()

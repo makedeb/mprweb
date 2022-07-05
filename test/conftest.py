@@ -82,8 +82,7 @@ def test_engine() -> Engine:
     }
 
     backend = aurweb.config.get("database", "backend")
-    driver = aurweb.db.DRIVERS.get(backend)
-    return create_engine(URL.create(driver, **kwargs))
+    return create_engine(URL.create("mysql+mysqldb", **kwargs))
 
 
 class AlembicArgs:

@@ -27,4 +27,5 @@ mysql -u root -e "GRANT ALL ON ${DATABASE}.* TO '${USER}'@'localhost';"
 mysqladmin -uroot shutdown
 
 # Start mysql back up with networking.
-/usr/bin/mysqld_safe --datadir=/var/lib/mysql
+# Run via 'exec' so that we can start up mysql_safe as a background job in toast.yml.
+exec "${@}"

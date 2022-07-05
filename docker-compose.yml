@@ -45,6 +45,7 @@ services:
     image: mprweb:latest
     init: true
     entrypoint: /docker/mariadb-entrypoint.sh
+    command: "/usr/bin/mysqld_safe --datadir=/var/lib/mysql"
     ports:
       # This will expose mariadbd on 127.0.0.1:13306 in the host.
       # Ex: `mysql -uaur -paur -h 127.0.0.1 -P 13306 aurweb`

@@ -1,5 +1,6 @@
 image: archlinux:base-devel
 command_prefix: set -e
+location: '/aurweb'
 tasks:
   install_deps:
     description: Install needed dependencies.
@@ -15,4 +16,6 @@ tasks:
     description: Run unit tests.
     input_paths:
       - ./
-    command: .drone/scripts/run-tests.sh
+    command: |
+      cp /aurweb/mprweb.cfg /mprweb.cfg
+      .drone/scripts/run-tests.sh

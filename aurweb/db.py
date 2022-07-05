@@ -79,7 +79,7 @@ _sessions = dict()
 
 def get_session(engine: Engine = None) -> Session:
     """Return aurweb.db's global session."""
-    dbname = aurweb.config.get("database", "name")
+    dbname = name()
 
     global _sessions
     if dbname not in _sessions:
@@ -190,7 +190,7 @@ def get_sqlalchemy_url() -> URL:
             "database", "password", fallback=None
         ),
         host=aurweb.config.get("database", "host"),
-        database=aurweb.config.get("database", "name"),
+        database=name(),
         port=port,
         query=param_query,
     )
@@ -227,7 +227,7 @@ def get_engine(dbname: str = None, echo: bool = False) -> Engine:
     :return: SQLAlchemy Engine instance
     """
     if not dbname:
-        dbname = aurweb.config.get("database", "name")
+        dbname = name()
 
     global _engines
     if dbname not in _engines:
@@ -252,7 +252,7 @@ def pop_engine(dbname: str) -> None:
 
 def kill_engine() -> None:
     """Close the current session and dispose of the engine."""
-    dbname = aurweb.config.get("database", "name")
+    dbname = name()
 
     session = get_session()
     session.close()
@@ -315,7 +315,7 @@ class Connection:
         import MySQLdb
 
         aur_db_host = aurweb.config.get("database", "host")
-        aur_db_name = aurweb.config.get("database", "name")
+        aur_db_name = name()
         aur_db_user = aurweb.config.get("database", "user")
         aur_db_pass = aurweb.config.get_with_fallback(
             "database", "password", None
