@@ -7,6 +7,9 @@ env:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: /aurweb
     container:
       image: archlinux:base-devel
     steps:
@@ -15,6 +18,7 @@ jobs:
 
       - name: Run unit tests
         run: |
+          mv mprweb/ /aurweb
           .drone/scripts/install-deps.sh
           .drone/scripts/run-tests.sh
 
