@@ -2,7 +2,7 @@
 set -ex
 
 aurweb_config() {
-    AUR_CONFIG='conf/config.dev' python3 -m aurweb.scripts.config "${@}"
+    python3 -m aurweb.scripts.config "${@}"
 }
 
 # Temporary variables until the Drone Exec runner supports variables from environment extensions.
@@ -15,7 +15,6 @@ fastapi_secret="$(openssl rand -hex 32)"
 
 # Set up config files.
 echo "+ Setting up config files..."
-echo 'AUR_CONFIG_IMMUTABLE=1' >> .env
 
 aurweb_config set database user 'mpr'
 aurweb_config set database password "${mpr_db_password}"
