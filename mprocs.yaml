@@ -1,7 +1,5 @@
 procs:
-  shell:
-    cmd: ["bash"]
   docker-compose:
-    shell: "docker-compose down; docker compose up -d"
+    shell: "docker-compose down; docker-compose up"
   unit-tests:
     cmd: ["toast"]

@@ -13,7 +13,7 @@ local runTests() = {
         },
 
         commands: [
-            "bash .drone/scripts/install-deps.sh"
+            "bash .drone/scripts/install-deps.sh",
             "bash .drone/scripts/run-tests.sh"
         ]
     }]

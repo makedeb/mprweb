@@ -97,10 +97,9 @@ def test_config_main_set_real(tmpdir: py.path.local):
     Test a real set_option path.
     """
 
-    # Copy MPR_CONFIG to {tmpdir}/aur.config.
-    aur_config = os.environ.get("MPRR_CONFIG")
+    # Copy config to {tmpdir}/aur.config.
     tmp_aur_config = os.path.join(str(tmpdir), "aur.config")
-    with open(aur_config) as f:
+    with open(config._mpr_config) as f:
         with open(tmp_aur_config, "w") as o:
             o.write(f.read())
 
@@ -128,23 +127,6 @@ def test_config_main_set_real(tmpdir: py.path.local):
 
     # fake-key should no longer exist.
     assert config.getint("options", "fake-key") is None
-
-
-def test_config_main_set_immutable():
-    data = None
-
-    def mock_set_option(section: str, option: str, value: str) -> None:
-        nonlocal data
-        data = value
-
-    args = ["aurweb-config", "set", "options", "salt_rounds", "666"]
-    with mock.patch.dict(os.environ, {"MPR_CONFIG_IMMUTABLE": "1"}):
-        with mock.patch("sys.argv", args):
-            with mock.patch("aurweb.config.set_option", side_effect=mock_set_option):
-                main()
-
-    expected = None
-    assert data == expected
 
 
 def test_config_main_set_invalid_value():

@@ -12,9 +12,7 @@ import aurweb.config
 from aurweb import cookies, l10n, time
 
 # Prepare jinja2 objects.
-_loader = jinja2.FileSystemLoader(
-    os.path.join(aurweb.config.mprweb_dir, "templates")
-)
+_loader = jinja2.FileSystemLoader(os.path.join(aurweb.config.mprweb_dir, "templates"))
 _env = jinja2.Environment(
     loader=_loader, autoescape=True, extensions=["jinja2.ext.i18n"]
 )

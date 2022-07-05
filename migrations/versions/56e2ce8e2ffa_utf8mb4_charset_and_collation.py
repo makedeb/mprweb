@@ -7,8 +7,6 @@ Create Date: 2021-05-17 14:23:00.008479
 """
 from alembic import op
 
-import aurweb.config
-
 # revision identifiers, used by Alembic.
 revision = "56e2ce8e2ffa"
 down_revision = "ef39fcd6e1cd"

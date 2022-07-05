@@ -21,8 +21,6 @@ from sqlalchemy import (
 from sqlalchemy.dialects.mysql import BIGINT, DECIMAL, INTEGER, TINYINT
 from sqlalchemy.ext.compiler import compiles
 
-import aurweb.config
-
 
 @compiles(TINYINT, "sqlite")
 def compile_tinyint_sqlite(type_, compiler, **kw):  # pragma: no cover

@@ -81,7 +81,6 @@ def test_engine() -> Engine:
         "query": {"unix_socket": unix_socket},
     }
 
-    backend = aurweb.config.get("database", "backend")
     return create_engine(URL.create("mysql+mysqldb", **kwargs))
 
 

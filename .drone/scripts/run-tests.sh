@@ -13,12 +13,19 @@ PYTHONPATH="${PWD}:${PWD}/app"
 export AUR_CONFIG DB_HOST TEST_RECURSION_LIMIT CURRENT_DIR LOG_CONFIG PYTHONPATH
 
 useradd -U -d /aurweb -c 'AUR User' mpr
+
 ./docker/mariadb-entrypoint.sh
 (cd '/usr' && /usr/bin/mysqld_safe --datadir='/var/lib/mysql') &
 until : > /dev/tcp/127.0.0.1/3306; do sleep 1s; done
 ./docker/test-mysql-entrypoint.sh
+
+./docker/redis-entrypoint.sh
+/usr/bin/redis-server /etc/redis/redis.conf &
+until ./docker/health/redis.sh; do sleep 1s; done
+
 make -C po all install
 make -C doc
+
 pytest
 black ./
 flake8 --count ./

@@ -43,7 +43,7 @@ SUPPORTED_LANGUAGES = OrderedDict(
 
 class Translator:
     def __init__(self):
-        self._localedir = aurweb.config.get("options", "localedir")
+        self._localedir = "/aurweb/web/locale/"
         self._translator = {}
 
     def get_translator(self, lang: str):

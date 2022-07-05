@@ -6,6 +6,7 @@ mprweb_dir = "/aurweb"
 _mpr_config = os.environ.get("MPR_CONFIG", "/mprweb.cfg")
 _parser = None
 
+
 def _get_parser():
     global _parser
 

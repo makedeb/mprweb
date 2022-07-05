@@ -30,19 +30,12 @@ class FakeConnectionPool:
 def redis_connection():  # pragma: no cover
     global pool
 
-    disabled = aurweb.config.get("options", "cache") != "redis"
-
     # If we haven't initialized redis yet, construct a pool.
-    if disabled:
-        if pool is None:
-            logger.debug("Initializing fake Redis instance.")
-            pool = FakeConnectionPool()
-        return pool.handle
-    else:
-        if pool is None:
-            logger.debug("Initializing real Redis instance.")
-            redis_addr = aurweb.config.get("options", "redis_address")
-            pool = ConnectionPool.from_url(redis_addr)
+    if pool is None:
+        logger.debug("Initializing real Redis instance.")
+        redis_addr = aurweb.config.get("options", "redis_address")
+        logger.debug(redis_addr)
+        pool = ConnectionPool.from_url(redis_addr)
 
     # Create a connection to the pool.
     return Redis(connection_pool=pool)
