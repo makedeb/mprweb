@@ -7,18 +7,18 @@ env:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: /aurweb
     container:
       image: archlinux:base-devel
     steps:
       - name: Checkout Git repository
         uses: actions/checkout@v3
+        with:
+          path: mprweb
 
       - name: Run unit tests
         run: |
           mv mprweb/ /aurweb
+          cd /aurweb
           .drone/scripts/install-deps.sh
           .drone/scripts/run-tests.sh
 
