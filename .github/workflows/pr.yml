@@ -19,6 +19,7 @@ jobs:
         run: |
           mv mprweb/ /aurweb
           cd /aurweb
+          cp /aurweb/mprweb.cfg /mprweb.cfg
           .drone/scripts/install-deps.sh
           .drone/scripts/run-tests.sh
 
