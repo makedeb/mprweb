@@ -29,6 +29,4 @@ make -C doc
 pytest
 black ./
 flake8 --count ./
-# DEBUG, REMOVE BEFORE MERGING!!!!!
-pwd
-isort --check-only ./
+isort --check-only ./ -v # REMOVE -v before merging!!!!!!!!!!!!!!!!!!!!!!!!!!! JUST FOR DEBUG
