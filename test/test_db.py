@@ -1,6 +1,5 @@
 import os
 import re
-import sqlite3
 import tempfile
 from unittest import mock
 
@@ -50,10 +49,6 @@ def make_temp_config(*replacements):
     :param *replacements: A variable number of tuple regex replacement pairs
     :return: A tuple containing (temp directory, temp config file)
     """
-    aurwebdir = aurweb.config.get("options", "aurwebdir")
-    config_file = os.path.join(aurwebdir, "conf", "config.dev")
-    config_defaults = os.path.join(aurwebdir, "conf", "config.defaults")
-
     db_name = aurweb.config.get("database", "name")
     db_host = aurweb.config.get_with_fallback("database", "host", "localhost")
     db_port = aurweb.config.get_with_fallback("database", "port", "3306")
@@ -68,20 +63,17 @@ def make_temp_config(*replacements):
         (r";port = .+", f";port = {db_port}"),
         (r"user = .+", f"user = {db_user}"),
         (r"password = .+", f"password = {db_password}"),
-        ("YOUR_AUR_ROOT", aurwebdir),
+        ("YOUR_AUR_ROOT", aurweb.config.mprweb_dir),
     )
 
     tmpdir = tempfile.TemporaryDirectory()
     tmp = os.path.join(tmpdir.name, "config.tmp")
-    with open(config_file) as f:
+    with open(aurweb.config._mpr_config) as f:
         config = f.read()
         for repl in tuple(perform + replacements):
             config = re.sub(repl[0], repl[1], config)
         with open(tmp, "w") as o:
             o.write(config)
-        with open(config_defaults) as i:
-            with open(f"{tmp}.defaults", "w") as o:
-                o.write(i.read())
     return tmpdir, tmp
 
 
@@ -107,7 +99,7 @@ def setup(db_test):
 def test_sqlalchemy_sqlite_url():
     tmpctx, tmp = make_temp_sqlite_config()
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             assert db.get_sqlalchemy_url()
     aurweb.config.rehash()
@@ -116,7 +108,7 @@ def test_sqlalchemy_sqlite_url():
 def test_sqlalchemy_mysql_url():
     tmpctx, tmp = make_temp_mysql_config()
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             assert db.get_sqlalchemy_url()
     aurweb.config.rehash()
@@ -126,7 +118,7 @@ def test_sqlalchemy_mysql_port_url():
     tmpctx, tmp = make_temp_config((r";port = 3306", "port = 3306"))
 
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             assert db.get_sqlalchemy_url()
         aurweb.config.rehash()
@@ -136,20 +128,9 @@ def test_sqlalchemy_mysql_socket_url():
     tmpctx, tmp = make_temp_config()
 
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             assert db.get_sqlalchemy_url()
-        aurweb.config.rehash()
-
-
-def test_sqlalchemy_unknown_backend():
-    tmpctx, tmp = make_temp_config((r"backend = .+", "backend = blah"))
-
-    with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
-            aurweb.config.rehash()
-            with pytest.raises(ValueError):
-                db.get_sqlalchemy_url()
         aurweb.config.rehash()
 
 
@@ -158,22 +139,11 @@ def test_db_connects_without_fail():
     db.connect()
 
 
-def test_connection_class_unsupported_backend():
-    tmpctx, tmp = make_temp_config((r"backend = .+", "backend = blah"))
-
-    with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
-            aurweb.config.rehash()
-            with pytest.raises(ValueError):
-                db.Connection()
-        aurweb.config.rehash()
-
-
 @mock.patch("MySQLdb.connect", mock.MagicMock(return_value=True))
 def test_connection_mysql():
     tmpctx, tmp = make_temp_mysql_config()
     with tmpctx:
-        with mock.patch.dict(os.environ, {"AUR_CONFIG": tmp}):
+        with mock.patch.dict(os.environ, {"MPR_CONFIG": tmp}):
             aurweb.config.rehash()
             db.Connection()
         aurweb.config.rehash()
@@ -212,14 +182,8 @@ def test_add_commit():
 
 
 def test_connection_executor_mysql_paramstyle():
-    executor = db.ConnectionExecutor(None, backend="mysql")
+    executor = db.ConnectionExecutor(None)
     assert executor.paramstyle() == "format"
-
-
-@mock.patch("sqlite3.paramstyle", "pyformat")
-def test_connection_executor_sqlite_paramstyle():
-    executor = db.ConnectionExecutor(None, backend="sqlite")
-    assert executor.paramstyle() == sqlite3.paramstyle
 
 
 def test_name_without_pytest_current_test():

@@ -234,30 +234,3 @@ def pkg_required(
         .limit(limit)
     )
     return query.all()
-
-
-@register_filter("source_uri")
-def source_uri(pkgsrc: models.PackageSource) -> Tuple[str, str]:
-    """
-    Produce a (text, uri) tuple out of `pkgsrc`.
-
-    In this filter, we cover various cases:
-    1. If "::" is anywhere in the Source column, split the string,
-       which should produce a (text, uri), where text is before "::"
-       and uri is after "::".
-    2. Otherwise, if "://" is anywhere in the Source column, it's just
-       some sort of URI, which we'll return varbatim as both text and uri.
-    3. Otherwise, we'll return a path to the source file in a uri produced
-       out of options.source_file_uri formatted with the source file and
-       the package base name.
-
-    :param pkgsrc: PackageSource instance
-    :return (text, uri) tuple
-    """
-    if "::" in pkgsrc.Source:
-        return pkgsrc.Source.split("::", 1)
-    elif "://" in pkgsrc.Source:
-        return (pkgsrc.Source, pkgsrc.Source)
-    path = config.get("options", "source_file_uri")
-    pkgbasename = pkgsrc.Package.PackageBase.Name
-    return (pkgsrc.Source, path % (pkgsrc.Source, pkgbasename))

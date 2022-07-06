@@ -47,23 +47,6 @@ async def test_asgi_http_exception_handler():
     assert f"MPR - {phrase}" in content
 
 
-@pytest.mark.asyncio
-async def test_asgi_app_unsupported_backends():
-    config_get = aurweb.config.get
-
-    # Test that the previously supported "sqlite" backend is now
-    # unsupported by FastAPI.
-    def mock_sqlite_backend(section: str, key: str):
-        if section == "database" and key == "backend":
-            return "sqlite"
-        return config_get(section, key)
-
-    with mock.patch("aurweb.config.get", side_effect=mock_sqlite_backend):
-        expr = r"^.*\(sqlite\) is unsupported.*$"
-        with pytest.raises(ValueError, match=expr):
-            await aurweb.asgi.app_startup()
-
-
 def test_internal_server_error(setup: None, caplog: pytest.LogCaptureFixture):
     config_getboolean = aurweb.config.getboolean
 

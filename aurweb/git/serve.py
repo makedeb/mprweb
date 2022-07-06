@@ -13,8 +13,6 @@ from aurweb import db
 from aurweb.models.package_base import PackageBase
 from aurweb.models.package_comaintainer import PackageComaintainer
 
-notify_cmd = aurweb.config.get("notifications", "notify-cmd")
-
 repo_path = aurweb.config.get("serve", "repo-path")
 repo_regex = aurweb.config.get("serve", "repo-regex")
 git_shell_cmd = aurweb.config.get("serve", "git-shell-cmd")
@@ -22,7 +20,9 @@ git_update_cmd = aurweb.config.get("serve", "git-update-cmd")
 ssh_cmdline = aurweb.config.get("serve", "ssh-cmdline")
 
 enable_maintenance = aurweb.config.getboolean("options", "enable-maintenance")
-maintenance_exc = aurweb.config.get("options", "maintenance-exceptions").split()
+maintenance_exc = aurweb.config.get_with_fallback(
+    "options", "maintenance-exceptions", ""
+).split()
 
 
 def log_ssh_login(user, remote_addr):
