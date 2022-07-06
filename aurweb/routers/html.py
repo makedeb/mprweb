@@ -209,11 +209,8 @@ async def pkgstats(request: Request):
     )
 
     # Package requests created by request.user.
-    archive_time = aurweb.config.getint("options", "request_archive_time")
-    start = get_current_time() - archive_time
-
     context["package_requests"] = (
-        request.user.package_requests.filter(models.PackageRequest.RequestTS >= start)
+        request.user.package_requests.filter(models.PackageRequest.Status == models.package_request.PENDING_ID)
         .order_by(
             # Order primarily by the Status column being PENDING_ID, and secondarily by
             # RequestTS; both in descending order.

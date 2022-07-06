@@ -12,6 +12,7 @@ LOG_CONFIG='logging.test.conf'
 PYTHONPATH="${PWD}:${PWD}/app"
 export AUR_CONFIG DB_HOST TEST_RECURSION_LIMIT CURRENT_DIR LOG_CONFIG PYTHONPATH
 
+aurweb-config set options redis_address 'redis://localhost' # Set the redis address to our custom value here. In the Docker Compose setup this is pointed to the 'redis' container, but we need it changed here.
 useradd -U -d /aurweb -c 'AUR User' mpr
 
 ./docker/mariadb-entrypoint.sh

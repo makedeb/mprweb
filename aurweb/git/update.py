@@ -24,7 +24,7 @@ from aurweb.models.package_source import PackageSource
 from aurweb.models.relation_type import RelationType
 from aurweb.models.user import User
 
-notify_cmd = aurweb.config.get("notifications", "notify-cmd")
+notify_cmd = "/usr/bin/aurweb-notify"
 
 repo_path = aurweb.config.get("serve", "repo-path")
 repo_regex = aurweb.config.get("serve", "repo-regex")

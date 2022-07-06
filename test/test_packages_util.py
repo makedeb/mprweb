@@ -94,39 +94,3 @@ def test_query_notified(maintainer: User, package: Package):
     query = db.query(Package).filter(Package.ID == package.ID).all()
     query_notified = util.query_notified(query, maintainer)
     assert query_notified[package.PackageBase.ID]
-
-
-def test_source_uri_file(package: Package):
-    FILE = "test_file"
-
-    with db.begin():
-        pkgsrc = db.create(
-            PackageSource, Source=FILE, Package=package, SourceArch="x86_64"
-        )
-    source_file_uri = config.get("options", "source_file_uri")
-    file, uri = util.source_uri(pkgsrc)
-    expected = source_file_uri % (pkgsrc.Source, package.PackageBase.Name)
-    assert (file, uri) == (FILE, expected)
-
-
-def test_source_uri_named_uri(package: Package):
-    FILE = "test"
-    URL = "https://test.xyz"
-
-    with db.begin():
-        pkgsrc = db.create(
-            PackageSource, Source=f"{FILE}::{URL}", Package=package, SourceArch="x86_64"
-        )
-    file, uri = util.source_uri(pkgsrc)
-    assert (file, uri) == (FILE, URL)
-
-
-def test_source_uri_unnamed_uri(package: Package):
-    URL = "https://test.xyz"
-
-    with db.begin():
-        pkgsrc = db.create(
-            PackageSource, Source=f"{URL}", Package=package, SourceArch="x86_64"
-        )
-    file, uri = util.source_uri(pkgsrc)
-    assert (file, uri) == (URL, URL)

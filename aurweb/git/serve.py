@@ -13,8 +13,6 @@ from aurweb import db
 from aurweb.models.package_base import PackageBase
 from aurweb.models.package_comaintainer import PackageComaintainer
 
-notify_cmd = aurweb.config.get("notifications", "notify-cmd")
-
 repo_path = aurweb.config.get("serve", "repo-path")
 repo_regex = aurweb.config.get("serve", "repo-regex")
 git_shell_cmd = aurweb.config.get("serve", "git-shell-cmd")

@@ -40,6 +40,8 @@ services:
       interval: 4s
     ports:
       - "127.0.0.1:16379:6379"
+    volumes:
+      - ./docker:/docker
 
   mariadb:
     image: mprweb:latest

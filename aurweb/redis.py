@@ -34,7 +34,6 @@ def redis_connection():  # pragma: no cover
     if pool is None:
         logger.debug("Initializing real Redis instance.")
         redis_addr = aurweb.config.get("options", "redis_address")
-        logger.debug(redis_addr)
         pool = ConnectionPool.from_url(redis_addr)
 
     # Create a connection to the pool.
