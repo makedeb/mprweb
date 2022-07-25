@@ -19,7 +19,11 @@
 		</div>
 		<div class="item">
 		    <p class="caption">{% trans %}Email Address{% endtrans %}:</p>
+                    {% if request.user != user and user.HideEmail == 1 %}
+		    <p class="data">None</a></p>
+                    {% else %}
 		    <p class="data"><a href="mailto:{{ user.Email }}">{{ user.Email }}</a></p>
+                    {% endif %}
 		</div>
 		<div class="item">
 		    <p class="caption">{% trans %}Real Name{% endtrans %}:</p>
