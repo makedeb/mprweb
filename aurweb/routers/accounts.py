@@ -270,7 +270,7 @@ async def account_register_post(
     request: Request,
     U: str = Form(default=str()),  # Username
     E: str = Form(default=str()),  # Email
-    H: str = Form(default=False),  # Hide Email
+    H: str = Form(default="off"),  # Hide Email
     BE: str = Form(default=None),  # Backup Email
     R: str = Form(default=""),  # Real Name
     HP: str = Form(default=None),  # Homepage
@@ -313,13 +313,19 @@ async def account_register_post(
         models.AccountType, models.AccountType.AccountType == "User"
     ).first()
 
+    # Check if we should turn on HideEmail.
+    if H == "on":
+        hide_email = 1
+    else:
+        hide_email = 0
+
     # Create a user given all parameters available.
     with db.begin():
         user = db.create(
             models.User,
             Username=U,
             Email=E,
-            HideEmail=H,
+            HideEmail=hide_email,
             BackupEmail=BE,
             RealName=R,
             Homepage=HP,
