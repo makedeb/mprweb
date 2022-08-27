@@ -63,7 +63,7 @@ def test_index_security_headers(client: TestClient):
 def test_favicon(client: TestClient):
     """Test the favicon route at '/favicon.ico'."""
     with client as request:
-        response1 = request.get("/static/images/makedeb-logo.png")
+        response1 = request.get("/static/images/makedeb-logo.svg")
     assert response1.status_code == int(HTTPStatus.OK)
 
 
