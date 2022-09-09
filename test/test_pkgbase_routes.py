@@ -1,4 +1,3 @@
-import re
 from http import HTTPStatus
 from typing import List
 
@@ -21,7 +20,6 @@ from aurweb.models.package_vote import PackageVote
 from aurweb.models.relation_type import PROVIDES_ID, RelationType
 from aurweb.models.request_type import DELETION_ID, MERGE_ID, RequestType
 from aurweb.models.user import User
-from aurweb.testing.email import Email
 from aurweb.testing.requests import Request
 
 
@@ -784,14 +782,6 @@ def test_pkgbase_delete_with_request(
     assert resp.status_code == int(HTTPStatus.SEE_OTHER)
     assert resp.headers.get("location") == "/packages"
 
-    # We should've just sent one closure email since `pkgreq` exists.
-    assert Email.count() == 1
-
-    # Make sure it was a closure for the deletion request.
-    email = Email(1).parse()
-    expr = r"^\[PRQ#\d+\] Deletion Request for [^ ]+ Accepted$"
-    assert re.match(expr, email.headers.get("Subject"))
-
 
 def test_packages_post_unknown_action(client: TestClient, user: User, package: Package):
 
@@ -877,11 +867,6 @@ def test_pkgbase_merge_post(
     assert resp.status_code == int(HTTPStatus.SEE_OTHER)
     loc = resp.headers.get("location")
     assert loc == f"/pkgbase/{target.Name}"
-
-    # Two emails should've been sent out.
-    assert Email.count() == 1
-    email_body = Email(1).parse().glue()
-    assert f"Merge Request for {pkgbasename} Accepted" in email_body
 
     # Assert that the original comments, notifs and votes we setup
     # got migrated to target as intended.

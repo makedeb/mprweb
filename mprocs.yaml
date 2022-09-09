@@ -1,0 +1,5 @@
+procs:
+  docker-compose:
+    shell: "docker-compose down; docker-compose up"
+  unit-tests:
+    cmd: ["toast"]

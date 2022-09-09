@@ -5,8 +5,6 @@ import pytest
 from aurweb import config, db, time
 from aurweb.models import TUVote, TUVoteInfo, User
 from aurweb.models.account_type import TRUSTED_USER_ID
-from aurweb.scripts import tuvotereminder as reminder
-from aurweb.testing.email import Email
 
 aur_location = config.get("options", "aur_location")
 
@@ -75,40 +73,3 @@ def voteinfo(user: User) -> TUVoteInfo:
             Submitted=0,
         )
     yield voteinfo
-
-
-def test_tu_vote_reminders(user: User, user2: User, user3: User, voteinfo: TUVoteInfo):
-    reminder.main()
-    assert Email.count() == 3
-
-    emails = [Email(i).parse() for i in range(1, 4)]
-    subject, content = email_pieces(voteinfo)
-    expectations = [
-        # (to, content)
-        (user.Email, subject, content),
-        (user2.Email, subject, content),
-        (user3.Email, subject, content),
-    ]
-    for i, element in enumerate(expectations):
-        email, subject, content = element
-        assert emails[i].headers.get("To") == email
-        assert emails[i].headers.get("Subject") == subject
-        assert emails[i].body == content
-
-
-def test_tu_vote_reminders_only_unvoted(
-    user: User, user2: User, user3: User, voteinfo: TUVoteInfo
-):
-    # Vote with user2 and user3; leaving only user to be notified.
-    create_vote(user2, voteinfo)
-    create_vote(user3, voteinfo)
-
-    reminder.main()
-    assert Email.count() == 1
-
-    email = Email(1).parse()
-    assert email.headers.get("To") == user.Email
-
-    subject, content = email_pieces(voteinfo)
-    assert email.headers.get("Subject") == subject
-    assert email.body == content
