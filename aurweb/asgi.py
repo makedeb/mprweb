@@ -126,12 +126,6 @@ async def internal_server_error(request: Request, exc: Exception) -> Response:
         pipe.expire(key, 3600)
         pipe.execute()
 
-        # Send out notification about it.
-        notif = notify.ServerErrorNotification(
-            tb_id, context.get("version"), context.get("utcnow")
-        )
-        notif.send()
-
         retval = tb
     else:
         retval = retval.decode()

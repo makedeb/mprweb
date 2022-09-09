@@ -13,7 +13,6 @@ from . import (
     requests,
     rpc,
     rss,
-    sso,
     trusted_user,
 )
 
@@ -33,5 +32,4 @@ APP_ROUTES = [
     trusted_user,
     rss,
     rpc,
-    sso,
 ]

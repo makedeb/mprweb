@@ -64,17 +64,6 @@ def test_internal_server_error(setup: None, caplog: pytest.LogCaptureFixture):
             resp = request.get("/internal_server_error")
     assert resp.status_code == int(http.HTTPStatus.INTERNAL_SERVER_ERROR)
 
-    # Let's assert that a notification was sent out to the postmaster.
-    assert Email.count() == 1
-
-    aur_location = aurweb.config.get("options", "aur_location")
-    email = Email(1)
-    assert f"Location: {aur_location}" in email.body
-    assert "Traceback ID:" in email.body
-    assert "Version:" in email.body
-    assert "Datetime:" in email.body
-    assert f"[1] {aur_location}" in email.body
-
     # Assert that the exception got logged with with its traceback id.
     expr = r"FATAL\[.{7}\]"
     assert re.search(expr, caplog.text)
@@ -85,4 +74,3 @@ def test_internal_server_error(setup: None, caplog: pytest.LogCaptureFixture):
         with TestClient(app=aurweb.asgi.app) as request:
             resp = request.get("/internal_server_error")
     assert resp.status_code == int(http.HTTPStatus.INTERNAL_SERVER_ERROR)
-    assert Email.count() == 1

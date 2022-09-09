@@ -13,19 +13,6 @@ logger = logging.get_logger(__name__)
 aur_location = config.get("options", "aur_location")
 
 
-@pytest.fixture(autouse=True)
-def setup(db_test, git: GitRepository):
-    config_get = config.get
-
-    def mock_config_get(section: str, key: str) -> str:
-        if section == "serve" and key == "repo-path":
-            return git.file_lock.path
-        return config_get(section, key)
-
-    with mock.patch("aurweb.config.get", side_effect=mock_config_get):
-        yield
-
-
 @pytest.fixture
 def user() -> User:
     with db.begin():

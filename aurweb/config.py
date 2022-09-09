@@ -5,7 +5,9 @@ from typing import Any
 mprweb_dir = "/aurweb"
 _mpr_config = os.environ.get("MPR_CONFIG", "/mprweb.cfg")
 _parser = None
-
+valid_keytypes = ["ssh-rsa" "ssh-dss" "ecdsa-sha2-nistp256" "ecdsa-sha2-nistp384" "ecdsa-sha2-nistp521" "ssh-ed25519" "sk-ecdsa-sha2-nistp256@openssh.com" "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com" "sk-ssh-ed25519@openssh.com" "sk-ssh-ed25519-cert-v01@openssh.com"]
+git_repo_path = "/aurweb/aur.git"
+git_repo_regex = "[a-z0-9][a-z0-9.+_-]*$"
 
 def _get_parser():
     global _parser

@@ -14,7 +14,6 @@ from aurweb.models.dependency_type import (
 from aurweb.models.relation_type import CONFLICTS_ID, PROVIDES_ID, REPLACES_ID
 from aurweb.testing import setup_test_db
 
-base_repo_path = config.get("serve", "repo-path")
 start_dir = os.getcwd()
 
 
@@ -26,13 +25,13 @@ class create_git_repo:
 
     def __init__(self, pkgbase):
         self.pkgbase = pkgbase
-        self.repo_path = f"{base_repo_path}/{pkgbase}"
-        self.target_repo_path = f"{base_repo_path}/tmp-{pkgbase}"
+        self.repo_path = f"{config.git_repo_path}/{pkgbase}"
+        self.target_repo_path = f"{config.git_repo_path}/tmp-{pkgbase}"
         self.env = os.environ
         self.env["AUR_PKGBASE"] = pkgbase
         self.env["AUR_USER"] = "user"
 
-        shutil.rmtree(base_repo_path, ignore_errors=True)
+        shutil.rmtree(config.git_repo_path, ignore_errors=True)
         os.makedirs(self.target_repo_path)
 
         util.run_command(["git", "init", "--bare", self.target_repo_path])
@@ -44,7 +43,7 @@ class create_git_repo:
         #
         # This path shouldn't matter with how this class is set up - we just
         # need to chdir into somewhere.
-        os.chdir(base_repo_path)
+        os.chdir(config.git_repo_path)
 
         util.run_command(["git", "config", "--global", "user.name", "Foo Bar"])
         util.run_command(

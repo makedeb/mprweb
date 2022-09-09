@@ -13,11 +13,8 @@ from aurweb import db
 from aurweb.models.package_base import PackageBase
 from aurweb.models.package_comaintainer import PackageComaintainer
 
-repo_path = aurweb.config.get("serve", "repo-path")
-repo_regex = aurweb.config.get("serve", "repo-regex")
-git_shell_cmd = aurweb.config.get("serve", "git-shell-cmd")
-git_update_cmd = aurweb.config.get("serve", "git-update-cmd")
-ssh_cmdline = aurweb.config.get("serve", "ssh-cmdline")
+git_shell_cmd = "/usr/bin/git-shell"
+git_update_cmd = "/usr/bin/aurweb-git-update"
 
 enable_maintenance = aurweb.config.getboolean("options", "enable-maintenance")
 maintenance_exc = aurweb.config.get_with_fallback(
@@ -49,10 +46,6 @@ def bans_match(remote_addr):
 def die(msg):
     sys.stderr.write("{:s}\n".format(msg))
     exit(1)
-
-
-def die_with_help(msg):
-    die(msg + "\nTry `{:s} help` for a list of commands.".format(ssh_cmdline))
 
 
 def checkarg_atleast(cmdargv, *argdesc):
@@ -103,7 +96,7 @@ def serve(action, cmdargv, username, privileged, remote_addr):  # noqa: C901
         pkgbase_name = path[1:-4]
 
         # Check if specified repository matches the repo regex.
-        if not re.match(repo_regex, pkgbase_name):
+        if not re.match(aurweb.config.git_repo_regex, pkgbase_name):
             raise aurweb.exceptions.InvalidRepositoryNameException(pkgbase_name)
 
         # Database entry for the pkgbase.
@@ -137,7 +130,7 @@ def serve(action, cmdargv, username, privileged, remote_addr):  # noqa: C901
         # If the Git repository doesn't exist, create it an initialize the Git hooks.
         os.environ["AUR_USER"] = username
         os.environ["AUR_PKGBASE"] = pkgbase_name
-        git_repo_path = f"{repo_path}/{pkgbase_name}"
+        git_repo_path = f"{aurweb.git.git_repo_path}/{pkgbase_name}"
 
         if os.path.exists(git_repo_path) is False:
             os.mkdir(git_repo_path)
@@ -169,7 +162,7 @@ def main():
     ssh_client = os.environ.get("SSH_CLIENT")
 
     if not ssh_cmd:
-        die_with_help("Interactive shell is disabled.")
+        die("Interactive shell is disabled.")
 
     cmdargv = shlex.split(ssh_cmd)
     action = cmdargv[0]
@@ -182,7 +175,7 @@ def main():
     except aurweb.exceptions.BannedException:
         die("The SSH interface is disabled for your IP address.")
     except aurweb.exceptions.InvalidArgumentsException as e:
-        die_with_help("{:s}: {}".format(action, e))
+        die("{:s}: {}".format(action, e))
     except aurweb.exceptions.AurwebException as e:
         die("{:s}: {}".format(action, e))
 
