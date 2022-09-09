@@ -58,7 +58,6 @@ class Notification:
         return body.rstrip()
 
     def _send(self) -> None:
-        sendmail = aurweb.config.get("notifications", "sendmail")
         sender = aurweb.config.get("notifications", "sender")
         reply_to = aurweb.config.get("notifications", "reply-to")
         reason = self.__class__.__name__
@@ -80,41 +79,34 @@ class Notification:
             for key, value in self.get_headers().items():
                 msg[key] = value
 
-            sendmail = aurweb.config.get("notifications", "sendmail")
-            if sendmail:
-                # send email using the sendmail binary specified in the
-                # configuration file
-                p = subprocess.Popen([sendmail, "-t", "-oi"], stdin=subprocess.PIPE)
-                p.communicate(msg.as_bytes())
-            else:
-                # send email using smtplib; no local MTA required
-                server_addr = aurweb.config.get("notifications", "smtp-server")
-                server_port = aurweb.config.getint("notifications", "smtp-port")
-                use_ssl = aurweb.config.getboolean("notifications", "smtp-use-ssl")
-                use_starttls = aurweb.config.getboolean(
-                    "notifications", "smtp-use-starttls"
-                )
-                user = aurweb.config.get("notifications", "smtp-user")
-                passwd = aurweb.config.get("notifications", "smtp-password")
+            # send email using smtplib; no local MTA required
+            server_addr = aurweb.config.get("notifications", "smtp-server")
+            server_port = aurweb.config.getint("notifications", "smtp-port")
+            use_ssl = aurweb.config.getboolean("notifications", "smtp-use-ssl")
+            use_starttls = aurweb.config.getboolean(
+                "notifications", "smtp-use-starttls"
+            )
+            user = aurweb.config.get("notifications", "smtp-user")
+            passwd = aurweb.config.get("notifications", "smtp-password")
 
-                classes = {
-                    False: smtplib.SMTP,
-                    True: smtplib.SMTP_SSL,
-                }
-                server = classes[use_ssl](server_addr, server_port)
+            classes = {
+                False: smtplib.SMTP,
+                True: smtplib.SMTP_SSL,
+            }
+            server = classes[use_ssl](server_addr, server_port)
 
-                if use_starttls:
-                    server.ehlo()
-                    server.starttls()
-                    server.ehlo()
+            if use_starttls:
+                server.ehlo()
+                server.starttls()
+                server.ehlo()
 
-                if user and passwd:
-                    server.login(user, passwd)
+            if user and passwd:
+                server.login(user, passwd)
 
-                server.set_debuglevel(0)
-                deliver_to = [to] + self.get_cc()
-                server.sendmail(sender, deliver_to, msg.as_bytes())
-                server.quit()
+            server.set_debuglevel(0)
+            deliver_to = [to] + self.get_cc()
+            server.sendmail(sender, deliver_to, msg.as_bytes())
+            server.quit()
 
     def send(self) -> None:
         try:

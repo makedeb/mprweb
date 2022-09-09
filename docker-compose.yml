@@ -168,7 +168,7 @@ services:
     entrypoint: /docker/nginx-entrypoint.sh
     command: /docker/scripts/run-nginx.sh
     ports:
-      - "127.0.0.1:8080:80" # FastAPI
+      - "8080:80" # FastAPI
     healthcheck:
       test: "bash /docker/health/nginx.sh"
       interval: 2s

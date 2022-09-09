@@ -547,9 +547,7 @@ config_get = config.get
 def mock_smtp_config(cls):
     def _mock_smtp_config(section: str, key: str):
         if section == "notifications":
-            if key == "sendmail":
-                return cls()
-            elif key == "smtp-use-ssl":
+            if key == "smtp-use-ssl":
                 return cls(0)
             elif key == "smtp-use-starttls":
                 return cls(0)
@@ -583,9 +581,7 @@ def test_smtp(user: User):
 def mock_smtp_starttls_config(cls):
     def _mock_smtp_starttls_config(section: str, key: str):
         if section == "notifications":
-            if key == "sendmail":
-                return cls()
-            elif key == "smtp-use-ssl":
+            if key == "smtp-use-ssl":
                 return cls(0)
             elif key == "smtp-use-starttls":
                 return cls(1)
@@ -630,9 +626,7 @@ def test_smtp_starttls(user: User):
 def mock_smtp_ssl_config(cls):
     def _mock_smtp_ssl_config(section: str, key: str):
         if section == "notifications":
-            if key == "sendmail":
-                return cls()
-            elif key == "smtp-use-ssl":
+            if key == "smtp-use-ssl":
                 return cls(1)
             elif key == "smtp-use-starttls":
                 return cls(0)
@@ -677,7 +671,6 @@ def test_notification_oserror(user: User, caplog: pytest.LogCaptureFixture):
     config_get = config.get
 
     mocked_options = {
-        "sendmail": str(),
         "smtp-server": "mail.server.xyz",
         "smtp-port": "587",
         "smtp-user": "notify@server.xyz",
