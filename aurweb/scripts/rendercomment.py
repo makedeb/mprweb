@@ -5,11 +5,9 @@ from xml.etree.ElementTree import Element
 
 import bleach
 import markdown
-import pygit2
 from bs4 import BeautifulSoup
 
-import aurweb.config
-from aurweb import db, logging, util
+from aurweb import db, logging
 from aurweb.models import PackageComment
 
 logger = logging.get_logger(__name__)
@@ -108,7 +106,6 @@ def update_comment_render_fastapi(comment: PackageComment) -> None:
 
 def update_comment_render(comment: PackageComment) -> None:
     text = comment.Comments
-    pkgbasename = comment.PackageBase.Name
 
     html = markdown.markdown(
         text,

@@ -265,6 +265,7 @@ def test_request_post_deletion_as_maintainer(
     assert pkgreq.ReqTypeID == DELETION_ID
     assert pkgreq.Status == ACCEPTED_ID
 
+
 def test_request_post_deletion_autoaccept(
     client: TestClient,
     auser: User,
@@ -364,6 +365,7 @@ def test_deletion_request(
     # Ensure that `pkgreq`.ClosureComment was left alone when specified.
     assert pkgreq.ClosureComment == comments
 
+
 def test_deletion_autorequest(client: TestClient, tu_user: User, pkgbase: PackageBase):
     """Test deleting a package without a request."""
     # `pkgreq`.ReqTypeID is already DELETION_ID.
@@ -374,6 +376,7 @@ def test_deletion_autorequest(client: TestClient, tu_user: User, pkgbase: Packag
     assert resp.status_code == int(HTTPStatus.SEE_OTHER)
 
     assert resp.headers.get("location") == "/packages"
+
 
 def test_merge_request(
     client: TestClient,
@@ -451,6 +454,7 @@ def test_merge_autorequest(
         resp = request.post(endpoint, data=data, cookies=tu_user.cookies)
     assert resp.status_code == int(HTTPStatus.SEE_OTHER)
     assert resp.headers.get("location") == f"/pkgbase/{target.Name}"
+
 
 def test_orphan_request(
     client: TestClient,

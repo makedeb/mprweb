@@ -26,7 +26,6 @@ from aurweb.models.package_request import PENDING_ID
 from aurweb.models.user import User
 from aurweb.packages.search import PackageSearch
 from aurweb.templates import make_context, render_template
-from aurweb.util import get_current_time
 
 router = APIRouter()
 
@@ -210,7 +209,9 @@ async def pkgstats(request: Request):
 
     # Package requests created by request.user.
     context["package_requests"] = (
-        request.user.package_requests.filter(models.PackageRequest.Status == models.package_request.PENDING_ID)
+        request.user.package_requests.filter(
+            models.PackageRequest.Status == models.package_request.PENDING_ID
+        )
         .order_by(
             # Order primarily by the Status column being PENDING_ID, and secondarily by
             # RequestTS; both in descending order.

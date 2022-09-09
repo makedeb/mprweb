@@ -10,7 +10,6 @@ from fastapi.testclient import TestClient
 import aurweb.asgi
 import aurweb.config
 import aurweb.redis
-from aurweb.testing.email import Email
 from aurweb.testing.requests import Request
 
 

@@ -1,13 +1,12 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from aurweb import asgi, config, db, time
+from aurweb import asgi, db, time
 from aurweb.models.account_type import USER_ID
 from aurweb.models.official_provider import OFFICIAL_BASE, OfficialProvider
 from aurweb.models.package import Package
 from aurweb.models.package_base import PackageBase
 from aurweb.models.package_notification import PackageNotification
-from aurweb.models.package_source import PackageSource
 from aurweb.models.package_vote import PackageVote
 from aurweb.models.user import User
 from aurweb.packages import util

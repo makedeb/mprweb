@@ -10,6 +10,7 @@ from aurweb.models.ssh_pub_key import SSHPubKey
 git_serve_cmd = "/usr/bin/aurweb-git-serve"
 ssh_opts = "restrict"
 
+
 def format_command(env_vars, command, ssh_opts, ssh_key):
     environment = ""
     for key, var in env_vars.items():

@@ -1,12 +1,12 @@
 from collections import defaultdict
 from http import HTTPStatus
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Union
 
 import orjson
 from fastapi import HTTPException
 from sqlalchemy import orm
 
-from aurweb import config, db, models
+from aurweb import db, models
 from aurweb.models import Package
 from aurweb.models.official_provider import OFFICIAL_BASE, OfficialProvider
 from aurweb.models.package_dependency import PackageDependency

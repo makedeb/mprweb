@@ -3,7 +3,7 @@ import gzip
 import orjson
 import pytest
 
-from aurweb import config, db, models
+from aurweb import db, models
 from aurweb.scripts import mkpkglists
 from aurweb.testing import setup_test_db
 

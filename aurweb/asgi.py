@@ -31,7 +31,6 @@ from aurweb.packages.util import get_pkg_or_base
 from aurweb.prometheus import instrumentator
 from aurweb.redis import redis_connection
 from aurweb.routers import APP_ROUTES
-from aurweb.scripts import notify
 from aurweb.templates import make_context, render_template
 
 logger = logging.get_logger(__name__)

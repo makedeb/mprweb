@@ -7,10 +7,14 @@ from aurweb.models import Package, PackageBase, PackageComment, User
 from aurweb.models.account_type import USER_ID
 from aurweb.scripts import rendercomment
 from aurweb.scripts.rendercomment import update_comment_render
-from aurweb.testing.git import GitRepository
 
 logger = logging.get_logger(__name__)
 aur_location = config.get("options", "aur_location")
+
+
+@pytest.fixture(autouse=True)
+def setup(db_test):
+    return
 
 
 @pytest.fixture

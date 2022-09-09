@@ -7,6 +7,7 @@ from aurweb import db, time
 from aurweb.models import TUVoteInfo
 from aurweb.scripts import notify
 
+
 def main():
     db.get_engine()
 

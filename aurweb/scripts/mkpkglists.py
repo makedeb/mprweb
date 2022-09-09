@@ -11,7 +11,6 @@ import os
 
 import orjson
 
-import aurweb.config
 from aurweb import db, logging, models
 from aurweb.models import Package, PackageBase, User
 

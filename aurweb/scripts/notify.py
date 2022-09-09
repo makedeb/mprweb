@@ -3,10 +3,8 @@
 import email.mime.text
 import email.utils
 import smtplib
-import subprocess
 import sys
 import textwrap
-from typing import List, Tuple
 
 from sqlalchemy import and_, or_
 
@@ -14,7 +12,7 @@ import aurweb.config
 import aurweb.db
 import aurweb.filters
 import aurweb.l10n
-from aurweb import db, l10n, logging
+from aurweb import db, logging
 from aurweb.models import PackageBase, User
 from aurweb.models.package_comaintainer import PackageComaintainer
 from aurweb.models.package_comment import PackageComment
