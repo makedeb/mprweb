@@ -31,7 +31,6 @@ from aurweb.packages.util import get_pkg_or_base
 from aurweb.prometheus import instrumentator
 from aurweb.redis import redis_connection
 from aurweb.routers import APP_ROUTES
-from aurweb.scripts import notify
 from aurweb.templates import make_context, render_template
 
 logger = logging.get_logger(__name__)
@@ -61,13 +60,6 @@ async def app_startup():
         os.environ.get("TEST_RECURSION_LIMIT", sys.getrecursionlimit() + 1000)
     )
     sys.setrecursionlimit(recursion_limit)
-
-    backend = aurweb.config.get("database", "backend")
-    if backend not in aurweb.db.DRIVERS:
-        raise ValueError(
-            f"The configured database backend ({backend}) is unsupported. "
-            f"Supported backends: {str(aurweb.db.DRIVERS.keys())}"
-        )
 
     session_secret = aurweb.config.get("fastapi", "session_secret")
     if not session_secret:
@@ -132,12 +124,6 @@ async def internal_server_error(request: Request, exc: Exception) -> Response:
         pipe.set(key, tb)
         pipe.expire(key, 3600)
         pipe.execute()
-
-        # Send out notification about it.
-        notif = notify.ServerErrorNotification(
-            tb_id, context.get("version"), context.get("utcnow")
-        )
-        notif.send()
 
         retval = tb
     else:

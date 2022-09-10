@@ -2,27 +2,36 @@ import configparser
 import os
 from typing import Any
 
-# Publicly visible version of aurweb. This is used to display
-# aurweb versioning in the footer and must be maintained.
-# Todo: Make this dynamic/automated.
-AURWEB_VERSION = "v6.0.2"
-
+mprweb_dir = "/aurweb"
+# This doesn't seem to be working in practice - things like Drone CI and our
+# Toast config are requiring us to still copy 'mprweb.cfg' to '/mprweb.cfg'
+# manually.
+# TODO: Find a fix.
+_mpr_config = os.environ.get("MPR_CONFIG", "/mprweb.cfg")
 _parser = None
+valid_keytypes = [
+    "ssh-rsa",
+    "ssh-dss",
+    "ecdsa-sha2-nistp256",
+    "ecdsa-sha2-nistp384",
+    "ecdsa-sha2-nistp521",
+    "ssh-ed25519",
+    "sk-ecdsa-sha2-nistp256@openssh.com",
+    "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com",
+    "sk-ssh-ed25519@openssh.com",
+    "sk-ssh-ed25519-cert-v01@openssh.com",
+]
+git_repo_path = "/aurweb/aur.git"
+git_repo_regex = "[a-z0-9][a-z0-9.+_-]*$"
 
 
 def _get_parser():
     global _parser
 
     if not _parser:
-        path = os.environ.get("AUR_CONFIG", "/aurweb/conf/config")
-        defaults = os.environ.get("AUR_CONFIG_DEFAULTS", path + ".defaults")
-
         _parser = configparser.RawConfigParser()
         _parser.optionxform = lambda option: option
-        if os.path.isfile(defaults):
-            with open(defaults) as f:
-                _parser.read_file(f)
-        _parser.read(path)
+        _parser.read(_mpr_config)
 
     return _parser
 
@@ -65,6 +74,5 @@ def set_option(section: str, option: str, value: Any) -> None:
 
 
 def save() -> None:
-    aur_config = os.environ.get("AUR_CONFIG", "/etc/aurweb/config")
-    with open(aur_config, "w") as fp:
+    with open(_mpr_config, "w") as fp:
         _get_parser().write(fp)

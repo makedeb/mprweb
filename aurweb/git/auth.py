@@ -7,6 +7,9 @@ import aurweb.config
 from aurweb import db
 from aurweb.models.ssh_pub_key import SSHPubKey
 
+git_serve_cmd = "/usr/bin/aurweb-git-serve"
+ssh_opts = "restrict"
+
 
 def format_command(env_vars, command, ssh_opts, ssh_key):
     environment = ""
@@ -24,13 +27,9 @@ def format_command(env_vars, command, ssh_opts, ssh_key):
 
 
 def main():
-    valid_keytypes = aurweb.config.get("auth", "valid-keytypes").split()
-    git_serve_cmd = aurweb.config.get("auth", "git-serve-cmd")
-    ssh_opts = aurweb.config.get("auth", "ssh-options")
-
     keytype = sys.argv[1]
     keytext = sys.argv[2]
-    if keytype not in valid_keytypes:
+    if keytype not in aurweb.config.valid_keytypes:
         exit(1)
 
     pubkey = keytype + " " + keytext

@@ -132,7 +132,6 @@ class RPC:
         pop = package.Popularity
         pop = 0 if not pop else float(number_format(pop, 6))
 
-        snapshot_uri = config.get("options", "snapshot_uri")
         return {
             "ID": package.ID,
             "Name": package.Name,
@@ -143,7 +142,7 @@ class RPC:
             "Version": package.Version,
             "Description": package.Description,
             "URL": package.URL,
-            "URLPath": snapshot_uri % package.Name,
+            "URLPath": "/packages/%s" % package.Name,
             "NumVotes": package.NumVotes,
             "Popularity": pop,
             "OutOfDate": package.OutOfDateTS,

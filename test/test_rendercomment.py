@@ -7,25 +7,14 @@ from aurweb.models import Package, PackageBase, PackageComment, User
 from aurweb.models.account_type import USER_ID
 from aurweb.scripts import rendercomment
 from aurweb.scripts.rendercomment import update_comment_render
-from aurweb.testing.git import GitRepository
 
 logger = logging.get_logger(__name__)
 aur_location = config.get("options", "aur_location")
 
 
 @pytest.fixture(autouse=True)
-def setup(db_test, git: GitRepository):
-    config_get = config.get
-
-    def mock_config_get(section: str, key: str) -> str:
-        if section == "serve" and key == "repo-path":
-            return git.file_lock.path
-        elif section == "options" and key == "commit_uri":
-            return "/cgit/aur.git/log/?h=%s&id=%s"
-        return config_get(section, key)
-
-    with mock.patch("aurweb.config.get", side_effect=mock_config_get):
-        yield
+def setup(db_test):
+    return
 
 
 @pytest.fixture
@@ -129,39 +118,6 @@ Visit <a href="https://www.archlinux.org/">https://www.archlinux.org/</a>.
 Visit <code>https://www.archlinux.org/</code>.
 Visit <a href="https://www.archlinux.org/">Arch Linux</a>.
 Visit <a href="https://www.archlinux.org/">Arch Linux</a>.</p>\
-"""
-    assert comment.RenderedComment == expected
-
-
-def test_git_commit_link(git: GitRepository, user: User, package: Package):
-    commit_hash = git.commit(package, "Initial commit.")
-    logger.info(f"Created commit: {commit_hash}")
-    logger.info(f"Short hash: {commit_hash[:7]}")
-
-    text = f"""\
-{commit_hash}
-{commit_hash[:7]}
-x.{commit_hash}.x
-{commit_hash}x
-0123456789abcdef
-`{commit_hash}`
-http://example.com/{commit_hash}\
-"""
-    comment = create_comment(user, package.PackageBase, text)
-
-    pkgname = package.PackageBase.Name
-    cgit_path = f"/cgit/aur.git/log/?h={pkgname}&amp;"
-    expected = f"""\
-<p><a href="{cgit_path}id={commit_hash[:12]}">{commit_hash[:12]}</a>
-<a href="{cgit_path}id={commit_hash[:7]}">{commit_hash[:7]}</a>
-x.<a href="{cgit_path}id={commit_hash[:12]}">{commit_hash[:12]}</a>.x
-{commit_hash}x
-0123456789abcdef
-<code>{commit_hash}</code>
-<a href="http://example.com/{commit_hash}">\
-http://example.com/{commit_hash}\
-</a>\
-</p>\
 """
     assert comment.RenderedComment == expected
 

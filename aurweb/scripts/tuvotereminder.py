@@ -7,8 +7,6 @@ from aurweb import db, time
 from aurweb.models import TUVoteInfo
 from aurweb.scripts import notify
 
-notify_cmd = aurweb.config.get("notifications", "notify-cmd")
-
 
 def main():
     db.get_engine()

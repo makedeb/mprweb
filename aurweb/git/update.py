@@ -24,10 +24,7 @@ from aurweb.models.package_source import PackageSource
 from aurweb.models.relation_type import RelationType
 from aurweb.models.user import User
 
-notify_cmd = aurweb.config.get("notifications", "notify-cmd")
-
-repo_path = aurweb.config.get("serve", "repo-path")
-repo_regex = aurweb.config.get("serve", "repo-regex")
+notify_cmd = "/usr/bin/aurweb-notify"
 
 max_blob_size = aurweb.config.getint("update", "max-blob-size")
 
@@ -296,7 +293,7 @@ def main():  # noqa: C901
         env_pkgbase = os.environ.get("AUR_PKGBASE")
         privileged = os.environ.get("AUR_PRIVILEGED", "0") == "1"
         allow_overwrite = (os.environ.get("AUR_OVERWRITE", "0") == "1") and privileged
-        repo = pygit2.Repository(f"{repo_path}/{env_pkgbase}")
+        repo = pygit2.Repository(f"{aurweb.config.git_repo_path}/{env_pkgbase}")
 
         warn_or_die = warn if privileged else die
 
@@ -372,7 +369,7 @@ def main():  # noqa: C901
 
         # Now lint the SRCINFO file.
         # pkgbase.
-        if not re.match(repo_regex, pkgbase):
+        if not re.match(aurweb.config.git_repo_regex, pkgbase):
             die_commit(
                 "Invalid .SRCINFO, invalid pkgbase: {:s}".format(pkgbase),
                 str(commit.id),

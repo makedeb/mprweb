@@ -12,8 +12,15 @@ jobs:
     steps:
       - name: Checkout Git repository
         uses: actions/checkout@v3
+        with:
+          path: mprweb
 
       - name: Run unit tests
-        run: .drone/scripts/run-tests.sh
+        run: |
+          mv mprweb/ /aurweb
+          cd /aurweb
+          cp /aurweb/mprweb.cfg /mprweb.cfg
+          .drone/scripts/install-deps.sh
+          .drone/scripts/run-tests.sh
 
 # vim: expandtab ts=2 sw=2

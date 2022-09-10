@@ -5,11 +5,9 @@ from xml.etree.ElementTree import Element
 
 import bleach
 import markdown
-import pygit2
 from bs4 import BeautifulSoup
 
-import aurweb.config
-from aurweb import db, logging, util
+from aurweb import db, logging
 from aurweb.models import PackageComment
 
 logger = logging.get_logger(__name__)
@@ -53,50 +51,6 @@ class FlysprayLinksExtension(markdown.extensions.Extension):
     def extendMarkdown(self, md):
         processor = FlysprayLinksInlineProcessor(r"\bFS#(\d+)\b", md)
         md.inlinePatterns.register(processor, "flyspray-links", 118)
-
-
-class GitCommitsInlineProcessor(markdown.inlinepatterns.InlineProcessor):
-    """
-    Turn Git hashes like f7f5152be5ab into links to AUR's cgit.
-
-    Only commit references that do exist are linkified. Hashes are shortened to
-    shorter non-ambiguous prefixes. Only hashes with at least 7 digits are
-    considered.
-    """
-
-    def __init__(self, md, head):
-        repo_path = aurweb.config.get("serve", "repo-path")
-        self._repo = pygit2.Repository(repo_path)
-        self._head = head
-        super().__init__(r"\b([0-9a-f]{7,40})\b", md)
-
-    def handleMatch(self, m, data):
-        oid = m.group(1)
-        if oid not in self._repo:
-            # Unkwown OID; preserve the orginal text.
-            return (None, None, None)
-
-        el = Element("a")
-        commit_uri = aurweb.config.get("options", "commit_uri")
-        prefixlen = util.git_search(self._repo, oid)
-        el.set("href", commit_uri % (self._head, oid[:prefixlen]))
-        el.text = markdown.util.AtomicString(oid[:prefixlen])
-        return (el, m.start(0), m.end(0))
-
-
-class GitCommitsExtension(markdown.extensions.Extension):
-    _head = None
-
-    def __init__(self, head):
-        self._head = head
-        super(markdown.extensions.Extension, self).__init__()
-
-    def extendMarkdown(self, md):
-        try:
-            processor = GitCommitsInlineProcessor(md, self._head)
-            md.inlinePatterns.register(processor, "git-commits", 117)
-        except pygit2.GitError:
-            logger.error(f"No git repository found for '{self._head}'.")
 
 
 class HeadingTreeprocessor(markdown.treeprocessors.Treeprocessor):
@@ -152,7 +106,6 @@ def update_comment_render_fastapi(comment: PackageComment) -> None:
 
 def update_comment_render(comment: PackageComment) -> None:
     text = comment.Comments
-    pkgbasename = comment.PackageBase.Name
 
     html = markdown.markdown(
         text,
@@ -160,7 +113,6 @@ def update_comment_render(comment: PackageComment) -> None:
             "fenced_code",
             LinkifyExtension(),
             FlysprayLinksExtension(),
-            GitCommitsExtension(pkgbasename),
             HeadingExtension(),
         ],
     )

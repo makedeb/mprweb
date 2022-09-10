@@ -5,7 +5,6 @@ VOLUME /root/.cache/pypoetry/artifacts
 
 ENV PATH="/root/.poetry/bin:${PATH}"
 ENV PYTHONPATH=/aurweb
-ENV AUR_CONFIG=conf/config
 
 # Install system-wide dependencies.
 COPY ./docker/scripts/install-deps.sh /install-deps.sh
@@ -20,10 +19,6 @@ COPY . /aurweb
 
 # Working directory is aurweb root @ /aurweb.
 WORKDIR /aurweb
-
-# Copy initial config to conf/config.
-RUN cp -vf conf/config.dev conf/config
-RUN sed -i "s;YOUR_AUR_ROOT;/aurweb;g" conf/config
 
 # Install Python dependencies.
 RUN /docker/scripts/install-python-deps.sh

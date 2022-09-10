@@ -3,29 +3,29 @@ set -eou pipefail
 
 MYSQL_DATA=/var/lib/mysql
 
-mariadb-install-db --user=mysql --basedir=/usr --datadir=$MYSQL_DATA
+mariadb-install-db --user=mysql --basedir=/usr --datadir="${MYSQL_DATA}"
 
 # Start it up.
 mysqld_safe --datadir=$MYSQL_DATA --skip-networking &
-while ! mysqladmin ping 2>/dev/null; do
+while ! mysqladmin ping --silent; do
     sleep 1s
 done
 
 # Configure databases.
-DATABASE="aurweb" # Persistent database for FastAPI.
+DATABASE="$(aurweb-config get database name)" # Persistent database for FastAPI.
+USER="$(aurweb-config get database user)"
+PASSWORD="$(aurweb-config get database password)"
 
 echo "Taking care of primary database '${DATABASE}'..."
-mysql -u root -e "CREATE USER IF NOT EXISTS 'aur'@'localhost' IDENTIFIED BY 'aur';"
-mysql -u root -e "CREATE USER IF NOT EXISTS 'aur'@'%' IDENTIFIED BY 'aur';"
-mysql -u root -e "CREATE DATABASE IF NOT EXISTS $DATABASE;"
+mysql -u root -e "CREATE USER IF NOT EXISTS '${USER}'@'%' IDENTIFIED BY '${PASSWORD}';"
+mysql -u root -e "CREATE USER IF NOT EXISTS '${USER}'@'localhost' IDENTIFIED BY '${PASSWORD}';"
 
-mysql -u root -e "CREATE USER IF NOT EXISTS 'aur'@'%' IDENTIFIED BY 'aur';"
-mysql -u root -e "GRANT ALL ON aurweb.* TO 'aur'@'localhost';"
-mysql -u root -e "GRANT ALL ON aurweb.* TO 'aur'@'%';"
-
-mysql -u root -e "CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'aur';"
-mysql -u root -e "GRANT ALL ON *.* TO 'root'@'%' WITH GRANT OPTION;"
+mysql -u root -e "CREATE DATABASE IF NOT EXISTS ${DATABASE};"
+mysql -u root -e "GRANT ALL ON ${DATABASE}.* TO '${USER}'@'%';"
+mysql -u root -e "GRANT ALL ON ${DATABASE}.* TO '${USER}'@'localhost';"
 
 mysqladmin -uroot shutdown
 
-exec "$@"
+# Start mysql back up with networking.
+# Run via 'exec' so that we can start up mysql_safe as a background job in toast.yml.
+exec "${@}"

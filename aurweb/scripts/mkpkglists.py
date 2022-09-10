@@ -11,21 +11,13 @@ import os
 
 import orjson
 
-import aurweb.config
 from aurweb import db, logging, models
 from aurweb.models import Package, PackageBase, User
 
 logger = logging.get_logger("aurweb.scripts.mkpkglists")
 
-archivedir = aurweb.config.get("mkpkglists", "archivedir")
+archivedir = "/var/lib/aurweb/archives"
 os.makedirs(archivedir, exist_ok=True)
-
-PACKAGES = aurweb.config.get("mkpkglists", "packagesfile")
-META = aurweb.config.get("mkpkglists", "packagesmetafile")
-META_EXT = aurweb.config.get("mkpkglists", "packagesmetaextfile")
-PKGBASE = aurweb.config.get("mkpkglists", "pkgbasefile")
-USERS = aurweb.config.get("mkpkglists", "userfile")
-
 
 TYPE_MAP = {
     "depends": "Depends",

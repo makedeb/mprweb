@@ -84,8 +84,7 @@ def valid_pgp_fingerprint(fp):
 
 
 def valid_ssh_pubkey(pk):
-    valid_prefixes = aurweb.config.get("auth", "valid-keytypes")
-    valid_prefixes = set(valid_prefixes.split(" "))
+    valid_prefixes = set(aurweb.config.valid_keytypes)
 
     has_valid_prefix = False
     for prefix in valid_prefixes:

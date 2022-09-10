@@ -1,13 +1,12 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from aurweb import asgi, config, db, time
+from aurweb import asgi, db, time
 from aurweb.models.account_type import USER_ID
 from aurweb.models.official_provider import OFFICIAL_BASE, OfficialProvider
 from aurweb.models.package import Package
 from aurweb.models.package_base import PackageBase
 from aurweb.models.package_notification import PackageNotification
-from aurweb.models.package_source import PackageSource
 from aurweb.models.package_vote import PackageVote
 from aurweb.models.user import User
 from aurweb.packages import util
@@ -94,39 +93,3 @@ def test_query_notified(maintainer: User, package: Package):
     query = db.query(Package).filter(Package.ID == package.ID).all()
     query_notified = util.query_notified(query, maintainer)
     assert query_notified[package.PackageBase.ID]
-
-
-def test_source_uri_file(package: Package):
-    FILE = "test_file"
-
-    with db.begin():
-        pkgsrc = db.create(
-            PackageSource, Source=FILE, Package=package, SourceArch="x86_64"
-        )
-    source_file_uri = config.get("options", "source_file_uri")
-    file, uri = util.source_uri(pkgsrc)
-    expected = source_file_uri % (pkgsrc.Source, package.PackageBase.Name)
-    assert (file, uri) == (FILE, expected)
-
-
-def test_source_uri_named_uri(package: Package):
-    FILE = "test"
-    URL = "https://test.xyz"
-
-    with db.begin():
-        pkgsrc = db.create(
-            PackageSource, Source=f"{FILE}::{URL}", Package=package, SourceArch="x86_64"
-        )
-    file, uri = util.source_uri(pkgsrc)
-    assert (file, uri) == (FILE, URL)
-
-
-def test_source_uri_unnamed_uri(package: Package):
-    URL = "https://test.xyz"
-
-    with db.begin():
-        pkgsrc = db.create(
-            PackageSource, Source=f"{URL}", Package=package, SourceArch="x86_64"
-        )
-    file, uri = util.source_uri(pkgsrc)
-    assert (file, uri) == (URL, URL)

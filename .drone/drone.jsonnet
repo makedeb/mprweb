@@ -7,12 +7,12 @@ local runTests() = {
         name: "run-tests",
         image: "archlinux:base-devel",
         environment: {
-            AUR_CONFIG: "conf/config",
             DB_HOST: "localhost",
             TEST_RECURSION_LIMIT: 10000,
         },
 
         commands: [
+            "bash .drone/scripts/install-deps.sh",
             "bash .drone/scripts/run-tests.sh"
         ]
     }]

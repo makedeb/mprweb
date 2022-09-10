@@ -28,7 +28,7 @@ services:
     command: /docker/scripts/run-memcached.sh
     healthcheck:
       test: "bash /docker/health/memcached.sh"
-      interval: 2s
+      interval: 4s
  
   redis:
     image: mprweb:latest
@@ -37,15 +37,17 @@ services:
     command: /docker/scripts/run-redis.sh
     healthcheck:
       test: "bash /docker/health/redis.sh"
-      interval: 2s
+      interval: 4s
     ports:
       - "127.0.0.1:16379:6379"
+    volumes:
+      - ./docker:/docker
 
   mariadb:
     image: mprweb:latest
     init: true
     entrypoint: /docker/mariadb-entrypoint.sh
-    command: /usr/bin/mysqld_safe --datadir=/var/lib/mysql
+    command: "/usr/bin/mysqld_safe --datadir=/var/lib/mysql"
     ports:
       # This will expose mariadbd on 127.0.0.1:13306 in the host.
       # Ex: `mysql -uaur -paur -h 127.0.0.1 -P 13306 aurweb`
@@ -53,61 +55,42 @@ services:
     volumes:
       - mariadb_run:/var/run/mysqld # Bind socket in this volume.
       - mariadb_data:/var/lib/mysql
+      - ./mprweb.cfg:/mprweb.cfg
+      - ./aurweb:/aurweb/aurweb
+      - ./docker:/docker
     healthcheck:
       test: "bash /docker/health/mariadb.sh"
-      interval: 2s
+      interval: 4s
 
   mariadb_init:
     image: mprweb:latest
     init: true
-    environment:
-      - AUR_CONFIG_IMMUTABLE=${AUR_CONFIG_IMMUTABLE:-0}
     entrypoint: /docker/mariadb-init-entrypoint.sh
-    command: echo "MariaDB tables initialized."
     volumes:
       - mariadb_run:/var/run/mysqld
+      - ./mprweb.cfg:/mprweb.cfg
     depends_on:
       mariadb:
         condition: service_healthy
-
-  mariadb_test:
-    # Test database.
-    image: mprweb:latest
-    init: true
-    environment:
-      - MARIADB_PRIVILEGED=1
-    entrypoint: /docker/mariadb-entrypoint.sh
-    command: /usr/bin/mysqld_safe --datadir=/var/lib/mysql
-    ports:
-      # This will expose mariadbd on 127.0.0.1:13307 in the host.
-      # Ex: `mysql -uaur -paur -h 127.0.0.1 -P 13306 aurweb`
-      - "127.0.0.1:13307:3306"
-    volumes:
-      - mariadb_test_run:/var/run/mysqld # Bind socket in this volume.
-    healthcheck:
-      test: "bash /docker/health/mariadb.sh"
-      interval: 2s
 
   git:
     image: mprweb:latest
     init: true
     environment:
-      - AUR_CONFIG=/aurweb/conf/config
       - SSH_CMDLINE=${SSH_CMDLINE:-ssh ssh://aur@localhost:2222}
-      - AUR_CONFIG_IMMUTABLE=${AUR_CONFIG_IMMUTABLE:-0}
     entrypoint: /docker/git-entrypoint.sh
-    command: /docker/scripts/run-sshd.sh
     ports:
       - "2222:2222"
     healthcheck:
       test: "bash /docker/health/sshd.sh"
-      interval: 2s
+      interval: 4s
     depends_on:
       mariadb_init:
         condition: service_started
     volumes:
       - ./aurweb:/aurweb/aurweb
       - ./data/git_data:/aurweb/aur.git
+      - ./mprweb.cfg:/mprweb.cfg
       - ./data:/aurweb/data
       - ./docker:/docker
       - mariadb_run:/var/run/mysqld
@@ -115,13 +98,11 @@ services:
   smartgit:
     image: mprweb:latest
     init: true
-    environment:
-      - AUR_CONFIG=/aurweb/conf/config
     entrypoint: /docker/smartgit-entrypoint.sh
     command: /docker/scripts/run-smartgit.sh
     healthcheck:
       test: "bash /docker/health/smartgit.sh"
-      interval: 2s
+      interval: 4s
     volumes:
       - ./data/git_data:/aurweb/aur.git
       - ./data:/data
@@ -130,9 +111,6 @@ services:
   cron:
     image: mprweb:latest
     init: true
-    environment:
-      - AUR_CONFIG=/aurweb/conf/config
-      - AUR_CONFIG_IMMUTABLE=${AUR_CONFIG_IMMUTABLE:-0}
     entrypoint: /docker/cron-entrypoint.sh
     command: /docker/scripts/run-cron.sh
     depends_on:
@@ -140,6 +118,8 @@ services:
         condition: service_started
     volumes:
       - ./aurweb:/aurweb/aurweb
+      - ./docker:/docker
+      - ./mprweb.cfg:/mprweb.cfg
       - mariadb_run:/var/run/mysqld
       - archives:/var/lib/aurweb/archives
 
@@ -147,19 +127,17 @@ services:
     image: mprweb:latest
     init: true
     environment:
-      - AUR_CONFIG=/aurweb/conf/config
       - FASTAPI_BACKEND=${FASTAPI_BACKEND}
       - FASTAPI_WORKERS=${FASTAPI_WORKERS}
       - AURWEB_FASTAPI_PREFIX=${AURWEB_FASTAPI_PREFIX}
       - AURWEB_SSHD_PREFIX=${AURWEB_SSHD_PREFIX}
       - PROMETHEUS_MULTIPROC_DIR=/tmp_prometheus
-      - AUR_CONFIG_IMMUTABLE=${AUR_CONFIG_IMMUTABLE:-0}
       - WATCH_SASS_FILES=${WATCH_SASS_FILES:-1}
     entrypoint: /docker/fastapi-entrypoint.sh
     command: /docker/scripts/run-fastapi.sh "${FASTAPI_BACKEND}"
     healthcheck:
       test: "bash /docker/health/fastapi.sh ${FASTAPI_BACKEND}"
-      interval: 2s
+      interval: 4s
     depends_on:
       git:
         condition: service_healthy
@@ -168,6 +146,7 @@ services:
       cron:
         condition: service_started
     volumes:
+      - ./mprweb.cfg:/mprweb.cfg
       - ./docker:/docker
       - ./aurweb:/aurweb/aurweb
       - ./media:/aurweb/media
@@ -186,12 +165,10 @@ services:
   nginx:
     image: mprweb:latest
     init: true
-    environment:
-      - AUR_CONFIG=/aurweb/conf/config
     entrypoint: /docker/nginx-entrypoint.sh
     command: /docker/scripts/run-nginx.sh
     ports:
-      - "127.0.0.1:8080:80" # FastAPI
+      - "8080:80" # FastAPI
     healthcheck:
       test: "bash /docker/health/nginx.sh"
       interval: 2s
@@ -207,90 +184,7 @@ services:
       fastapi:
         condition: service_healthy
 
-  sharness:
-    image: mprweb:latest
-    profiles: ["dev"]
-    init: true
-    environment:
-      - AUR_CONFIG=conf/config.sqlite
-      - LOG_CONFIG=logging.test.conf
-    entrypoint: /docker/sharness-entrypoint.sh
-    command: /docker/scripts/run-sharness.sh
-    stdin_open: true
-    tty: true
-    depends_on:
-      mariadb_test:
-        condition: service_healthy
-    volumes:
-      - ./data:/data
-      - ./aurweb:/aurweb/aurweb
-      - ./migrations:/aurweb/migrations
-      - ./test:/aurweb/test
-      - ./web/html:/aurweb/web/html
-      - ./web/template:/aurweb/web/template
-      - ./web/lib:/aurweb/web/lib
-      - ./templates:/aurweb/templates
-
-  pytest-mysql:
-    image: mprweb:latest
-    profiles: ["dev"]
-    init: true
-    environment:
-      - AUR_CONFIG=/aurweb/conf/config
-      - TEST_RECURSION_LIMIT=${TEST_RECURSION_LIMIT}
-      - PROMETHEUS_MULTIPROC_DIR=/tmp_prometheus
-      - LOG_CONFIG=logging.test.conf
-    entrypoint: /docker/test-mysql-entrypoint.sh
-    command: /docker/scripts/run-pytests.sh clean
-    stdin_open: true
-    tty: true
-    depends_on:
-      mariadb_test:
-        condition: service_healthy
-    tmpfs:
-      - /tmp
-    volumes:
-      - mariadb_test_run:/var/run/mysqld
-      - ./data:/data
-      - ./docker:/docker
-      - ./aurweb:/aurweb/aurweb
-      - ./migrations:/aurweb/migrations
-      - ./test:/aurweb/test
-      - ./web/html:/aurweb/web/html
-      - ./web/template:/aurweb/web/template
-      - ./web/lib:/aurweb/web/lib
-      - ./templates:/aurweb/templates
-
-  test:
-    image: mprweb:latest
-    profiles: ["dev"]
-    init: true
-    environment:
-      - TEST_RECURSION_LIMIT=${TEST_RECURSION_LIMIT}
-      - PROMETHEUS_MULTIPROC_DIR=/tmp_prometheus
-      - LOG_CONFIG=logging.test.conf
-      - AUR_CONFIG=/aurweb/conf/config
-    entrypoint: /docker/test-mysql-entrypoint.sh
-    command: /docker/scripts/run-tests.sh
-    stdin_open: true
-    tty: true
-    depends_on:
-      mariadb_test:
-        condition: service_healthy
-    volumes:
-      - mariadb_test_run:/var/run/mysqld
-      - ./docker:/docker
-      - ./data:/data
-      - ./aurweb:/aurweb/aurweb
-      - ./migrations:/aurweb/migrations
-      - ./test:/aurweb/test
-      - ./web/html:/aurweb/web/html
-      - ./web/template:/aurweb/web/template
-      - ./web/lib:/aurweb/web/lib
-      - ./templates:/aurweb/templates
-
 volumes:
-  mariadb_test_run: {}
   mariadb_run: {} # Share /var/run/mysqld/mysqld.sock
   mariadb_data: {} # Share /var/lib/mysql
   smartgit_run: {}
