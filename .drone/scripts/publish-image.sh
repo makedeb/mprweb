@@ -2,7 +2,7 @@
 set -ex
 
 aurweb_config() {
-    python3 -m aurweb.scripts.config "${@}"
+    MPR_CONFIG='./mprweb.cfg' python3 -m aurweb.scripts.config "${@}"
 }
 
 # Temporary variables until the Drone Exec runner supports variables from environment extensions.
@@ -25,8 +25,6 @@ aurweb_config set options git_clone_uri_anon "https://${mpr_url}/%s.git"
 aurweb_config set options git_clone_uri_priv "ssh://mpr@${mpr_url}/%s.git"
 aurweb_config set options traceback 0
 
-aurweb_config set notifications notify-cmd '/usr/bin/aurweb-notify'
-aurweb_config set notifications sendmail ' '
 aurweb_config set notifications smtp-server "mailcow.${hw_url}"
 aurweb_config set notifications smtp-port '465'
 aurweb_config set notifications smtp-use-ssl '1'
@@ -34,7 +32,6 @@ aurweb_config set notifications smtp-user "mpr@${hw_url}"
 aurweb_config set notifications smtp-password "${mpr_smtp_password}"
 aurweb_config set notifications sender "mpr@${hw_url}"
 aurweb_config set notifications reply-to "mpr@${hw_url}"
-aurweb_config set notifications postmaster "hunter@${hw_url}"
 
 ed25519_key="$(ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub  | awk '{print $2}')"
 ecdsa_key="$(ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub  | awk '{print $2}')"
@@ -44,10 +41,8 @@ aurweb_config set fingerprints Ed25519 "${ed25519_key}"
 aurweb_config set fingerprints ECDSA "${ecdsa_key}"
 aurweb_config set fingerprints RSA "${rsa_key}"
 
-aurweb_config set serve ssh-cmdline "ssh mpr@${mpr_url}"
-aurweb_config set serve repo-path '/aurweb/aur.git'
 aurweb_config set devel commit_hash "$(git rev-parse --short HEAD)"
-aurweb_config set devel commit_url 'https://github.com/makedeb/mprweb/commit/%s'
+
 aurweb_config set fastapi session_secret "$(openssl rand -hex 32)"
 
 echo "+ Building image..."
