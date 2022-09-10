@@ -29,7 +29,8 @@ local publishImage() = {
         name: "publish-image",
         environment: {
             mpr_db_password: {from_secret: "mpr_db_password"},
-            mpr_smtp_password: {from_secret: "mpr_smtp_password"}
+            mpr_smtp_password: {from_secret: "mpr_smtp_password"},
+            mpr_fastapi_session_secret: {from_secret: "mpr_fastapi_session_secret"}
         },
         commands: [
             "bash .drone/scripts/publish-image.sh"

@@ -11,7 +11,6 @@ export hw_url='hunterwittenborn.com'
 
 # Get needed data.
 commit_hash="$(git rev-parse --short HEAD)"
-fastapi_secret="$(openssl rand -hex 32)"
 
 # Set up config files.
 echo "+ Setting up config files..."
@@ -43,7 +42,7 @@ aurweb_config set fingerprints RSA "${rsa_key}"
 
 aurweb_config set devel commit_hash "$(git rev-parse --short HEAD)"
 
-aurweb_config set fastapi session_secret "$(openssl rand -hex 32)"
+aurweb_config set fastapi session_secret "${mpr_fastapi_session_secret}"
 
 echo "+ Building image..."
 docker-compose build --pull --no-cache aurweb-image
