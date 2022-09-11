@@ -1,6 +1,6 @@
 @import "variables";
 
-$comment-mobile-view: 47.5em;
+$comment-mobile-view: 35em;
 
 .comments {
 		hr:nth-child(2) {
@@ -8,7 +8,6 @@ $comment-mobile-view: 47.5em;
 		}
 
 	.comment-header {
-		margin: 0.5em 0;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
@@ -23,7 +22,6 @@ $comment-mobile-view: 47.5em;
 			flex-direction: column;
 			
 			.comment-intro {
-				font-size: 1.35em;
 				margin-bottom: 0.2em;
 			}
 
@@ -40,7 +38,7 @@ $comment-mobile-view: 47.5em;
 
 			@media (max-width: $comment-mobile-view) {
 				margin-left: 0;
-				padding-top: 0.5em;
+				padding-bottom: 0.5em;
 			}
 			
 			.svg-icon {
@@ -50,10 +48,6 @@ $comment-mobile-view: 47.5em;
 				color: darken($light-grey, 15%);
 				transition-property: color;
 				transition-duration: 0.2s;
-
-				@media (max-width: $comment-mobile-view) {
-					height: 1.7em;
-				}
 
 				&:hover {
 					color: $orange-hover;
@@ -72,8 +66,6 @@ $comment-mobile-view: 47.5em;
 	}
 
 	.article-content {
-		padding-top: 1em;
-
 		h5, h6 {
 			font-weight: bold;
 			padding-top: 0.5rem;
