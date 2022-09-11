@@ -7,8 +7,12 @@ import subprocess
 import sys
 import time
 
+import sentry_sdk
+from sentry_sdk import push_scope
+
 import aurweb.config
 import aurweb.exceptions
+import aurweb.sentry
 from aurweb import db
 from aurweb.models.package_base import PackageBase
 from aurweb.models.package_comaintainer import PackageComaintainer
@@ -44,8 +48,15 @@ def bans_match(remote_addr):
 
 
 def die(msg):
-    sys.stderr.write("{:s}\n".format(msg))
+    sys.stderr.write("remote: {:s}\n".format(msg))
     exit(1)
+
+
+def die_unknown_error():
+    die(
+        "An unknown error has occurred. These incidents are automatically logged, and"
+        + " will be reviewed by a makedeb team member shortly."
+    )
 
 
 def checkarg_atleast(cmdargv, *argdesc):
@@ -155,7 +166,7 @@ def serve(action, cmdargv, username, privileged, remote_addr):  # noqa: C901
         raise aurweb.exceptions.InvalidArgumentsException(msg)
 
 
-def main():
+def _main():
     user = os.environ.get("AUR_USER")
     privileged = os.environ.get("AUR_PRIVILEGED", "0") == "1"
     ssh_cmd = os.environ.get("SSH_ORIGINAL_COMMAND")
@@ -178,6 +189,22 @@ def main():
         die("{:s}: {}".format(action, e))
     except aurweb.exceptions.AurwebException as e:
         die("{:s}: {}".format(action, e))
+
+
+def set_sentry_context():
+    sentry_sdk.set_context(
+        "Environment",
+        {
+            "AUR_USER": os.environ.get("AUR_USER"),
+            "SSH_ORIGINAL_COMMAND": os.environ.get("SSH_ORIGINAL_COMMAND"),
+        },
+    )
+
+
+def main():
+    with push_scope() as scope:  # noqa: F841
+        set_sentry_context()
+        aurweb.sentry.run_fn(_main, die_unknown_error)
 
 
 if __name__ == "__main__":

@@ -2,15 +2,26 @@
 
 	{% block body %}
     <div class="box">
-        <h2>500 - {{ "Internal Server Error" | tr }}</h2>
+        <h2>{{ "Server Error" | tr }}</h2>
 
+        <p>{{ "There was an issue processing your request." | tr }}</p>
         <p>
-            {{ "A fatal error has occurred." | tr }}
-            {{
-                "Details have been logged and will be reviewed by the "
-                "postmaster posthaste. We apologize for any inconvenience "
-                "this may have caused." | tr
-            }}
+            {% if request.headers.get("dnt") == None %}
+                {{ "This incident has been automatically logged, and will be reviewed by a makedeb team member shortly." | tr }}
+                {{
+                    "If you keep experiencing this issue, consider %sreporting an issue%s or reaching out in %smakedeb's support rooms%s."
+                    | tr
+                    | format('<a href="https://' + github_url + '/makedeb/mprweb/issues">', "</a>", '<a href="https://docs.' + makedeb_url + '/support/obtaining-support">', "</a>")
+                    | safe
+                }}
+            {% else %}
+                {{
+                    "This incident has not been logged, as your browser has the Do-Not-Track header enabled. If you keep experiencing this issue, please %sreport an issue%s or reach out in %smakedeb's support rooms%s."
+                    | tr
+                    | format('<a href="https://' + github_url + '/makedeb/mprweb/issues">', "</a>", '<a href="https://docs.' + makedeb_url + '/support/obtaining-support">', "</a>")
+                    | safe
+                }}
+            {% endif %}
         </p>
 
         {% if config.getboolean("options", "traceback") %}

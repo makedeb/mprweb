@@ -90,6 +90,7 @@ def make_context(request: Request, title: str, next: str = None):
         "hw_url": "hunterwittenborn.com",
         "makedeb_url": makedeb_url,
         "mpr_url": f"mpr.{makedeb_url}",
+        "github_url": "github.com",
     }
 
 

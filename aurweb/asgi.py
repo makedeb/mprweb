@@ -23,6 +23,7 @@ import aurweb.config
 import aurweb.filters  # noqa: F401
 import aurweb.logging
 import aurweb.pkgbase.util as pkgbaseutil
+import aurweb.sentry
 from aurweb import logging, prometheus, util
 from aurweb.auth import BasicAuthBackend
 from aurweb.db import get_engine, query
@@ -34,6 +35,9 @@ from aurweb.routers import APP_ROUTES
 from aurweb.templates import make_context, render_template
 
 logger = logging.get_logger(__name__)
+
+# Set up Sentry logging.
+aurweb.sentry.setup()
 
 # Setup the FastAPI app.
 app = FastAPI()
@@ -94,7 +98,13 @@ async def internal_server_error(request: Request, exc: Exception) -> Response:
     :param request: FastAPI Request
     :return: Rendered 500.html template with status_code 500
     """
-    context = make_context(request, "Internal Server Error")
+
+    # Pass the exception to Sentry if the user doesn't have the Do-Not-Track header set.
+    if request.headers.get("dnt") is None:
+        aurweb.sentry.capture_exception(exc)
+
+    # Generate the exception response for the user.
+    context = make_context(request, "Server Error")
 
     # Print out the exception via `traceback` and store the value
     # into the `traceback` context variable.

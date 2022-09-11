@@ -8,9 +8,11 @@ import time
 
 import pygit2
 from makedeb_srcinfo import ParsingError, SrcinfoParser
+from sentry_sdk import push_scope
 
 import aurweb.config
 from aurweb import db
+from aurweb.git.serve import die_unknown_error, set_sentry_context
 from aurweb.models.dependency_type import DependencyType
 from aurweb.models.license import License
 from aurweb.models.package import Package
@@ -285,7 +287,7 @@ def die_commit(msg, commit):
     exit(1)
 
 
-def main():  # noqa: C901
+def _main():  # noqa: C901
     with db.begin():
         user = (
             db.query(User).filter(User.Username == os.environ.get("AUR_USER")).first()
@@ -500,6 +502,12 @@ def main():  # noqa: C901
 
     # Send package update notifications.
     update_notify(user, db_pkgbase)
+
+
+def main():
+    with push_scope() as scope:  # noqa: F841
+        set_sentry_context()
+        aurweb.sentry.run_fn(_main, die_unknown_error)
 
 
 if __name__ == "__main__":

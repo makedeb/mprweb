@@ -306,7 +306,7 @@ def test_generate_unique_sid_exhausted(
             response = request.post("/login", data=post_data, cookies={})
     assert response.status_code == int(HTTPStatus.INTERNAL_SERVER_ERROR)
 
-    assert "500 - Internal Server Error" in response.text
+    assert "Server Error" in response.text
 
     # Make sure an IntegrityError from the DB got logged out
     # with a FATAL traceback ID.

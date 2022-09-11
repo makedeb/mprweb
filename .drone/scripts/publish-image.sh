@@ -24,6 +24,9 @@ aurweb_config set options git_clone_uri_anon "https://${mpr_url}/%s.git"
 aurweb_config set options git_clone_uri_priv "ssh://mpr@${mpr_url}/%s.git"
 aurweb_config set options traceback 0
 
+aurweb_config set sentry dsn "${mpr_sentry_dsn}"
+aurweb_config set sentry traces_sample_rate '1.0'
+
 aurweb_config set notifications smtp-server "mailcow.${hw_url}"
 aurweb_config set notifications smtp-port '465'
 aurweb_config set notifications smtp-use-ssl '1'
