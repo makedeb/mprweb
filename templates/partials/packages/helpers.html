@@ -7,9 +7,8 @@
 
 		<select>
 			<option value="makedeb" selected>makedeb</option>
+			<option value="Mist">Mist</option>
 			<option value="Prebuilt-MPR">Prebuilt-MPR</option>
-			<option value="Tap">Tap</option>
-			<option value="Una">Una</option>
 		</select>
 	
 		<div class="makedeb code-block helper-info">
@@ -31,14 +30,9 @@ makedeb -si</code></pre>
 				</div>
 			{% endif %}
 		</div>
-		<div class="Tap code-block helper-info hidden">
+		<div class="Mist code-block helper-info hidden">
 			{% include "partials/clipboard_icons.html" %}
-			<pre><code class="hljs language-bash">sudo tap install {{ pkgbase.Name }}</code></pre>
-		</div>
-
-		<div class="Una code-block helper-info hidden">
-			{% include "partials/clipboard_icons.html" %}
-			<pre><code class="hljs language-bash">sudo una install {{ pkgbase.Name }}</code></pre>
+			<pre><code class="hljs language-bash">mist install {{ pkgbase.Name }}</code></pre>
 		</div>
 	</div>
 </div>
