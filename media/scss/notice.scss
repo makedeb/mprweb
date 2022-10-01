@@ -5,8 +5,12 @@
 	padding: 0.2em 0.4em;
 	margin: 1em 0;
 	
-	& *:first-child {
-		padding-top: 0 !important;
+	& > *:first-child {
+		margin-top: 0 !important;
+	}
+
+	& > *:last-child {
+		margin-bottom: 0 !important;
 	}
 
 	&.note {
