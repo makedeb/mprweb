@@ -16,9 +16,7 @@
                 <li><code>GET</code> and <code>POST</code> refer to the HTTP request types required in order to send the request.</li>
                 <li>API interfaces marked with <code>AUTH</code> require an API key in order to access. Pass the API key as part of your request via an HTTP header with a title of <code>Authorization</code> and a value of the API key.</li>
             </ul>
-            <br>
             <p>Text in brackets (i.e. <code>{pkgbase}</code> is expected to be filled in by the client (i.e. <code>/api/adopt/{pkgbase}</code> would become <code>/api/adopt/makedeb</code>, (or any other package base on the MPR).</p>
-            <br>
             {% if request.user.is_authenticated() %}
                 <p>You can create and manage your API keys <a href="/account/{{ request.user.Username }}/api-keys">here</a>.</p>
             {% else %}
@@ -27,28 +25,26 @@
         </div>
         
         <h2>API Routes</h2>
-        <br>
-
         <div class="item">
-            <h4><code>/api/meta</code> <code>GET</code></h4>
+            <h4 class="code-header"><code>/api/meta</code> <code>GET</code></h4>
             <hr>
             <p>Shows current instance information.</p>
         </div>
 
         <div class="item">
-            <h4><code>/api/test</code> <code>GET/POST</code> <code>AUTH</code></h4>
+            <h4 class="code-header"><code>/api/test</code> <code>GET/POST</code> <code>AUTH</code></h4>
             <hr>
             <p>Verifies that you are succesfully logged in.</p>
         </div>
 
         <div class="item">
-            <h4><code>/api/adopt/{pkgbase}</code> <code>POST</code> <code>AUTH</code></h4>
+            <h4 class="code-header"><code>/api/adopt/{pkgbase}</code> <code>POST</code> <code>AUTH</code></h4>
             <hr>
             <p>Adopts an orphan package onto the current user's account.</p>
         </div>
 
         <div class="item">
-            <h4><code>/api/disown/{pkgbase}</code> <code>POST</code> <code>AUTH</code></h4>
+            <h4 class="code-header"><code>/api/disown/{pkgbase}</code> <code>POST</code> <code>AUTH</code></h4>
             <hr>
             <p>Disowns a package from the current user account. If the package has comaintainers, one of them is selected to be the new maintainer. Otherwise, the package gets orphaned.</p>
         </div>

@@ -24,13 +24,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 // Main CSS, shared across entire website.
-body {
+body, input, button, select {
 	font-family: "Ubuntu", sans-serif;
+}
+
+p, a, h1, h2, h3, h4, h5, h6, ul, li, td, div, input, button, select {
+        font-weight: lighter;
+}
+
+p, li, label:has(:not(h1, h2, h3, h4, h5, h6)) {
+	line-height: 1.3em;
+	margin: 0.5em 0;
 }
 
 p {
 	word-break: break-word;
 	hyphens: auto;
+}
+
+p:not(li p), li {
+	font-size: 1.1em;
 }
 
 a, a:visited {
@@ -44,12 +57,29 @@ a:hover {
 	color: $orange-hover;
 }
 
+h2, h3, h4 {
+	margin-top: 0.7em;
+}
+
 h2 {
 	font-size: 1.8em;
 }
 
 h3 {
-	font-size: 1.5em;
+	font-size: 1.4em;
+}
+
+h4 {
+	font-size: 1.1em;
+
+	&.code-header {
+		margin-top: 1em !important;
+	}
+}
+
+
+ul {
+	margin: 0.5em 0;
 }
 
 hr {
@@ -63,7 +93,7 @@ em {
 }
 
 strong {
-	font-weight: bold;
+	font-weight: normal;
 }
 
 sup {
@@ -76,7 +106,7 @@ ul {
 }
 
 p, ul, li {
-	line-height: 1.6em;
+	line-height: 1.3em;
 }
 
 blockquote {
@@ -93,8 +123,7 @@ blockquote {
 // Styling for code blocks.
 code {
 	background-color: lighten($light-grey, 5%);
-	padding: 0.2em;
-	margin: 0.2em;
+	padding: 0.1em 0.2em;
 	border-radius: 0.3em;
 	font-family: "Ubuntu Mono", monospace;
 }
@@ -107,7 +136,7 @@ pre {
 	overflow: auto;
 
 	code {
-		line-height: 1.4em;
+		line-height: 1.3em;
 	}
 }
 
@@ -167,12 +196,16 @@ footer {
 		margin-bottom: 1em;
 	}
 	
-	p {
-		line-height: 1.6em;
+	h4 {
+		margin-top: 0.5em;
 	}
 
-	h4 {
-		padding-top: 0.5em;
+	& > *:first-child {
+		margin-top: 0;
+	}
+
+	& > *:last-child {
+		margin-bottom: 0;
 	}
 }
 
@@ -185,49 +218,46 @@ footer {
 // Field styling.
 // We have 'fieldset' for compatibility purposes with some stuff that's already been written.
 fieldset, .field {
-	padding-top: 1em;
-        // For some reason this fixes some overflow issues on small viewports.
-        min-width: auto;
+	// For some reason this fixes some overflow issues on small viewports.
+	min-width: auto;
 	
 	h1 {
 		font-size: 1.8em;
 	}
                         
-        h2 {
+	h2 {
 		font-size: 1.4em;
-        }
-
-	h4 {
-		padding-top: 0.2em;
 	}
 
-        .item {
-                padding-bottom: 0.8rem;
-                        
-                select, .button {
-                        display: block;
-                        background-color: lighten($light-grey, 8%);
+	h4 {
+		margin-top: 0.2em;
+	}
 
-                        &:hover, &:active {
-                                background-color: lighten($light-grey, 6%);
-                        }
-                }
+	.item {
+		select, .button {
+			display: block;
+			background-color: lighten($light-grey, 8%);
 
-                input:not(.checkbox), select, textarea, .button {
-                	width: 100%;
-                        font-size: 1.2em;
-                        border-radius: 0.2rem;
-                        border-color: $light-grey;
-                        border-style: solid;
+			&:hover, &:active {
+					background-color: lighten($light-grey, 6%);
+			}
+		}
+
+		input:not(.checkbox), select, textarea, .button {
+			width: 100%;
+			font-size: 1.2em;
+			border-radius: 0.2rem;
+			border-color: $light-grey;
+			border-style: solid;
 			border-width: 0.15em;
-                        margin-top: 0.5em;
-                        padding: 0.2em;
-                        box-sizing: border-box;
-                }
+			margin: 0.5em 0;
+			padding: 0.2em;
+			box-sizing: border-box;
+		}
 
-                textarea {
-                        resize: none;
-                }
+		textarea {
+				resize: none;
+		}
 
 		.button {
 			text-align: center;
@@ -247,19 +277,19 @@ fieldset, .field {
 				}
 			}
 		}
-        }
+	}
 
 	.comment, .overhead-comment {
-                color: darken($light-grey, 30%);
-        }
+			color: darken($light-grey, 30%);
+	}
 
-        .comment {
-                padding-top: 0.2em;
-        }
+	.comment {
+		margin-top: 0.2em;
+	}
 
-        .overhead-comment {
-                padding-bottom: 0.6em;
-        }
+	.overhead-comment {
+		margin-bottom: 0.6em;
+	}
 }
 
 // Error lists.

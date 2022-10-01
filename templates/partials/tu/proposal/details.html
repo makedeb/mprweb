@@ -48,11 +48,11 @@
                 {% if not voteinfo.ActiveTUs %}
                     <span>{{ "unknown" | tr }}</span>
                 {% elif accepted %}
-                    <span style="color: green; font-weight: bold">
+                    <span style="color: green; font-weight: normal">
                         {{ "Accepted" | tr }}
                     </span>
                 {% else %}
-                    <span style="color: red; font-weight: bold">
+                    <span style="color: red; font-weight: normal">
                         {{ "Rejected" | tr }}
                     </span>
                 {% endif %}
@@ -84,9 +84,9 @@
         {{ "Voted" | tr }}:
 
         {% if not has_voted %}
-            <span style="color: red; font-weight: bold">{{ "No" | tr }}</span>
+            <span style="color: red; font-weight: normal">{{ "No" | tr }}</span>
         {% else %}
-            <span style="color: green; font-weight: bold">{{ "Yes" | tr }}</span>
+            <span style="color: green; font-weight: normal">{{ "Yes" | tr }}</span>
         {% endif %}
     </p>
     <p>

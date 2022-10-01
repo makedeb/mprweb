@@ -12,6 +12,14 @@
 	transition-duration: 0.2s;
 	z-index: 2;
 
+	& > *:first-child {
+		margin-top: 0 !important;
+	}
+
+	& > *:last-child {
+		margin-bottom: 0 !important;
+	}
+
 	@media (max-width: 32em) {
 		width: 80%;
 	}

@@ -4,33 +4,55 @@ $footer-max-width: 1230px;
 
 footer {
 	height: 100%;
-	padding: 0.8em 0.5em;
+	padding: 0.8em 0;
 	font-size: 1.1em;
 	background-color: $dark-grey;
 	display: flex;
 	justify-content: space-between;
-	align-items: center;
-
-	a, p {
-		line-height: 1.4em;
-	}
 
 	@media (max-width: $footer-max-width) {
 		flex-direction: column;
 	}
 
-	.copyright {
-		@media (max-width: $footer-max-width) {
-			padding: 0.4em 0.5em;
+	p {
+		color: $light-grey;
+		width: fit-content;
+		line-height: 1.2em;
+		text-align: center;
+	}
+
+	.copyright, .generation-info, .links {
+		align-self: center;
+	}
+
+	@media (max-width: $footer-max-width) {
+		.copyright, .generation-info, .links {
+			padding: 0 0.5em;
 		}
 
-		p {
-			color: $light-grey;
+		.generation-info, .links {
+			padding-top: 0.5em;
+		}
+	}
+	
+	.copyright {
+		@media (min-width: $footer-max-width) {
+			margin-left: 0.7em;
+		}
+	}
 
-			@media (max-width: $footer-max-width) {
-				text-align: center;
-				padding-bottom: 0.3em;
-			}
+	.generation-info {
+		a {
+			color: $light-orange;
+			transition: color 0.2s;
+		}
+
+		a:hover {
+			color: $orange;
+		}
+		
+		@media (max-width: $footer-max-width) {
+			display: none;
 		}
 	}
 
