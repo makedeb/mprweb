@@ -14,7 +14,7 @@
 		    <div class="package-item">
 			<a href="/packages/{{ item.Name }}">
 			    <p>{{ item.Name }} {{ item.Version }}</p>
-			    {% if item.Description != None %}<p class="description">{{ item.Description }}</p>{% endif %}
+			    {% if item.packages.first().Description != None %}<p class="description">{{ item.packages.first().Description }}</p>{% endif %}
 			</a>
 		    </div>
 		{% endfor %}
