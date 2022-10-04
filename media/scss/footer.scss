@@ -36,6 +36,10 @@ footer {
 	}
 	
 	.copyright {
+		p {
+			margin: 0;
+		}
+
 		@media (min-width: $footer-max-width) {
 			margin-left: 0.7em;
 		}
