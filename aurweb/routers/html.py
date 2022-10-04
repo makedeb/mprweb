@@ -77,12 +77,11 @@ async def index(request: Request):
     """Homepage route."""
     context = make_context(request, "Home")
 
-    # Get the 10 most recently updated packages.
+    # Get the 10 most recently updated package bases.
     context["package_updates"] = (
-        db.query(Package)
-        .join(PackageBase)
-        .filter(models.PackageBase.PackagerUID.isnot(None))
-        .order_by(models.PackageBase.ModifiedTS.desc())
+        db.query(PackageBase)
+        .filter(PackageBase.PackagerUID.isnot(None))
+        .order_by(PackageBase.ModifiedTS.desc())
         .limit(10)
     ).all()
 
