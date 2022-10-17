@@ -32,7 +32,7 @@ p, a, h1, h2, h3, h4, h5, h6, ul, li, td, div, input, button, select {
         font-weight: lighter;
 }
 
-p, li, label:has(:not(h1, h2, h3, h4, h5, h6)) {
+p, a, li, label:has(:not(h1, h2, h3, h4, h5, h6)) {
 	line-height: 1.3em;
 	margin: 0.5em 0;
 }
