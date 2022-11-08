@@ -37,7 +37,7 @@ def create_user(username: str, account_type_id: int):
         user = db.create(
             User,
             Username=username,
-            Email=f"{username}@example.org",
+            Email=f"{username}@makedeb.org",
             RealName=username.title(),
             Passwd="testPassword",
             AccountTypeID=account_type_id,

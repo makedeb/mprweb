@@ -82,7 +82,7 @@ def tu_user():
         tu_user = db.create(
             User,
             Username="test_tu",
-            Email="test_tu@example.org",
+            Email="test_tu@makedeb.org",
             RealName="Test TU",
             Passwd="testPassword",
             AccountType=tu_type,
@@ -97,7 +97,7 @@ def user():
         user = db.create(
             User,
             Username="test",
-            Email="test@example.org",
+            Email="test@makedeb.org",
             RealName="Test User",
             Passwd="testPassword",
             AccountType=user_type,

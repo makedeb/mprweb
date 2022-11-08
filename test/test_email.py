@@ -24,7 +24,7 @@ def sendmail(from_: str, to_: str, content: str) -> Email:
 def test_email_glue():
     """Test that Email.glue() decodes both base64 and decoded content."""
     body = "Test email."
-    sendmail("test@example.org", "test@example.org", body)
+    sendmail("test@makedeb.org", "test@makedeb.org", body)
     assert Email.count() == 1
 
     email1 = Email(1)
@@ -35,7 +35,7 @@ def test_email_glue():
 def test_email_dump():
     """Test that Email.dump() dumps a single email."""
     body = "Test email."
-    sendmail("test@example.org", "test@example.org", body)
+    sendmail("test@makedeb.org", "test@makedeb.org", body)
     assert Email.count() == 1
 
     stdout = io.StringIO()
@@ -47,8 +47,8 @@ def test_email_dump():
 def test_email_dump_multiple():
     """Test that Email.dump() dumps multiple emails."""
     body = "Test email."
-    sendmail("test@example.org", "test@example.org", body)
-    sendmail("test2@example.org", "test2@example.org", body)
+    sendmail("test@makedeb.org", "test@makedeb.org", body)
+    sendmail("test2@makedeb.org", "test2@makedeb.org", body)
     assert Email.count() == 2
 
     stdout = io.StringIO()

@@ -33,7 +33,7 @@ def test_adduser_no_args():
 
 
 def test_adduser():
-    run_main(["-u", "test", "-e", "test@example.org", "-p", "abcd1234"])
+    run_main(["-u", "test", "-e", "test@makedeb.org", "-p", "abcd1234"])
     test = db.query(User).filter(User.Username == "test").first()
     assert test is not None
     assert test.login(Request(), "abcd1234")
@@ -45,7 +45,7 @@ def test_adduser_tu():
             "-u",
             "test",
             "-e",
-            "test@example.org",
+            "test@makedeb.org",
             "-p",
             "abcd1234",
             "-t",
@@ -63,7 +63,7 @@ def test_adduser_ssh_pk():
             "-u",
             "test",
             "-e",
-            "test@example.org",
+            "test@makedeb.org",
             "-p",
             "abcd1234",
             "--ssh-pubkey",

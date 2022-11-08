@@ -146,7 +146,7 @@ Example code:
     def user(db_test: None) -> User:
         with db.begin():
             user = db.create(User, Username="test",
-                             Email="test@example.org",
+                             Email="test@makedeb.org",
                              Passwd="testPassword",
                              AccountTypeID=USER_ID)
         yield user

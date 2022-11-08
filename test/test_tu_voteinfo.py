@@ -19,7 +19,7 @@ def user() -> User:
         user = create(
             User,
             Username="test",
-            Email="test@example.org",
+            Email="test@makedeb.org",
             RealName="Test User",
             Passwd="testPassword",
             AccountTypeID=TRUSTED_USER_ID,

@@ -21,7 +21,7 @@ def create_user(username: str, type_id: int):
             User,
             AccountTypeID=type_id,
             Username=username,
-            Email=f"{username}@example.org",
+            Email=f"{username}@makedeb.org",
             Passwd=str(),
         )
     return user

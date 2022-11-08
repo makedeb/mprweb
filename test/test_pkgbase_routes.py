@@ -64,7 +64,7 @@ def create_user(username: str) -> User:
         user = db.create(
             User,
             Username=username,
-            Email=f"{username}@example.org",
+            Email=f"{username}@makedeb.org",
             Passwd="testPassword",
             AccountTypeID=USER_ID,
         )
@@ -86,7 +86,7 @@ def maintainer() -> User:
         maintainer = db.create(
             User,
             Username="test_maintainer",
-            Email="test_maintainer@example.org",
+            Email="test_maintainer@makedeb.org",
             Passwd="testPassword",
             AccountType=account_type,
         )
@@ -100,7 +100,7 @@ def tu_user():
         tu_user = db.create(
             User,
             Username="test_tu",
-            Email="test_tu@example.org",
+            Email="test_tu@makedeb.org",
             RealName="Test TU",
             Passwd="testPassword",
             AccountType=tu_type,
@@ -530,7 +530,7 @@ def test_pkgbase_flag(
         user2 = db.create(
             User,
             Username="test2",
-            Email="test2@example.org",
+            Email="test2@makedeb.org",
             Passwd="testPassword",
             AccountType=user.AccountType,
         )
