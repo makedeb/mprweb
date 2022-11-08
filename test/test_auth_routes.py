@@ -14,7 +14,7 @@ from aurweb.models.user import User
 
 # Some test global constants.
 TEST_USERNAME = "test"
-TEST_EMAIL = "test@example.org"
+TEST_EMAIL = "test@makedeb.org"
 TEST_REFERER = {
     "referer": aurweb.config.get("options", "aur_location") + "/login",
 }
@@ -278,7 +278,7 @@ def test_generate_unique_sid_exhausted(
         user2 = db.create(
             User,
             Username="test2",
-            Email="test2@example.org",
+            Email="test2@makedeb.org",
             ResetKey="testReset",
             Passwd="testPassword",
             AccountTypeID=USER_ID,

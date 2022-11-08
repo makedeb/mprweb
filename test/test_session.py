@@ -21,7 +21,7 @@ def user() -> User:
         user = db.create(
             User,
             Username="test",
-            Email="test@example.org",
+            Email="test@makedeb.org",
             ResetKey="testReset",
             Passwd="testPassword",
             AccountTypeID=USER_ID,
@@ -49,7 +49,7 @@ def test_session_cs():
         user2 = db.create(
             User,
             Username="test2",
-            Email="test2@example.org",
+            Email="test2@makedeb.org",
             ResetKey="testReset2",
             Passwd="testPassword",
             AccountTypeID=USER_ID,

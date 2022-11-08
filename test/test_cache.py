@@ -42,7 +42,7 @@ async def test_db_count_cache(redis):
     db.create(
         User,
         Username="user1",
-        Email="user1@example.org",
+        Email="user1@makedeb.org",
         Passwd="testPassword",
         AccountTypeID=USER_ID,
     )
@@ -63,7 +63,7 @@ async def test_db_count_cache_expires(redis):
     db.create(
         User,
         Username="user1",
-        Email="user1@example.org",
+        Email="user1@makedeb.org",
         Passwd="testPassword",
         AccountTypeID=USER_ID,
     )

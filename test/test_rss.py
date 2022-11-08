@@ -27,7 +27,7 @@ def user():
     yield db.create(
         User,
         Username="test",
-        Email="test@example.org",
+        Email="test@makedeb.org",
         RealName="Test User",
         Passwd="testPassword",
         AccountType=account_type,

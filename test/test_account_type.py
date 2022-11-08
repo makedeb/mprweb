@@ -41,7 +41,7 @@ def test_user_account_type_relationship(account_type):
         user = db.create(
             User,
             Username="test",
-            Email="test@example.org",
+            Email="test@makedeb.org",
             RealName="Test User",
             Passwd="testPassword",
             AccountType=account_type,

@@ -25,7 +25,7 @@ def user():
         user = db.create(
             User,
             Username="test",
-            Email="test@example.org",
+            Email="test@makedeb.org",
             Passwd="testPassword",
             AccountTypeID=USER_ID,
         )
@@ -38,7 +38,7 @@ def user2():
         user = db.create(
             User,
             Username="test2",
-            Email="test2@example.org",
+            Email="test2@makedeb.org",
             Passwd="testPassword",
             AccountTypeID=USER_ID,
         )

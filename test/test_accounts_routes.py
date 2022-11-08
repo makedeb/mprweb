@@ -31,7 +31,7 @@ logger = logging.get_logger(__name__)
 
 # Some test global constants.
 TEST_USERNAME = "test"
-TEST_EMAIL = "test@example.org"
+TEST_EMAIL = "test@makedeb.org"
 
 
 def make_ssh_pubkey():
@@ -62,7 +62,7 @@ def client() -> TestClient:
 
 
 def create_user(username: str) -> User:
-    email = f"{username}@example.org"
+    email = f"{username}@makedeb.org"
     user = create(
         User,
         Username=username,
@@ -285,7 +285,7 @@ def post_register(request, **kwargs):
 
     data = {
         "U": "newUser",
-        "E": "newUser@example.com",
+        "E": "newUser@makedeb.org",
         "P": "newUserPassword",
         "C": "newUserPassword",
         "L": "en",
@@ -315,21 +315,21 @@ def test_post_register(client: TestClient):
 
 def test_post_register_rejects_case_insensitive_spoof(client: TestClient):
     with client as request:
-        response = post_register(request, U="newUser", E="newUser@example.org")
+        response = post_register(request, U="newUser", E="newUser@makedeb.org")
     assert response.status_code == int(HTTPStatus.OK)
 
     with client as request:
-        response = post_register(request, U="NEWUSER", E="BLAH@GMAIL.COM")
+        response = post_register(request, U="NEWUSER", E="newUser2@makedeb.org")
     assert response.status_code == int(HTTPStatus.BAD_REQUEST)
 
     expected = "The username, <strong>NEWUSER</strong>, is already in use."
     assert expected in response.content.decode()
 
     with client as request:
-        response = post_register(request, U="BLAH", E="NEWUSER@EXAMPLE.ORG")
+        response = post_register(request, U="BLAH", E="newUser@makedeb.org")
     assert response.status_code == int(HTTPStatus.BAD_REQUEST)
 
-    expected = "The address, <strong>NEWUSER@EXAMPLE.ORG</strong>, "
+    expected = "The address, <strong>newUser@makedeb.org</strong>, "
     expected += "is already in use."
     assert expected in response.content.decode()
 
@@ -550,8 +550,12 @@ def test_post_register_error_username_taken(client: TestClient, user: User):
 
 def test_post_register_error_email_taken(client: TestClient, user: User):
     with client as request:
-        response = post_register(request, E="test@example.org")
+        assert post_register(request, E="user@makedeb.org").status_code == int(
+            HTTPStatus.OK
+        )
 
+    with client as request:
+        response = post_register(request, U="user2", E="user@makedeb.org")
     assert response.status_code == int(HTTPStatus.BAD_REQUEST)
 
     content = response.content.decode()
@@ -635,7 +639,7 @@ def test_get_account_edit_unauthorized(client: TestClient, user: User):
         user2 = create(
             User,
             Username="test2",
-            Email="test2@example.org",
+            Email="test2@makedeb.org",
             Passwd="testPassword",
             AccountTypeID=USER_ID,
         )
@@ -654,7 +658,7 @@ def test_post_account_edit(client: TestClient, user: User):
     request = Request()
     sid = user.login(request, "testPassword")
 
-    post_data = {"U": "test", "E": "test666@example.org", "passwd": "testPassword"}
+    post_data = {"U": "test", "E": "test666@makedeb.org", "passwd": "testPassword"}
 
     with client as request:
         response = request.post(
@@ -717,7 +721,7 @@ def test_post_account_edit_dev(client: TestClient, tu_user: User):
     request = Request()
     sid = tu_user.login(request, "testPassword")
 
-    post_data = {"U": "test", "E": "test666@example.org", "passwd": "testPassword"}
+    post_data = {"U": "test", "E": "test666@makedeb.org", "passwd": "testPassword"}
 
     endpoint = f"/account/{tu_user.Username}/edit"
     with client as request:
@@ -737,7 +741,7 @@ def test_post_account_edit_timezone(client: TestClient, user: User):
 
     post_data = {
         "U": "test",
-        "E": "test@example.org",
+        "E": "test@makedeb.org",
         "TZ": "CET",
         "passwd": "testPassword",
     }
@@ -757,7 +761,7 @@ def test_post_account_edit_error_missing_password(client: TestClient, user: User
     request = Request()
     sid = user.login(request, "testPassword")
 
-    post_data = {"U": "test", "E": "test@example.org", "TZ": "CET", "passwd": ""}
+    post_data = {"U": "test", "E": "test@makedeb.org", "TZ": "CET", "passwd": ""}
 
     with client as request:
         response = request.post(
@@ -777,7 +781,7 @@ def test_post_account_edit_error_invalid_password(client: TestClient, user: User
     request = Request()
     sid = user.login(request, "testPassword")
 
-    post_data = {"U": "test", "E": "test@example.org", "TZ": "CET", "passwd": "invalid"}
+    post_data = {"U": "test", "E": "test@makedeb.org", "TZ": "CET", "passwd": "invalid"}
 
     with client as request:
         response = request.post(
@@ -801,7 +805,7 @@ def test_post_account_edit_inactivity(client: TestClient, user: User):
     cookies = {"AURSID": user.login(Request(), "testPassword")}
     post_data = {
         "U": "test",
-        "E": "test@example.org",
+        "E": "test@makedeb.org",
         "J": True,
         "passwd": "testPassword",
     }
@@ -832,7 +836,7 @@ def test_post_account_edit_suspended(client: TestClient, user: User):
     cookies = {"AURSID": user.login(Request(), "testPassword")}
     post_data = {
         "U": "test",
-        "E": "test@example.org",
+        "E": "test@makedeb.org",
         "S": True,
         "passwd": "testPassword",
     }
@@ -860,14 +864,14 @@ def test_post_account_edit_error_unauthorized(client: TestClient, user: User):
         user2 = create(
             User,
             Username="test2",
-            Email="test2@example.org",
+            Email="test2@makedeb.org",
             Passwd="testPassword",
             AccountTypeID=USER_ID,
         )
 
     post_data = {
         "U": "test",
-        "E": "test@example.org",
+        "E": "test@makedeb.org",
         "TZ": "CET",
         "passwd": "testPassword",
     }
@@ -890,7 +894,7 @@ def test_post_account_edit_ssh_pub_key(client: TestClient, user: User):
 
     post_data = {
         "U": "test",
-        "E": "test@example.org",
+        "E": "test@makedeb.org",
         "PK": make_ssh_pubkey(),
         "passwd": "testPassword",
     }
@@ -966,7 +970,7 @@ def test_post_account_edit_invalid_ssh_pubkey(client: TestClient, user: User):
 
     post_data = {
         "U": "test",
-        "E": "test@example.org",
+        "E": "test@makedeb.org",
         "P": "newPassword",
         "C": "newPassword",
         "PK": pubkey,
@@ -990,7 +994,7 @@ def test_post_account_edit_password(client: TestClient, user: User):
 
     post_data = {
         "U": "test",
-        "E": "test@example.org",
+        "E": "test@makedeb.org",
         "P": "newPassword",
         "C": "newPassword",
         "passwd": "testPassword",

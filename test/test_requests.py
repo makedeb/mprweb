@@ -52,7 +52,7 @@ def create_user(username: str, email: str) -> User:
 @pytest.fixture
 def user() -> User:
     """Yield a User instance."""
-    user = create_user("test", "test@example.org")
+    user = create_user("test", "test@makedeb.org")
     yield user
 
 
@@ -67,7 +67,7 @@ def auser(user: User) -> User:
 @pytest.fixture
 def user2() -> User:
     """Yield a secondary non-maintainer User instance."""
-    user = create_user("test2", "test2@example.org")
+    user = create_user("test2", "test2@makedeb.org")
     yield user
 
 
@@ -86,7 +86,7 @@ def maintainer() -> User:
         maintainer = db.create(
             User,
             Username="test_maintainer",
-            Email="test_maintainer@example.org",
+            Email="test_maintainer@makedeb.org",
             Passwd="testPassword",
             AccountTypeID=USER_ID,
         )
@@ -135,7 +135,7 @@ def requests(user: User, packages: List[Package]) -> List[PackageRequest]:
 @pytest.fixture
 def tu_user() -> User:
     """Yield an authenticated Trusted User instance."""
-    user = create_user("test_tu", "test_tu@example.org")
+    user = create_user("test_tu", "test_tu@makedeb.org")
     with db.begin():
         user.AccountTypeID = TRUSTED_USER_ID
     cookies = {"AURSID": user.login(Request(), "testPassword")}
@@ -350,7 +350,7 @@ def test_deletion_request(
 
     # Create a notification record for another user. They should then
     # also receive a DeleteNotification.
-    user2 = create_user("test2", "test2@example.org")
+    user2 = create_user("test2", "test2@makedeb.org")
     create_notification(user2, pkgbase)
 
     endpoint = f"/pkgbase/{pkgbase.Name}/delete"
