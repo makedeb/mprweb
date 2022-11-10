@@ -7,6 +7,9 @@ sass_watcher() {
     sass -w -s compressed media/scss/main.scss media/css/style.css &
 }
 
+# Make sure Git is properly configured to support stored MPR package repositories owned by the 'mpr' user. Since we run as 'root' this is needed.
+git config --global --add safe.directory '*'
+
 # By default, set FASTAPI_WORKERS to 2. In production, this should
 # be configured by the deployer.
 if [ -z ${FASTAPI_WORKERS+x} ]; then
