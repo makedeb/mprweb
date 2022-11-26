@@ -52,7 +52,20 @@ async def login_post(
     cookie_timeout = cookies.timeout(remember_me)
     sid = user.login(request, passwd, cookie_timeout)
     if not sid:
-        return await login_template(request, next, errors=["Bad username or password."])
+        errors = ["Bad username or password."]
+
+        # If the user logged in last before the security incident, they probably need
+        # to reset their password.
+        # This timestamp is just an estimate that was a little bit before the
+        # incident, but should cover most cases.
+        if user.LastLogin <= 1668819600:
+            errors += [
+                "The system has detected that a mandatory password reset may currently "
+                + "be in effect for your account. Please click the 'Forgot Password' "
+                + "button below."
+            ]
+
+        return await login_template(request, next, errors=errors)
 
     login_timeout = aurweb.config.getint("options", "login_timeout")
 
