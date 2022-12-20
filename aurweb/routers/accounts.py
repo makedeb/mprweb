@@ -20,6 +20,7 @@ from aurweb.models import account_type as at
 from aurweb.models.api_key import ApiKey
 from aurweb.models.ssh_pub_key import get_fingerprint
 from aurweb.models.user import generate_resetkey
+from aurweb.pkgbase import actions as pkgbase_actions
 from aurweb.scripts.notify import ResetKeyNotification, WelcomeNotification
 from aurweb.templates import make_context, make_variable_context, render_template
 from aurweb.users import update, validate
@@ -467,6 +468,89 @@ async def account_edit_post(
     # Update cookies with requests, in case they were changed.
     response = render_template(request, "account/edit.html", context)
     return cookies.update_response_cookies(request, response, aurtz=TZ, aurlang=L)
+
+
+@router.get("/account/{username}/delete")
+@requires_auth
+async def account_delete(request: Request, username: str):
+    context = await make_variable_context(request, "Login", next)
+    user = db.query(models.User, models.User.Username == username).first()
+    context["user"] = user
+
+    response = cannot_edit(request, user)
+    if response:
+        return response
+
+    return render_template(request, "delete.html", context)
+
+
+@router.post("/account/{username}/delete")
+@requires_auth
+async def account_delete_post(
+    request: Request,
+    username: str,
+    passwd: str = Form(default=str()),
+    confirm: bool = Form(default=False),
+):
+    context = await make_variable_context(request, "Login", next)
+    user = db.query(models.User, models.User.Username == username).first()
+    context["user"] = user
+
+    response = cannot_edit(request, user)
+    if response:
+        return response
+
+    errors = []
+
+    if passwd == "":
+        errors += ["Please enter a password."]
+    elif passwd != "" and request.user.valid_password(passwd) is False:
+        errors += ["You entered an invalid password."]
+
+    if confirm is False:
+        errors += ["Please confirm deleting the account."]
+
+    if len(errors) != 0:
+        context["errors"] = errors
+        return render_template(request, "delete.html", context)
+
+    # Delete any API keys associated with the account.
+    api_keys = db.query(ApiKey).filter(ApiKey.UserID == user.ID).all()
+
+    with db.begin():
+        for key in api_keys:
+            db.delete(key)
+
+    # Delete any sessions associated with the account.
+    sessions = db.query(models.Session).filter(models.Session.UsersID == user.ID).all()
+
+    with db.begin():
+        for session in sessions:
+            db.delete(session)
+
+    # Disown any packages owned by the user.
+    pkgbases = (
+        db.query(models.PackageBase)
+        .filter(models.PackageBase.MaintainerUID == user.ID)
+        .all()
+    )
+
+    for pkgbase in pkgbases:
+        pkgbase_actions.pkgbase_disown_instance(request, pkgbase)
+
+    # Delete any package votes by the user.
+    votes = (
+        db.query(models.PackageVote).filter(models.PackageVote.UsersID == user.ID).all()
+    )
+
+    for vote in votes:
+        db.delete(vote)
+
+    # Finally, delete the account.
+    db.delete(user)
+
+    # And now redirect to the home page.
+    return RedirectResponse("/", status_code=HTTPStatus.SEE_OTHER)
 
 
 @router.get("/account/{username}")

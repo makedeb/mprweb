@@ -1,0 +1,39 @@
+{% extends "partials/layout.html" %}
+{% block body %}
+    <div class="box">
+        <h2>{% trans %}Accounts{% endtrans %}</h2>
+		<hr>
+		<p>
+			{{
+				"You can use this form to permanently delete the MPR account <strong>%s</strong>."
+				| tr
+				| format(user.Username)
+				| safe
+			}}
+		</p>
+		<ul class="errorlist">
+			{% for error in errors %}
+			<li>{{ error }}</li>
+			{% endfor %}
+		</ul>
+		<form id="edit-profile-form" method="post">
+			<fieldset>
+				<div class="item">
+					<h2><label for="passwd">{% trans %}Account Password:{% endtrans %}</label></h2>
+					<input id="passwd" type="password" size="30" name="passwd">
+				</div>
+				<div class="item">
+					<label>
+						<input class="checkbox" type="checkbox" name="confirm">
+						{% trans %}Confirm deletion{% endtrans %}
+					</label>
+				</div>
+				<br>
+				<div class="item">
+					<p><input class="button" type="submit" value="{{ 'Delete' | tr}}"></p>
+				</div>
+			</fieldset>
+		</form>
+	</div>
+{% endblock %}
+{# vim: set sw=4 expandtab: #}
