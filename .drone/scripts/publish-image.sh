@@ -6,6 +6,7 @@ aurweb_config() {
 }
 
 # Temporary variables until the Drone Exec runner supports variables from environment extensions.
+export makedeb_url='makedeb.org'
 export mpr_url='mpr.makedeb.org'
 export hw_url='hunterwittenborn.com'
 
@@ -24,16 +25,16 @@ aurweb_config set options git_clone_uri_anon "https://${mpr_url}/%s.git"
 aurweb_config set options git_clone_uri_priv "ssh://mpr@${mpr_url}/%s.git"
 aurweb_config set options traceback 0
 
-# aurweb_config set sentry dsn "${mpr_sentry_dsn}"
-# aurweb_config set sentry traces_sample_rate '1.0'
+aurweb_config set sentry dsn "${mpr_sentry_dsn}"
+aurweb_config set sentry traces_sample_rate '1.0'
 
-aurweb_config set notifications smtp-server "mailcow.${hw_url}"
+aurweb_config set notifications smtp-server 'smtp.gmail.com'
 aurweb_config set notifications smtp-port '465'
 aurweb_config set notifications smtp-use-ssl '1'
-aurweb_config set notifications smtp-user "mpr@${hw_url}"
+aurweb_config set notifications smtp-user "kavplex@${hw_url}"
 aurweb_config set notifications smtp-password "${mpr_smtp_password}"
-aurweb_config set notifications sender "mpr@${hw_url}"
-aurweb_config set notifications reply-to "mpr@${hw_url}"
+aurweb_config set notifications sender "MPR <mpr@${makedeb_url}>"
+aurweb_config set notifications reply-to "mpr@${makedeb_url}"
 
 ed25519_key="$(ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub  | awk '{print $2}')"
 ecdsa_key="$(ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub  | awk '{print $2}')"
