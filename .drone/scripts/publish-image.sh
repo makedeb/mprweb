@@ -36,9 +36,9 @@ aurweb_config set notifications smtp-password "${mpr_smtp_password}"
 aurweb_config set notifications sender "MPR <mpr@${makedeb_url}>"
 aurweb_config set notifications reply-to "mpr@${makedeb_url}"
 
-ed25519_key="$(ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub  | awk '{print $2}')"
-ecdsa_key="$(ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub  | awk '{print $2}')"
-rsa_key="$(ssh-keygen -lf /etc/ssh/ssh_host_rsa_key.pub  | awk '{print $2}')"
+ed25519_key="$(ssh-keygen -lf /var/www/mpr.makedeb.org/keys/ssh_host_ed25519_key.pub  | awk '{print $2}')"
+ecdsa_key="$(ssh-keygen -lf /var/www/mpr.makedeb.org/keys/ssh_host_ecdsa_key.pub  | awk '{print $2}')"
+rsa_key="$(ssh-keygen -lf /var/www/mpr.makedeb.org/keys/ssh_host_rsa_key.pub  | awk '{print $2}')"
 
 aurweb_config set fingerprints Ed25519 "${ed25519_key}"
 aurweb_config set fingerprints ECDSA "${ecdsa_key}"
@@ -60,6 +60,7 @@ docker-compose -f ./docker-compose.yml \
 find ./ -maxdepth 1 \
         -not -path './' \
         -not -path './data' \
+	-not -path './keys' \
         -not -path './service.sh' \
         -exec rm -rf '{}' +
 

@@ -11,9 +11,9 @@ services:
     volumes:
       - ./data/git_data:/aurweb/aur.git
       - ./data:/aurweb/data
-      - /etc/ssh/ssh_host_ecdsa_key:/etc/ssh/ssh_host_ecdsa_key:ro
-      - /etc/ssh/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key:ro
-      - /etc/ssh/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key:ro
+      - ./keys/ssh_host_ecdsa_key:/etc/ssh/ssh_host_ecdsa_key:ro
+      - ./keys/ssh_host_ed25519_key:/etc/ssh/ssh_host_ed25519_key:ro
+      - ./keys/ssh_host_rsa_key:/etc/ssh/ssh_host_rsa_key:ro
 
   smartgit:
     volumes:

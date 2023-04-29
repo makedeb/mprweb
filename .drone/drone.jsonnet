@@ -24,7 +24,7 @@ local publishImage() = {
     type: "exec",
     trigger: {branch: ["main"]},
     depends_on: ["run-tests"],
-    node: {server: "mprweb"},
+    node: {server: "homelab"},
     steps: [{
         name: "publish-image",
         environment: {
