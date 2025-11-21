@@ -1,3 +1,6 @@
+> [!WARNING]
+> makedeb is currently unmaintained: https://hunterwittenborn.com/blog/stepping-back-from-open-source/
+
 # mprweb
 mprweb is a hosting platform for the makedeb Package Repository (MPR), a fork of
 aurweb, the underlying platform that powers the Arch User Repository (AUR).
